@@ -2,90 +2,263 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { 
+  ShoppingCartIcon,
+  ClipboardDocumentCheckIcon,
+  ExclamationTriangleIcon,
+  ClipboardIcon,
+  ArchiveBoxIcon,
+  BookOpenIcon,
+  DocumentArrowUpIcon,
+  BeakerIcon,
+  PaintBrushIcon,
+  WrenchScrewdriverIcon,
+  CircleStackIcon,
+  CubeTransparentIcon,
+  ChartBarIcon,
+  BuildingOfficeIcon,
+  TableCellsIcon,
+  CpuChipIcon,
+  PrinterIcon,
+  WifiIcon,
+  PencilSquareIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline';
 
 export default function StoreDashboard() {
   const router = useRouter();
 
+  const sections = [
+    {
+      title: "Stationary",
+      description: "Manage office supplies and daily consumables",
+      icon: PencilSquareIcon,
+      color: "blue",
+      gradient: "from-blue-500 to-blue-600",
+      bgColor: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20",
+      items: [
+        {
+          title: "Regular Usage",
+          description: "Daily office supplies and consumables",
+          href: "/store/stationary/regular",
+          icon: BookOpenIcon
+        },
+        {
+          title: "Fixed Items",
+          description: "Permanent stationary items",
+          href: "/store/stationary/fixed",
+          icon: ArchiveBoxIcon
+        },
+        {
+          title: "In/Out Details",
+          description: "Track stationary movement",
+          href: "/store/stationary/inventory",
+          icon: DocumentArrowUpIcon
+        }
+      ]
+    },
+    {
+      title: "Lab Materials",
+      description: "Laboratory equipment and supplies management",
+      icon: BeakerIcon,
+      color: "emerald",
+      gradient: "from-emerald-500 to-emerald-600",
+      bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20",
+      items: [
+        {
+          title: "Instruments",
+          description: "Lab equipment and tools",
+          href: "/store/lab/instruments",
+          icon: PaintBrushIcon
+        },
+        {
+          title: "Components",
+          description: "Lab parts and components",
+          href: "/store/lab/components",
+          icon: WrenchScrewdriverIcon
+        },
+        {
+          title: "Materials",
+          description: "Lab consumables and materials",
+          href: "/store/lab/materials",
+          icon: CubeTransparentIcon
+        },
+        {
+          title: "In/Out Details",
+          description: "Track lab items movement",
+          href: "/store/lab/inventory",
+          icon: ChartBarIcon
+        }
+      ]
+    },
+    {
+      title: "Fixed Office Assets",
+      description: "Manage permanent office equipment and furniture",
+      icon: BuildingOfficeIcon,
+      color: "purple",
+      gradient: "from-purple-500 to-purple-600",
+      bgColor: "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20",
+      items: [
+        {
+          title: "Furniture",
+          description: "Office furniture and fixtures",
+          href: "/store/assets/furniture",
+          icon: TableCellsIcon
+        },
+        {
+          title: "Systems",
+          description: "Computers and electronic systems",
+          href: "/store/assets/systems",
+          icon: CpuChipIcon
+        },
+        {
+          title: "Printers & Equipment",
+          description: "Printers and other office equipment",
+          href: "/store/assets/printers",
+          icon: PrinterIcon
+        },
+        {
+          title: "Asset Tracking",
+          description: "Track fixed assets movement",
+          href: "/store/assets/inventory",
+          icon: WifiIcon
+        }
+      ]
+    }
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          Store Management Dashboard
-        </h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Stationary Section */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <h2 className="text-xl font-semibold text-blue-900 dark:text-blue-100 mb-4">
-              Stationary
-            </h2>
-            <div className="space-y-3">
-              <Link href="/store/stationary/regular" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">Regular Usage</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-300">Daily office supplies and consumables</p>
-              </Link>
-              <Link href="/store/stationary/fixed" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">Fixed Items</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-300">Permanent stationary items</p>
-              </Link>
-              <Link href="/store/stationary/inventory" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">In/Out Details</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-300">Track stationary movement</p>
-              </Link>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header Section */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg transform hover:scale-105 transition-transform duration-300">
+            <ShoppingCartIcon className="w-10 h-10 text-white" />
           </div>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-4">
+            Store Management
+          </h1>
+          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            Comprehensive inventory management system for all your business needs
+          </p>
+        </div>
 
-          {/* Lab Materials Section */}
-          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <h2 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-4">
-              Lab Materials
-            </h2>
-            <div className="space-y-3">
-              <Link href="/store/lab/instruments" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">Instruments</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">Lab equipment and tools</p>
-              </Link>
-              <Link href="/store/lab/components" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">Components</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">Lab parts and components</p>
-              </Link>
-              <Link href="/store/lab/materials" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">Materials</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">Lab consumables and materials</p>
-              </Link>
-              <Link href="/store/lab/inventory" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">In/Out Details</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">Track lab items movement</p>
-              </Link>
-            </div>
-          </div>
+        {/* Quick Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          {[
+            { 
+              label: "Total Items", 
+              value: "2,847", 
+              change: "+12%", 
+              color: "blue",
+              icon: ClipboardDocumentCheckIcon
+            },
+            { 
+              label: "Active Assets", 
+              value: "156", 
+              change: "+5%", 
+              color: "emerald",
+              icon: BuildingOfficeIcon
+            },
+            { 
+              label: "Low Stock Alerts", 
+              value: "23", 
+              change: "-8%", 
+              color: "amber",
+              icon: ExclamationTriangleIcon
+            },
+            { 
+              label: "Monthly Requests", 
+              value: "89", 
+              change: "+18%", 
+              color: "purple",
+              icon: ClipboardIcon
+            }
+          ].map((stat, index) => {
+            const Icon = stat.icon;
+            return (
+              <div key={index} className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Icon className={`w-5 h-5 text-${stat.color}-500`} />
+                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{stat.label}</p>
+                    </div>
+                    <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2">{stat.value}</p>
+                  </div>
+                  <div className={`text-sm font-semibold ${
+                    stat.change.startsWith('+') 
+                      ? 'text-emerald-600 dark:text-emerald-400' 
+                      : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {stat.change}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Fixed Office Assets Section */}
-          <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <h2 className="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-4">
-              Fixed Office Assets
-            </h2>
-            <div className="space-y-3">
-              <Link href="/store/assets/furniture" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Furniture</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">Office furniture and fixtures</p>
-              </Link>
-              <Link href="/store/assets/systems" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Systems</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">Computers and electronic systems</p>
-              </Link>
-              <Link href="/store/assets/printers" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Printers & Equipment</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">Printers and other office equipment</p>
-              </Link>
-              <Link href="/store/assets/inventory" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Asset Tracking</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">Track fixed assets movement</p>
-              </Link>
-            </div>
-          </div>
+        {/* Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {sections.map((section, sectionIndex) => {
+            const IconComponent = section.icon;
+            return (
+              <div key={sectionIndex} className="group">
+                <div className={`${section.bgColor} rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm transform hover:-translate-y-1`}>
+                  {/* Section Header */}
+                  <div className="flex items-center mb-6">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-r ${section.gradient} flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                      <IconComponent className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="ml-4">
+                      <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                        {section.title}
+                      </h2>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                        {section.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Section Items */}
+                  <div className="space-y-3">
+                    {section.items.map((item, itemIndex) => {
+                      const ItemIcon = item.icon;
+                      return (
+                        <Link 
+                          key={itemIndex}
+                          href={item.href} 
+                          className="group/item block"
+                        >
+                          <div className="bg-white/70 dark:bg-slate-700/50 backdrop-blur-sm rounded-xl p-4 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 border border-white/50 dark:border-slate-600/30 hover:shadow-md hover:scale-[1.02]">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${section.gradient} flex items-center justify-center shadow-sm transform group-hover/item:scale-110 transition-transform duration-300`}>
+                                  <ItemIcon className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-slate-800 dark:text-white group-hover/item:text-slate-900 dark:group-hover/item:text-slate-100 transition-colors">
+                                    {item.title}
+                                  </h3>
+                                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <ChevronRightIcon className="w-5 h-5 text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-300 group-hover/item:translate-x-1 transition-all duration-200" />
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
-} 
+}

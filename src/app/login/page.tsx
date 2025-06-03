@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { LockClosedIcon, EnvelopeIcon, ShieldCheckIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -20,6 +20,24 @@ export default function LoginPage() {
     password?: string;
     role?: string;
   }>({});
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    const userRole = localStorage.getItem('userRole');
+    
+    if (isAuthenticated === 'true' && userRole) {
+      // Redirect to appropriate dashboard
+      router.push(
+        userRole === 'admin' ? '/admin' :
+        userRole === 'employee' ? '/employee' :
+        userRole === 'store' ? '/store' :
+        userRole === 'hr' ? '/hr' :
+        userRole === 'datamanager' ? '/data-manager' :
+        '/finance-manager/dashboard'
+      );
+    }
+  }, [router]);
 
   // Predefined credentials
   const CREDENTIALS = {
@@ -116,21 +134,27 @@ export default function LoginPage() {
         // Store authentication state
         localStorage.setItem('isAuthenticated', 'true');
         localStorage.setItem('userRole', role);
+        localStorage.setItem('userEmail', email);
 
         // Redirect to role-specific dashboard
-        router.push(
+        const redirectPath = 
           role === 'admin' ? '/admin' :
           role === 'employee' ? '/employee' :
           role === 'store' ? '/store' :
           role === 'hr' ? '/hr' :
-          role === 'datamanager' ? '/data-manager/dashboard' :
-          '/finance-manager/dashboard' // Redirect to Finance Manager Dashboard
-        );
+          role === 'datamanager' ? '/data-manager' :
+          '/finance-manager/dashboard';
+
+        router.push(redirectPath);
       } else {
         throw new Error('Invalid email or password');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred during login');
+      // Clear authentication state on error
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userEmail');
     } finally {
       setIsLoading(false);
     }
@@ -298,38 +322,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              <span className="sr-only">Sign in with Google</span>
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
-              </svg>
-            </button>
-
-            <button
-              type="button"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
-            >
-              <span className="sr-only">Sign in with Microsoft</span>
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/>
-              </svg>
-            </button>
-          </div>
+         
         </div>
       </div>
     </div>
