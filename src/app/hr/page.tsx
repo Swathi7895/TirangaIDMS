@@ -1,173 +1,161 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  UserCircleIcon,        // Changed from UserCircle
-  DocumentTextIcon,      // Changed from DocumentText  
-  DevicePhoneMobileIcon, // Changed from DevicePhoneMobile
-  CalendarDaysIcon,      // Already corrected
-  ChartBarIcon,          // Already corrected
-  DocumentDuplicateIcon, // Changed from DocumentDuplicate
-  ClipboardDocumentListIcon // Changed from ClipboardDocumentList
-} from '@heroicons/react/24/outline';
+  Users, 
+  Calendar, 
+  Target, 
+  ClipboardCheck, 
+  BarChart2,
+  UserCheck,
+  Award,
+  FileText,
+  Briefcase,
+  Building2,
+  Settings,
+  Bell,
+  Mail,
+  Plus,
+  ArrowRight
+} from 'lucide-react';
 
-export default function HRDashboard() {
-  const router = useRouter();
+interface Module {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  color: string;
+  path: string;
+  description: string;
+}
 
+const modules: Module[] = [
+  {
+    id: 'documents',
+    name: 'Employee Documents',
+    icon: FileText,
+    color: 'bg-green-600',
+    path: '/hr/documents',
+    description: 'Manage resume, ID proof, offer letter and more'
+  },
+  {
+    id: 'assets',
+    name: 'Assets Issued',
+    icon: Briefcase,
+    color: 'bg-green-600',
+    path: '/hr/assets/accessories',
+    description: 'Track phones, SIMs, laptops, and more issued to employees'
+  },
+  {
+    id: 'leave-management',
+    name: 'Leave Management',
+    icon: Calendar,
+    color: 'bg-green-600',
+    path: '/hr/leaves',
+    description: 'Approve or view employee leave records'
+  },
+  {
+    id: 'employee-performance',
+    name: 'Performance',
+    icon: Target,
+    color: 'bg-green-600',
+    path: '/hr/performance',
+    description: 'Monitor promotions, applications, and positions'
+  },
+  {
+    id: 'joining-releaving',
+    name: 'Joining / Releaving',
+    icon: UserCheck,
+    color: 'bg-green-600',
+    path: '/hr/joining',
+    description: 'View joining or relieving details'
+  },
+  {
+    id: 'weekly-activities',
+    name: 'Weekly Activities',
+    icon: ClipboardCheck,
+    color: 'bg-green-600',
+    path: '/hr/weekly-activities',
+    description: 'Track weekly work reports and checklists'
+  }
+];
+
+
+export default function HRMain() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          HR Operations Dashboard
-        </h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Employee Documents Section */}
-          <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center mb-4">
-              <DocumentTextIcon className="h-6 w-6 text-blue-600 dark:text-blue-400 mr-2" />
-              <h2 className="text-xl font-semibold text-blue-900 dark:text-blue-100">
-                Employee Documents
-              </h2>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-4">
+              <Building2 className="w-8 h-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-gray-900">HR Management</h1>
             </div>
-            <div className="space-y-3">
-              <Link href="/hr/documents/resume" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">Resume & Marks Cards</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-300">View and manage employee qualifications</p>
-              </Link>
-              <Link href="/hr/documents/id-proofs" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">ID Proofs</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-300">Manage identity documents</p>
-              </Link>
-              <Link href="/hr/documents/offer-letters" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-800/30 transition-colors">
-                <h3 className="font-medium text-blue-800 dark:text-blue-200">Offer Letters</h3>
-                <p className="text-sm text-blue-600 dark:text-blue-300">Access and manage offer documents</p>
-              </Link>
-            </div>
-          </div>
-
-          {/* Asset Management Section */}
-          <div className="bg-green-50 dark:bg-green-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center mb-4">
-              <DevicePhoneMobileIcon className="h-6 w-6 text-green-600 dark:text-green-400 mr-2" />
-              <h2 className="text-xl font-semibold text-green-900 dark:text-green-100">
-                Asset Management
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <Link href="/hr/assets/electronics" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">Electronics</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">Phones, laptops, and systems</p>
-              </Link>
-              <Link href="/hr/assets/accessories" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">Accessories</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">SIM cards and ID cards</p>
-              </Link>
-              <Link href="/hr/assets/vehicles" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-green-100 dark:hover:bg-green-800/30 transition-colors">
-                <h3 className="font-medium text-green-800 dark:text-green-200">Vehicles</h3>
-                <p className="text-sm text-green-600 dark:text-green-300">Company vehicle assignments</p>
-              </Link>
-            </div>
-          </div>
-
-          {/* Leave Management Section */}
-          <div className="bg-purple-50 dark:bg-purple-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center mb-4">
-              <CalendarDaysIcon className="h-6 w-6 text-purple-600 dark:text-purple-400 mr-2" />
-              <h2 className="text-xl font-semibold text-purple-900 dark:text-purple-100">
-                Leave Management
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <Link href="/hr/leaves/approved" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Approved Leaves</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">View approved leave requests</p>
-              </Link>
-              <Link href="/hr/leaves/pending" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Pending Requests</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">Manage pending leave requests</p>
-              </Link>
-              <Link href="/hr/leaves/holidays" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-800/30 transition-colors">
-                <h3 className="font-medium text-purple-800 dark:text-purple-200">Holiday Calendar</h3>
-                <p className="text-sm text-purple-600 dark:text-purple-300">View and manage holidays</p>
-              </Link>
-            </div>
-          </div>
-
-          {/* Performance Management Section */}
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center mb-4">
-              <ChartBarIcon className="h-6 w-6 text-yellow-600 dark:text-yellow-400 mr-2" />
-              <h2 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100">
-                Performance Management
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <Link href="/hr/performance/positions" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-800/30 transition-colors">
-                <h3 className="font-medium text-yellow-800 dark:text-yellow-200">Positions</h3>
-                <p className="text-sm text-yellow-600 dark:text-yellow-300">Track employee positions</p>
-              </Link>
-              <Link href="/hr/performance/promotions" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-800/30 transition-colors">
-                <h3 className="font-medium text-yellow-800 dark:text-yellow-200">Promotions</h3>
-                <p className="text-sm text-yellow-600 dark:text-yellow-300">Manage promotion records</p>
-              </Link>
-              <Link href="/hr/performance/applications" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-yellow-100 dark:hover:bg-yellow-800/30 transition-colors">
-                <h3 className="font-medium text-yellow-800 dark:text-yellow-200">Applications</h3>
-                <p className="text-sm text-yellow-600 dark:text-yellow-300">Track internal applications</p>
-              </Link>
-            </div>
-          </div>
-
-          {/* Joining/Relieving Section */}
-          <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center mb-4">
-              <DocumentDuplicateIcon className="h-6 w-6 text-red-600 dark:text-red-400 mr-2" />
-              <h2 className="text-xl font-semibold text-red-900 dark:text-red-100">
-                Joining/Relieving
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <Link href="/hr/joining/details" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-800/30 transition-colors">
-                <h3 className="font-medium text-red-800 dark:text-red-200">Joining Details</h3>
-                <p className="text-sm text-red-600 dark:text-red-300">Manage onboarding process</p>
-              </Link>
-              <Link href="/hr/joining/documents" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-800/30 transition-colors">
-                <h3 className="font-medium text-red-800 dark:text-red-200">Joining Documents</h3>
-                <p className="text-sm text-red-600 dark:text-red-300">Track joining documentation</p>
-              </Link>
-              <Link href="/hr/relieving" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-red-100 dark:hover:bg-red-800/30 transition-colors">
-                <h3 className="font-medium text-red-800 dark:text-red-200">Relieving Process</h3>
-                <p className="text-sm text-red-600 dark:text-red-300">Manage exit formalities</p>
-              </Link>
-            </div>
-          </div>
-
-          {/* Weekly Activities Section */}
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-lg hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center mb-4">
-              <ClipboardDocumentListIcon className="h-6 w-6 text-indigo-600 dark:text-indigo-400 mr-2" />
-              <h2 className="text-xl font-semibold text-indigo-900 dark:text-indigo-100">
-                Weekly Activities
-              </h2>
-            </div>
-            <div className="space-y-3">
-              <Link href="/hr/activities/tasks" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors">
-                <h3 className="font-medium text-indigo-800 dark:text-indigo-200">Task List</h3>
-                <p className="text-sm text-indigo-600 dark:text-indigo-300">View and manage weekly tasks</p>
-              </Link>
-              <Link href="/hr/activities/calendar" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors">
-                <h3 className="font-medium text-indigo-800 dark:text-indigo-200">Activity Calendar</h3>
-                <p className="text-sm text-indigo-600 dark:text-indigo-300">Schedule and track activities</p>
-              </Link>
-              <Link href="/hr/activities/reports" className="block p-3 bg-white dark:bg-gray-700 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors">
-                <h3 className="font-medium text-indigo-800 dark:text-indigo-200">Weekly Reports</h3>
-                <p className="text-sm text-indigo-600 dark:text-indigo-300">Generate activity reports</p>
-              </Link>
+            <div className="flex items-center space-x-4">
+              <button className="p-2 text-gray-500 hover:text-gray-700">
+                <Bell className="w-6 h-6" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-700">
+                <Mail className="w-6 h-6" />
+              </button>
+              <button className="p-2 text-gray-500 hover:text-gray-700">
+                <Settings className="w-6 h-6" />
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-gray-900">Welcome back, HR Manager</h2>
+          <p className="mt-2 text-gray-600">Here's an overview of your HR management system</p>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <button className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <Plus className="w-5 h-5 text-blue-600 mr-2" />
+            <span className="text-gray-700">Add Employee</span>
+          </button>
+          <button className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <Calendar className="w-5 h-5 text-green-600 mr-2" />
+            <span className="text-gray-700">Manage Leave</span>
+          </button>
+          <button className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <FileText className="w-5 h-5 text-purple-600 mr-2" />
+            <span className="text-gray-700">Generate Reports</span>
+          </button>
+          <button className="flex items-center justify-center p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+            <Settings className="w-5 h-5 text-gray-600 mr-2" />
+            <span className="text-gray-700">Settings</span>
+          </button>
+        </div>
+
+        {/* Main Modules Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map((module) => (
+            <Link
+              key={module.id}
+              href={module.path}
+              className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between">
+                <div className={`p-3 rounded-lg ${module.color}`}>
+                  <module.icon className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-gray-900">{module.name}</h3>
+              <p className="mt-2 text-sm text-gray-600">{module.description}</p>
+              <div className="mt-4 flex items-center text-sm text-blue-600">
+                View details
+                <ArrowRight className="ml-1 w-4 h-4" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }

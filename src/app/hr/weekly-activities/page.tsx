@@ -1,235 +1,322 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { 
+  ClipboardCheck,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Plus,
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  BarChart2,
+  ArrowLeft
+} from 'lucide-react';
+import Link from 'next/link';
 
 interface Activity {
   id: string;
-  title: string;
-  type: 'Meeting' | 'Training' | 'Event' | 'Deadline' | 'Other';
-  date: string;
-  time: string;
-  duration: string;
-  location: string;
-  organizer: string;
-  participants: string[];
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
-  description: string;
-  agenda?: string[];
-  materials?: {
-    name: string;
-    type: string;
-    url: string;
+  employeeName: string;
+  department: string;
+  weekStart: string;
+  weekEnd: string;
+  status: 'completed' | 'pending' | 'overdue';
+  tasks: {
+    id: string;
+    title: string;
+    status: 'completed' | 'pending';
   }[];
-  notes?: string[];
+  hoursLogged: number;
+  comments: string;
 }
 
-export default function WeeklyActivitiesManagement() {
-  const [searchQuery, setSearchQuery] = useState('');
+const WeeklyActivities = () => {
+  const [activeTab, setActiveTab] = useState('reports');
   const [activities] = useState<Activity[]>([
     {
       id: '1',
-      title: 'New Employee Orientation',
-      type: 'Training',
-      date: '2024-03-25',
-      time: '10:00 AM',
-      duration: '2 hours',
-      location: 'Conference Room A',
-      organizer: 'Jane Smith',
-      participants: [
-        'John Doe',
-        'Alice Johnson',
-        'Bob Wilson'
+      employeeName: 'John Doe',
+      department: 'Engineering',
+      weekStart: '2024-03-18',
+      weekEnd: '2024-03-24',
+      status: 'completed',
+      tasks: [
+        { id: '1', title: 'Complete API Integration', status: 'completed' },
+        { id: '2', title: 'Code Review', status: 'completed' },
+        { id: '3', title: 'Documentation Update', status: 'completed' }
       ],
-      status: 'Scheduled',
-      description: 'Orientation session for new employees joining this week',
-      agenda: [
-        'Company Overview',
-        'HR Policies',
-        'Benefits Introduction',
-        'Team Introductions'
-      ],
-      materials: [
-        {
-          name: 'Orientation Guide',
-          type: 'PDF',
-          url: '/materials/orientation-guide.pdf'
-        },
-        {
-          name: 'Benefits Overview',
-          type: 'PDF',
-          url: '/materials/benefits-overview.pdf'
-        }
-      ],
-      notes: [
-        'Please bring laptops for digital forms',
-        'Snacks will be provided'
-      ]
+      hoursLogged: 40,
+      comments: 'All tasks completed successfully'
     },
-    // Add more sample data as needed
+    {
+      id: '2',
+      employeeName: 'Jane Smith',
+      department: 'Marketing',
+      weekStart: '2024-03-18',
+      weekEnd: '2024-03-24',
+      status: 'pending',
+      tasks: [
+        { id: '1', title: 'Social Media Campaign', status: 'completed' },
+        { id: '2', title: 'Content Creation', status: 'pending' },
+        { id: '3', title: 'Analytics Report', status: 'pending' }
+      ],
+      hoursLogged: 32,
+      comments: 'Working on content creation'
+    }
   ]);
 
-  const filteredActivities = activities.filter(activity =>
-    activity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    activity.organizer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    activity.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getStatusColor = (status: Activity['status']) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Scheduled':
-        return 'text-blue-600 dark:text-blue-400';
-      case 'In Progress':
-        return 'text-yellow-600 dark:text-yellow-400';
-      case 'Completed':
-        return 'text-green-600 dark:text-green-400';
-      case 'Cancelled':
-        return 'text-red-600 dark:text-red-400';
+      case 'completed':
+        return 'text-green-600 bg-green-50';
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-50';
+      case 'overdue':
+        return 'text-red-600 bg-red-50';
       default:
-        return 'text-gray-600 dark:text-gray-400';
+        return 'text-gray-600 bg-gray-50';
     }
   };
 
-  const getTypeColor = (type: Activity['type']) => {
-    switch (type) {
-      case 'Meeting':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'Training':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'Event':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-      case 'Deadline':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'Other':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <CheckCircle2 className="w-5 h-5" />;
+      case 'overdue':
+        return <AlertCircle className="w-5 h-5" />;
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+        return <Clock className="w-5 h-5" />;
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center">
-            <CalendarIcon className="h-8 w-8 text-blue-600 dark:text-blue-400 mr-3" />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Weekly Activities
-            </h1>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className='mb-10'>
+          <Link href="/hr" className="flex items-center text-gray-600 hover:text-gray-900">
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
+            </Link>
+            </div>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-4">
+          
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Weekly Activities</h1>
+              <p className="text-gray-600">Track employee work reports and checklists</p>
+            </div>
           </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Schedule New Activity
+          <button className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <Plus className="w-5 h-5 mr-2" />
+            New Report
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search by activity title, organizer, or type..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            />
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <ClipboardCheck className="w-6 h-6 text-blue-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Total Reports</p>
+                <p className="text-xl font-semibold text-gray-900">45</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-xl font-semibold text-gray-900">30</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-yellow-100 rounded-lg">
+                <Clock className="w-6 h-6 text-yellow-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Pending</p>
+                <p className="text-xl font-semibold text-gray-900">12</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm text-gray-600">Overdue</p>
+                <p className="text-xl font-semibold text-gray-900">3</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Activities Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Activity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Date & Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Organizer
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Participants
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredActivities.map((activity) => (
-                <tr key={activity.id}>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.title}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {activity.description}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getTypeColor(activity.type)}`}>
-                      {activity.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {activity.date}
-                    </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {activity.time} ({activity.duration})
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {activity.location}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {activity.organizer}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 dark:text-gray-300">
-                      {activity.participants.map((participant, index) => (
-                        <div key={index}>{participant}</div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`${getStatusColor(activity.status)}`}>
-                      {activity.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    <button className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mr-3">
-                      View Details
-                    </button>
-                    {activity.status === 'Scheduled' && (
-                      <button className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
-                        Start Activity
-                      </button>
-                    )}
-                    {activity.status === 'In Progress' && (
-                      <button className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
-                        Complete
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm mb-6">
+          <div className="flex border-b">
+            <button
+              className={`px-6 py-3 font-medium ${
+                activeTab === 'reports' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'
+              }`}
+              onClick={() => setActiveTab('reports')}
+            >
+              Weekly Reports
+            </button>
+            <button
+              className={`px-6 py-3 font-medium ${
+                activeTab === 'checklists' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'
+              }`}
+              onClick={() => setActiveTab('checklists')}
+            >
+              Checklists
+            </button>
+            <button
+              className={`px-6 py-3 font-medium ${
+                activeTab === 'analytics' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'
+              }`}
+              onClick={() => setActiveTab('analytics')}
+            >
+              Analytics
+            </button>
+          </div>
         </div>
+
+        {/* Week Navigation */}
+        <div className="flex items-center justify-between mb-6">
+          <button className="flex items-center text-gray-600 hover:text-gray-900">
+            <ChevronLeft className="w-5 h-5 mr-1" />
+            Previous Week
+          </button>
+          <div className="flex items-center">
+            <Calendar className="w-5 h-5 text-gray-600 mr-2" />
+            <span className="text-gray-900 font-medium">March 18 - March 24, 2024</span>
+          </div>
+          <button className="flex items-center text-gray-600 hover:text-gray-900">
+            Next Week
+            <ChevronRight className="w-5 h-5 ml-1" />
+          </button>
+        </div>
+
+        {/* Search and Filter */}
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search reports..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <button className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <Filter className="w-5 h-5 mr-2 text-gray-600" />
+            Filter
+          </button>
+        </div>
+
+        {/* Weekly Reports Table */}
+        {activeTab === 'reports' && (
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Employee
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tasks
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Hours Logged
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {activities.map((activity) => (
+                  <tr key={activity.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{activity.employeeName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{activity.department}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {activity.tasks.map((task) => (
+                          <div key={task.id} className="flex items-center mb-1">
+                            <CheckCircle2 className={`w-4 h-4 mr-2 ${
+                              task.status === 'completed' ? 'text-green-500' : 'text-gray-300'
+                            }`} />
+                            <span>{task.title}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{activity.hoursLogged} hours</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(activity.status)}`}>
+                        {getStatusIcon(activity.status)}
+                        <span className="ml-1 capitalize">{activity.status}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button className="text-blue-600 hover:text-blue-900 mr-3">View</button>
+                      <button className="text-green-600 hover:text-green-900">Edit</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Analytics Section */}
+        {activeTab === 'analytics' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Task Completion Rate</h3>
+              <div className="h-64 flex items-center justify-center">
+                <BarChart2 className="w-16 h-16 text-gray-400" />
+                {/* Add chart component here */}
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Hours Logged Distribution</h3>
+              <div className="h-64 flex items-center justify-center">
+                <BarChart2 className="w-16 h-16 text-gray-400" />
+                {/* Add chart component here */}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
-} 
+};
+
+export default WeeklyActivities; 
