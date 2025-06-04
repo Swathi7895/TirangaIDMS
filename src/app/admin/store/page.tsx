@@ -24,6 +24,11 @@ import {
   PencilSquareIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
+import { 
+ 
+  ArrowLeft,
+ 
+} from 'lucide-react';
 
 export default function StoreDashboard() {
   const router = useRouter();
@@ -40,19 +45,19 @@ export default function StoreDashboard() {
         {
           title: "Regular Usage",
           description: "Daily office supplies and consumables",
-          href: "/store/stationary/regular",
+          href: "/admin/store/stationary/regular",
           icon: BookOpenIcon
         },
         {
           title: "Fixed Items",
           description: "Permanent stationary items",
-          href: "/store/stationary/fixed",
+          href: "/admin/store/stationary/fixed",
           icon: ArchiveBoxIcon
         },
         {
           title: "In/Out Details",
           description: "Track stationary movement",
-          href: "/store/stationary/inventory",
+          href: "/admin/store/stationary/inventory",
           icon: DocumentArrowUpIcon
         }
       ]
@@ -68,25 +73,25 @@ export default function StoreDashboard() {
         {
           title: "Instruments",
           description: "Lab equipment and tools",
-          href: "/store/lab/instruments",
+          href: "/admin/store/lab/instruments",
           icon: PaintBrushIcon
         },
         {
           title: "Components",
           description: "Lab parts and components",
-          href: "/store/lab/components",
+          href: "/admin/store/lab/components",
           icon: WrenchScrewdriverIcon
         },
         {
           title: "Materials",
           description: "Lab consumables and materials",
-          href: "/store/lab/materials",
+          href: "/admin/store/lab/materials",
           icon: CubeTransparentIcon
         },
         {
           title: "In/Out Details",
           description: "Track lab items movement",
-          href: "/store/lab/inventory",
+          href: "/admin/store/lab/inventory",
           icon: ChartBarIcon
         }
       ]
@@ -102,19 +107,19 @@ export default function StoreDashboard() {
         {
           title: "Furniture",
           description: "Office furniture and fixtures",
-          href: "/store/assets/furniture",
+          href: "/admin/store/assets/furniture",
           icon: TableCellsIcon
         },
         {
           title: "Systems",
           description: "Computers and electronic systems",
-          href: "/store/assets/systems",
+          href: "/admin/store/assets/systems",
           icon: CpuChipIcon
         },
         {
           title: "Printers & Equipment",
           description: "Printers and other office equipment",
-          href: "/store/assets/printers",
+          href: "/admin/store/assets/printers",
           icon: PrinterIcon
         },
        
@@ -125,6 +130,12 @@ export default function StoreDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div>
+     <Link href="/admin" className="flex items-center text-gray-600 hover:text-gray-900">
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
+            </Link>
+            </div>
         {/* Header Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg transform hover:scale-105 transition-transform duration-300">
