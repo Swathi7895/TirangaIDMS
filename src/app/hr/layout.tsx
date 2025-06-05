@@ -1,25 +1,45 @@
 'use client';
+import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { 
+  Home, 
+  FileText, 
+  Laptop, 
+  Calendar, 
+  Award, 
+  UserPlus, 
+  Clock,
+  Search,
+  Bell,
+  Settings,
+  LogOut,
+  LucideIcon
+} from 'lucide-react';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  path: string;
+}
+
+const menuItems: MenuItem[] = [
+  { id: 'overview', label: 'Overview', icon: Home, path: '/hr' },
+  { id: 'documents', label: 'Employee Documents', icon: FileText, path: '/hr/documents' },
+  { id: 'assets', label: 'Asset Management', icon: Laptop, path: '/hr/assets' },
+  { id: 'leaves', label: 'Leave Management', icon: Calendar, path: '/hr/leaves' },
+  { id: 'performance', label: 'Performance', icon: Award, path: '/hr/performance' },
+  { id: 'joining', label: 'Joining/Relieving', icon: UserPlus, path: '/hr/joining' },
+  { id: 'activities', label: 'Weekly Activities', icon: Clock, path: '/hr/activities' }
+];
 
 export default function HRLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    // Check if user is authenticated and is an HR user
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    const userRole = localStorage.getItem('userRole');
-
-    if (!isAuthenticated || userRole !== 'hr') {
-      router.push('/login');
-    }
-  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -28,33 +48,77 @@ export default function HRLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Navigation Bar */}
-      <nav className="bg-white dark:bg-gray-800 shadow-lg">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  HR Operations
-                </h1>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Home className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-gray-900">HR Dashboard</h1>
               </div>
-            
             </div>
-            <div className="flex items-center">
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <Bell className="w-5 h-5" />
+              </button>
+              <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                <Settings className="w-5 h-5" />
+              </button>
               <button
                 onClick={handleLogout}
-                className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 transition-colors"
               >
-                Logout
+                <LogOut className="w-5 h-5" />
+                <span>Logout</span>
               </button>
             </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* Main Content */}
-      <main>{children}</main>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8 overflow-x-auto">
+              {menuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.path;
+                return (
+                  <a
+                    key={item.id}
+                    href={item.path}
+                    className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                      isActive
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </a>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <main>{children}</main>
+      </div>
     </div>
   );
 } 
