@@ -137,7 +137,94 @@ export default function ReportsPage() {
     });
   };
 
+  const renderNewReportForm = () => {
+    if (!showNewReportForm) return null;
 
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg p-6 w-full max-w-2xl">
+         
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Report Type</label>
+              <select
+                value={newReport.type}
+                onChange={(e) => {
+                  const type = e.target.value as Report['type'];
+                  setNewReport({ 
+                    ...newReport, 
+                    type,
+                    // Reset subtype if not employee report
+                    subtype: type === 'employee' ? newReport.subtype : undefined
+                  });
+                }}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              >
+                {reportTypes.map(type => (
+                  <option key={type.id} value={type.id}>{type.label}</option>
+                ))}
+              </select>
+            </div>
+            {newReport.type === 'employee' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Report Subtype</label>
+                <select
+                  value={newReport.subtype || 'daily'}
+                  onChange={(e) => setNewReport({ ...newReport, subtype: e.target.value as Report['subtype'] })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                >
+                  {employeeSubtypes.map(subtype => (
+                    <option key={subtype.id} value={subtype.id}>{subtype.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                type="text"
+                value={newReport.title}
+                onChange={(e) => setNewReport({ ...newReport, title: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Content</label>
+              <textarea
+                value={newReport.content}
+                onChange={(e) => setNewReport({ ...newReport, content: e.target.value })}
+                rows={4}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowNewReportForm(false);
+                  setNewReport({
+                    type: 'employee',
+                    subtype: 'daily',
+                    title: '',
+                    content: '',
+                    status: 'draft'
+                  });
+                }}
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmitReport}
+                className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              >
+                Submit Report
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -284,7 +371,7 @@ export default function ReportsPage() {
           </div>
         </div>
       </div>
-   
+      {renderNewReportForm()}
     </div>
   );
 } 
