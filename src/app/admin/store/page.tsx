@@ -29,6 +29,7 @@ import {
   ArrowLeft,
  
 } from 'lucide-react';
+import MemoViewer from '@/app/components/memos/MemoViewer';
 
 export default function StoreDashboard() {
   const router = useRouter();
@@ -204,6 +205,8 @@ export default function StoreDashboard() {
             );
           })}
         </div>
+
+      
 
         {/* Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

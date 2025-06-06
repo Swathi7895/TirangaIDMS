@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, Upload, Download, Search, Filter, ArrowLeft, Edit, Trash2 } from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
-
+import Link from 'next/link';
 interface LogisticsDocument {
   id: number;
   documentType: 'Bill of Lading' | 'Packing List' | 'Commercial Invoice' | 'Certificate of Origin' | 'Customs Declaration';
@@ -110,6 +110,15 @@ export default function LogisticsPage() {
 
   return (
     <div className="space-y-6">
+       <div className="mb-6">
+          <Link
+            href="/admin/data-manager"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Dashboard
+          </Link>
+        </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Logistics Documents</h2>
      

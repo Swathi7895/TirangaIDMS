@@ -28,7 +28,7 @@ export default function AdminDashboard() {
       bgGradient: 'from-blue-50 to-cyan-50',
       darkBgGradient: 'from-blue-900/20 to-cyan-900/20',
       items: ['Daily', 'Weekly', 'Monthly', 'Yearly', 'Attendance Summary'],
-      href: '/employee/attendance'
+      href: '/admin/attendence'
     },
     {
       id: 'store',
@@ -50,7 +50,7 @@ export default function AdminDashboard() {
       bgGradient: 'from-amber-50 to-orange-50',
       darkBgGradient: 'from-amber-900/20 to-orange-900/20',
       items: ['Employee Details', 'Asset Management', 'Leave Management', 'Performance', 'Joining/Relieving', 'Weekly Activities'],
-      href: '/hr'
+      href: '/admin/hr'
     },
     {
       id: 'data',
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
       gradient: 'from-red-500 to-pink-500',
       bgGradient: 'from-red-50 to-pink-50',
       darkBgGradient: 'from-red-900/20 to-pink-900/20',
-      items: ['Sales & Purchases', 'Logistics', 'Company Registration', 'Bank Documents', 'Billing', 'CA Doc', 'Tender Management'],
+      items: ['Sales & Purchases', 'Logistics', 'Company Registration', 'Bank Documents', 'Billing', 'CA Doc', 'Tender Management', 'Finance reports' ],
       href: '/admin/data-manager'
     },
     {
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
       gradient: 'from-purple-500 to-violet-500',
       bgGradient: 'from-purple-50 to-violet-50',
       darkBgGradient: 'from-purple-900/20 to-violet-900/20',
-      items: ['Employee Reports', 'Visit Report', 'OEM Report', 'Customer Report', 'Blueprint Reports', 'Projection Reports'],
+      items: ['Employee Reports', 'Visit Report', 'OEM Report', 'Customer Report', 'Blueprint Reports', 'Projection Reports', 'Projection Achieved Reports', 'Visit Inquiries', 'BQ Quatitions'  ],
       href: '/admin/reports'
     },
     {
@@ -94,7 +94,7 @@ export default function AdminDashboard() {
       bgGradient: 'from-teal-50 to-green-50',
       darkBgGradient: 'from-teal-900/20 to-green-900/20',
       items: ['Admin Memos', 'Employee Notices'],
-      href: '/employee/memo'
+      href: '/admin/memos'
     }
   ];
 

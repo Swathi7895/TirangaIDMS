@@ -17,6 +17,9 @@ import {
   ArrowLeft,
  
 } from 'lucide-react';
+import Sidebar from './components/Sidebar';
+import MemoViewer from '@/app/components/memos/MemoViewer';
+
 interface Module {
   id: string;
   name: string;
@@ -96,16 +99,19 @@ const modules: Module[] = [
 export default function DataManagerDashboard() {
   return (
     <div className="space-y-8">
+     <div className="mb-6">
+          <Link
+            href="/admin"
+            className="inline-flex items-center text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Dashboard
+          </Link>
+        </div>
         <div>
-     <Link href="/admin" className="flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
-            </Link>
-            </div>
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">Data Manager Dashboard</h2>
-        <p className="mt-1 text-sm text-gray-500">Overview of all data management features</p>
-      </div>
+          <h2 className="text-2xl font-bold text-gray-900">Data Manager Dashboard</h2>
+          <p className="mt-1 text-sm text-gray-500">Overview of all data management features</p>
+        </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {modules.map((module) => (
@@ -149,24 +155,7 @@ export default function DataManagerDashboard() {
             </div>
           </div>
         </div>
-{/* 
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <Link href="/data-manager/finance" className="p-3 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-              Generate New Report
-            </Link>
-            <Link href="/data-manager/logistics" className="p-3 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-              Upload Documents
-            </Link>
-            <Link href="/data-manager/tender" className="p-3 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-              View Pending Tasks
-            </Link>
-            <Link href="/data-manager/finance" className="p-3 text-left text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-              Export Data
-            </Link>
-          </div>
-        </div> */}
+
       </div>
     </div>
   );

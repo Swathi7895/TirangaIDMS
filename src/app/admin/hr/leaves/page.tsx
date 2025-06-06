@@ -319,16 +319,7 @@ const LeaveManagementSystem = () => {
                 <td className="px-4 py-3"><StatusBadge status={leave.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    {showActions && leave.status === 'pending' && (
-                      <>
-                        <ActionButton variant="approve" onClick={() => approveLeave(leave.id)}>
-                          Approve
-                        </ActionButton>
-                        <ActionButton variant="reject" onClick={() => rejectLeave(leave.id)}>
-                          Reject
-                        </ActionButton>
-                      </>
-                    )}
+                    
                     <ActionButton variant="view" onClick={() => viewDetails(leave.id)}>
                       View
                     </ActionButton>
@@ -347,7 +338,7 @@ const LeaveManagementSystem = () => {
   const pendingCount = leaveData.pending.length;
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen  p-6">
       <div className="max-w-7xl mx-auto bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
         {/* Header */}
         <div className="text-center mb-10 pb-6 border-b-4 border-blue-500">
@@ -359,81 +350,56 @@ const LeaveManagementSystem = () => {
           </p>
         </div>
 
-        {/* Layout Container */}
-        <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar (Placeholder) */}
-          <div className="md:w-1/4 bg-gray-100 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-gray-700 mb-4">Navigation</h3>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-blue-600 hover:underline">Overview</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Employee Documents</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Asset Management</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Leave Management</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Performance</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Joining/Relieving</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Weekly Activities</a></li>
-            </ul>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+            <h3 className="text-3xl font-bold mb-2">{totalLeaves}</h3>
+            <p className="text-lg opacity-90">Total Leave Requests</p>
           </div>
-
-          {/* Main Content */}
-          <div className="md:w-3/4">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                <h3 className="text-3xl font-bold mb-2">{totalLeaves}</h3>
-                <p className="text-lg opacity-90">Total Leave Requests</p>
-              </div>
-              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                <h3 className="text-3xl font-bold mb-2">{approvedCount}</h3>
-                <p className="text-lg opacity-90">Approved Leaves</p>
-              </div>
-              <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-                <h3 className="text-3xl font-bold mb-2">{pendingCount}</h3>
-                <p className="text-lg opacity-90">Pending Requests</p>
-              </div>
-            </div>
-
-            {/* Approved Leaves Section */}
-            <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-green-500">
-              <div className="flex items-center mb-6">
-                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                  ✓
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Approved Leaves</h2>
-              </div>
-              <LeaveTable leaves={leaveData.approved} />
-            </div>
-
-            {/* Non-Approved Leaves Section */}
-            <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-red-500">
-              <div className="flex items-center mb-6">
-                <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                  ✗
-                </div>
-                <h2 className="text-2xl font-bold text-gray-800">Non-Approved Leaves</h2>
-              </div>
-              <LeaveTable leaves={[...leaveData.pending, ...leaveData.rejected]} showActions={true} />
-            </div>
-
-            {/* Holiday Leaves Section */}
-            <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-orange-500">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                    🎉
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-800">Holiday Leaves</h2>
-                </div>
-                <button
-                  onClick={() => setShowAddHolidayModal(true)}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-2"
-                >
-                  <span>+</span> Add Holiday
-                </button>
-              </div>
-              <LeaveTable leaves={leaveData.holidays} isHoliday={true} />
-            </div>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+            <h3 className="text-3xl font-bold mb-2">{approvedCount}</h3>
+            <p className="text-lg opacity-90">Approved Leaves</p>
           </div>
+          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+            <h3 className="text-3xl font-bold mb-2">{pendingCount}</h3>
+            <p className="text-lg opacity-90">Pending Requests</p>
+          </div>
+        </div>
+
+        {/* Approved Leaves Section */}
+        <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-green-500">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+              ✓
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Approved Leaves</h2>
+          </div>
+          <LeaveTable leaves={leaveData.approved} />
+        </div>
+
+        {/* Non-Approved Leaves Section */}
+        <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-red-500">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+              ✗
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800">Non-Approved Leaves</h2>
+          </div>
+          <LeaveTable leaves={[...leaveData.pending, ...leaveData.rejected]} showActions={true} />
+        </div>
+
+        {/* Holiday Leaves Section */}
+        <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-orange-500">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                🎉
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800">Holiday Leaves</h2>
+            </div>
+          
+          </div>
+          <LeaveTable leaves={leaveData.holidays} isHoliday={true} />
         </div>
 
         {/* Details Modal */}
@@ -505,89 +471,7 @@ const LeaveManagementSystem = () => {
           </div>
         )}
 
-        {/* Add Holiday Modal */}
-        {showAddHolidayModal && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-2xl font-bold text-gray-800">Add New Holiday</h3>
-                <button
-                  onClick={() => setShowAddHolidayModal(false)}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Holiday Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={newHoliday.name}
-                    onChange={(e) => setNewHoliday(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    placeholder="e.g., Republic Day"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={newHoliday.date}
-                    onChange={(e) => setNewHoliday(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type
-                  </label>
-                  <select
-                    value={newHoliday.type}
-                    onChange={(e) => setNewHoliday(prev => ({ ...prev, type: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="National Holiday">National Holiday</option>
-                    <option value="State Holiday">State Holiday</option>
-                    <option value="Company Holiday">Company Holiday</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Coverage
-                  </label>
-                  <select
-                    value={newHoliday.coverage}
-                    onChange={(e) => setNewHoliday(prev => ({ ...prev, coverage: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="All Employees">All Employees</option>
-                    <option value="Specific Department">Specific Department</option>
-                    <option value="Specific Location">Specific Location</option>
-                  </select>
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => setShowAddHolidayModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={addHoliday}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                >
-                  Add Holiday
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+    
       </div>
     </div>
   );

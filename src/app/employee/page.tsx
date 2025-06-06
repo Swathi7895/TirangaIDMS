@@ -34,6 +34,7 @@ import {
   X
 } from 'lucide-react';
 import Link from 'next/link';
+import MemoViewer from '@/app/components/memos/MemoViewer';
 
 interface Attendance {
   date: string;
@@ -587,8 +588,8 @@ export default function EmployeeDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Profile Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-start space-x-6">
@@ -756,6 +757,11 @@ export default function EmployeeDashboard() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Memos Section */}
+        <div className="mb-8">
+          <MemoViewer userId="current-user-id" userRole="employee" />
         </div>
 
         {/* Quick Links */}

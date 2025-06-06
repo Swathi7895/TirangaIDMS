@@ -1,27 +1,38 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+ 'use client';
+import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { 
+  Home, 
+  FileText, 
+  Laptop, 
+  Calendar, 
+  Award, 
+  UserPlus, 
+  Clock,
+  Search,
+  Bell,
+  Settings,
+  LogOut,
+  LucideIcon,
+  ArrowLeft
+} from 'lucide-react';
 import Link from 'next/link';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
 
-export default function DataManagerLayout({
+interface MenuItem {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  path: string;
+}
+
+
+export default function DatamanagerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    // Check if user is authenticated and is an HR user
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    const userRole = localStorage.getItem('userRole');
-
-    if (!isAuthenticated || userRole !== 'admin') {
-      router.push('/login');
-    }
-  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
@@ -30,13 +41,15 @@ export default function DataManagerLayout({
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title="Data Manager" handleLogout={handleLogout} />
-        <main className="flex-1 overflow-auto p-6">
-          {children}
-        </main>
+    <div className="min-h-screen bg-gray-50">
+     
+   
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */} 
+       
+
+        {/* Main Content */}
+        <main>{children}</main>
       </div>
     </div>
   );

@@ -31,6 +31,9 @@ interface Report {
   submittedBy?: string;
   approvedBy?: string;
   approvedDate?: string;
+  employeeId?: string;
+  employeeName?: string;
+  department?: string;
 }
 
 export default function ReportsPage() {
@@ -43,7 +46,10 @@ export default function ReportsPage() {
       date: '2024-03-18',
       status: 'submitted',
       content: 'Weekly progress report including completed tasks and achievements.',
-      submittedBy: 'John Doe'
+      submittedBy: 'John Doe',
+      employeeId: 'EMP001',
+      employeeName: 'John Doe',
+      department: 'Engineering'
     },
     {
       id: 2,
@@ -55,7 +61,10 @@ export default function ReportsPage() {
       attachments: ['meeting_notes.pdf', 'presentation.pptx'],
       submittedBy: 'John Doe',
       approvedBy: 'Manager Name',
-      approvedDate: '2024-03-18'
+      approvedDate: '2024-03-18',
+      employeeId: 'EMP001',
+      employeeName: 'John Doe',
+      department: 'Engineering'
     },
     {
       id: 3,
@@ -64,13 +73,20 @@ export default function ReportsPage() {
       date: '2024-03-16',
       status: 'draft',
       content: 'Discussion with OEM partner regarding new product launch.',
-      submittedBy: 'John Doe'
+      submittedBy: 'John Doe',
+      employeeId: 'EMP001',
+      employeeName: 'John Doe',
+      department: 'Engineering'
     }
   ]);
 
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('all');
   const [showNewReportForm, setShowNewReportForm] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [newReport, setNewReport] = useState<Partial<Report>>({
     type: 'employee',
     subtype: 'daily',
@@ -86,13 +102,17 @@ export default function ReportsPage() {
     { id: 'customer', label: 'Customer Report', icon: <Users className="w-5 h-5" /> },
     { id: 'blueprint', label: 'Blueprint Report', icon: <FileText className="w-5 h-5" /> },
     { id: 'projection', label: 'Projection Report', icon: <Target className="w-5 h-5" /> },
-    { id: 'achievement', label: 'Achievement Report', icon: <Award className="w-5 h-5" /> }
+    { id: 'achievement', label: 'Achievement Report', icon: <Award className="w-5 h-5" /> },
+    { id: 'Visit Inquiries', label: 'Visit Inquiries', icon: <Award className="w-5 h-5" /> },
+    { id: 'BQ quatitions', label: 'BQ quatitions', icon: <Award className="w-5 h-5" /> }
   ];
 
   const employeeSubtypes = [
     { id: 'daily', label: 'Daily Report', icon: <Calendar className="w-5 h-5" /> },
     { id: 'weekly', label: 'Weekly Report', icon: <Calendar className="w-5 h-5" /> },
     { id: 'monthly', label: 'Monthly Report', icon: <Calendar className="w-5 h-5" /> },
+    { id: 'Quaterly', label: 'Quaterly Report', icon: <Calendar className="w-5 h-5" /> },
+    { id: 'half', label: 'half Report', icon: <Calendar className="w-5 h-5" /> },
     { id: 'yearly', label: 'Yearly Report', icon: <Calendar className="w-5 h-5" /> }
   ];
 
@@ -114,30 +134,37 @@ export default function ReportsPage() {
     }
   };
 
-  const handleSubmitReport = () => {
-    const report: Report = {
-      id: reports.length + 1,
-      type: newReport.type as Report['type'],
-      subtype: newReport.type === 'employee' ? newReport.subtype as Report['subtype'] : undefined,
-      title: newReport.title || '',
-      date: new Date().toISOString().split('T')[0],
-      status: 'submitted',
-      content: newReport.content || '',
-      submittedBy: 'John Doe' // This should be the actual logged-in user
-    };
+  const departments = [
+    'Engineering',
+    'Sales',
+    'Marketing',
+    'HR',
+    'Finance',
+    'Operations'
+  ];
 
-    setReports([report, ...reports]);
-    setShowNewReportForm(false);
-    setNewReport({
-      type: 'employee',
-      subtype: 'daily',
-      title: '',
-      content: '',
-      status: 'draft'
-    });
-  };
+  const statuses = [
+    { id: 'all', label: 'All Status' },
+    { id: 'draft', label: 'Draft' },
+    { id: 'submitted', label: 'Submitted' },
+    { id: 'approved', label: 'Approved' }
+  ];
 
+  const filteredReports = reports.filter(report => {
+    const matchesType = selectedType === 'all' || report.type === selectedType;
+    const matchesSubtype = selectedType !== 'employee' || selectedSubtype === 'all' || report.subtype === selectedSubtype;
+    const matchesSearch = searchQuery === '' || 
+      report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.employeeId?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesDepartment = selectedDepartment === 'all' || report.department === selectedDepartment;
+    const matchesStatus = selectedStatus === 'all' || report.status === selectedStatus;
+    const matchesDateRange = (!dateRange.start || new Date(report.date) >= new Date(dateRange.start)) &&
+      (!dateRange.end || new Date(report.date) <= new Date(dateRange.end));
 
+    return matchesType && matchesSubtype && matchesSearch && matchesDepartment && matchesStatus && matchesDateRange;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -145,7 +172,7 @@ export default function ReportsPage() {
         {/* Back Button */}
         <div className="mb-6">
           <Link
-            href="/employee"
+            href="/admin"
             className="inline-flex items-center text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
@@ -157,13 +184,62 @@ export default function ReportsPage() {
           {/* Header */}
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Reports</h1>
-            <button
-              onClick={() => setShowNewReportForm(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
-            >
-              <FilePlus className="w-5 h-5" />
-              <span>New Report</span>
-            </button>
+          </div>
+
+          {/* Search and Filters */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search reports by title, content, employee name or ID..."
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Advanced Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Department Filter */}
+              <select
+                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+              >
+                <option value="all">All Departments</option>
+                {departments.map(dept => (
+                  <option key={dept} value={dept}>{dept}</option>
+                ))}
+              </select>
+
+              {/* Status Filter */}
+              <select
+                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                {statuses.map(status => (
+                  <option key={status.id} value={status.id}>{status.label}</option>
+                ))}
+              </select>
+
+              {/* Date Range */}
+              <input
+                type="date"
+                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                placeholder="Start Date"
+              />
+              <input
+                type="date"
+                className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                placeholder="End Date"
+              />
+            </div>
           </div>
 
           {/* Report Type Filter */}
@@ -229,62 +305,58 @@ export default function ReportsPage() {
           {/* Reports List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="space-y-4">
-              {reports
-                .filter(report => 
-                  (selectedType === 'all' || report.type === selectedType) &&
-                  (selectedType !== 'employee' || selectedSubtype === 'all' || report.subtype === selectedSubtype)
-                )
-                .map(report => (
-                  <div key={report.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                          {getReportIcon(report.type)}
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">{report.title}</h3>
-                          <div className="mt-1 text-sm text-gray-600">
-                            <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
-                            {report.type === 'employee' && report.subtype && (
-                              <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
-                            )}
-                            <p>Date: {new Date(report.date).toLocaleDateString()}</p>
-                            <p>Submitted by: {report.submittedBy}</p>
-                            {report.approvedBy && (
-                              <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
-                            )}
-                          </div>
+              {filteredReports.map(report => (
+                <div key={report.id} className="border rounded-lg p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-4">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        {getReportIcon(report.type)}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-900">{report.title}</h3>
+                        <div className="mt-1 text-sm text-gray-600">
+                          <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
+                          {report.type === 'employee' && report.subtype && (
+                            <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
+                          )}
+                          <p>Date: {new Date(report.date).toLocaleDateString()}</p>
+                          <p>Employee: {report.employeeName} ({report.employeeId})</p>
+                          <p>Department: {report.department}</p>
+                          <p>Submitted by: {report.submittedBy}</p>
+                          {report.approvedBy && (
+                            <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
-                          {report.status}
-                        </span>
-                        {report.attachments && (
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                            <Download className="w-5 h-5" />
-                          </button>
-                        )}
-                      </div>
                     </div>
-                    <div className="mt-4 text-sm text-gray-600">
-                      <p>{report.content}</p>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+                        {report.status}
+                      </span>
+                      {report.attachments && (
+                        <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                          <Download className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
-                    {report.attachments && (
-                      <div className="mt-4 flex items-center space-x-2">
-                        <FileText className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
-                          Attachments: {report.attachments.join(', ')}
-                        </span>
-                      </div>
-                    )}
                   </div>
-                ))}
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p>{report.content}</p>
+                  </div>
+                  {report.attachments && (
+                    <div className="mt-4 flex items-center space-x-2">
+                      <FileText className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        Attachments: {report.attachments.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-   
     </div>
   );
 } 
