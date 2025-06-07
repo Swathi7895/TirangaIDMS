@@ -9,10 +9,7 @@ import {
   Award, 
   UserPlus, 
   Clock,
-  Search,
-  Bell,
-  Settings,
-  LogOut,
+ 
   LucideIcon,
   ArrowLeft
 } from 'lucide-react';

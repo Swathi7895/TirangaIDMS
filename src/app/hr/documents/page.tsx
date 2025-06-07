@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { File, Upload, Search, Filter, Eye, Download, Plus, X, Calendar, User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon } from 'lucide-react';
+import { File, Upload, Search, Filter, Eye, Download,  X, Calendar, User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon } from 'lucide-react';
 
 interface Document {
   id: number;

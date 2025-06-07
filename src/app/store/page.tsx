@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+
 import Link from 'next/link';
 import { 
   ShoppingCartIcon,
@@ -13,20 +13,20 @@ import {
   BeakerIcon,
   PaintBrushIcon,
   WrenchScrewdriverIcon,
-  CircleStackIcon,
+
   CubeTransparentIcon,
   ChartBarIcon,
   BuildingOfficeIcon,
   TableCellsIcon,
   CpuChipIcon,
   PrinterIcon,
-  WifiIcon,
+ 
   PencilSquareIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
 
 export default function StoreDashboard() {
-  const router = useRouter();
+ 
 
   const sections = [
     {

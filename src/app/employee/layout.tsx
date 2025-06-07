@@ -3,12 +3,7 @@ import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Home, 
-  FileText, 
-  Laptop, 
-  Calendar, 
-  Award, 
-  UserPlus, 
-  Clock,
+ 
   Search,
   Bell,
   Settings,

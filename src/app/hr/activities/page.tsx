@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
   Search, 
-  Filter, 
+ 
   Plus, 
   X, 
   Calendar,
@@ -10,8 +10,7 @@ import {
   Edit,
   Trash2,
   Eye,
-  CheckCircle,
-  XCircle,
+ 
   User
 } from 'lucide-react';
 

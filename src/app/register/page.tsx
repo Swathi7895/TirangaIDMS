@@ -164,7 +164,8 @@ export default function Register() {
       alert('Account created successfully!');
       
     } catch (error) {
-      alert('Failed to create account. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create account. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

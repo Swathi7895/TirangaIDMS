@@ -12,11 +12,11 @@ import {
   MessageSquare,
   ChevronRight,
   Activity,
-  Sparkles
+
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const router = useRouter();
+
 
   const dashboardItems = [
     {

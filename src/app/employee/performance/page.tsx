@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Star, TrendingUp, Award, Calendar, Briefcase, ArrowUpRight, ArrowLeft } from 'lucide-react';
+import { Star, TrendingUp, Award, Calendar, Briefcase,  ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface Performance {

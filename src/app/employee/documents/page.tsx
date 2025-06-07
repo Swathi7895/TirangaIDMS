@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { FileText, Download, Upload, Trash2, Eye, ArrowLeft } from 'lucide-react';
+import { FileText, Download, Upload,  Eye, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface Document {

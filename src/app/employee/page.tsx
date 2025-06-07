@@ -5,30 +5,25 @@ import {
   FileText, 
   Clock,
   CheckCircle,
-  XCircle,
+ 
   AlertCircle,
-  User,
+
   Mail,
   Phone,
   MapPin,
   Briefcase,
-  GraduationCap,
+ 
   Star,
   TrendingUp,
-  Bell,
-  Settings,
+ 
   Download,
   Laptop,
-  Car,
+
   Smartphone,
   CreditCard,
   FileCheck,
   Calendar as CalendarIcon,
-  BarChart,
-  ClipboardList,
-  Building,
-  Users,
-  Map,
+  
   Edit2,
   Save,
   X

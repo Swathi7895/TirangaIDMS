@@ -2,21 +2,11 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
-  Home, 
-  FileText, 
-  Laptop, 
-  Calendar, 
-  Award, 
-  UserPlus, 
-  Clock,
-  Search,
-  Bell,
-  Settings,
-  LogOut,
+ 
   LucideIcon,
-  ArrowLeft
+
 } from 'lucide-react';
-import Link from 'next/link';
+
 
 interface MenuItem {
   id: string;

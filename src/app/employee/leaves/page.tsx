@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Calendar, Clock, AlertCircle, CheckCircle, XCircle, Plus, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock,  CheckCircle, XCircle, Plus, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
 interface Leave {

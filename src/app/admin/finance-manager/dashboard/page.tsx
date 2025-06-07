@@ -7,16 +7,16 @@ import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
   BanknotesIcon,
-  CurrencyDollarIcon
+
 } from '@heroicons/react/24/outline';
-import QuickActions from '@/components/QuickActions';
+
 import { 
  
   ArrowLeft,
  
 } from 'lucide-react';
 export default function FinanceManagerDashboard() {
-  const router = useRouter();
+
 
   const financeSections = [
     {

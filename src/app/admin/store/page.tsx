@@ -13,14 +13,14 @@ import {
   BeakerIcon,
   PaintBrushIcon,
   WrenchScrewdriverIcon,
-  CircleStackIcon,
+ 
   CubeTransparentIcon,
   ChartBarIcon,
   BuildingOfficeIcon,
   TableCellsIcon,
   CpuChipIcon,
   PrinterIcon,
-  WifiIcon,
+
   PencilSquareIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
@@ -29,10 +29,10 @@ import {
   ArrowLeft,
  
 } from 'lucide-react';
-import MemoViewer from '@/app/components/memos/MemoViewer';
+
 
 export default function StoreDashboard() {
-  const router = useRouter();
+
 
   const sections = [
     {

@@ -4,24 +4,21 @@ import {
   Users, 
   FileText, 
   Smartphone, 
-  CreditCard, 
-  Laptop, 
-  Car, 
+ 
   Calendar, 
   CheckCircle, 
-  XCircle, 
+
   TrendingUp, 
   Award, 
   UserPlus, 
-  UserMinus,
+
   Clock,
   LucideIcon,
   Building,
   GraduationCap,
-  Briefcase, ArrowLeft
+  Briefcase, 
 } from 'lucide-react';
-import Link from 'next/link';
-import MemoViewer from '@/app/components/memos/MemoViewer';
+
 
 interface StatCardProps {
   icon: LucideIcon;

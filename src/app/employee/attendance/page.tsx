@@ -1,14 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { 
-  Clock, 
-  Calendar, 
+  
   CheckCircle, 
   XCircle, 
   AlertCircle,
-  Download,
-  ChevronLeft,
-  ChevronRight,
+ 
   ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
@@ -23,7 +20,7 @@ interface Attendance {
 
 export default function AttendancePage() {
   const [attendance, setAttendance] = useState<Attendance[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+ 
   const [viewMode, setViewMode] = useState<'week' | 'month' | 'year'>('week');
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
 

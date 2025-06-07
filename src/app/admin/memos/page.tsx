@@ -3,10 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, 
   Send, 
-  Users, 
+
   Search, 
-  Filter,
-  CheckCircle,
+ 
   XCircle,
   AlertCircle,
   Clock,

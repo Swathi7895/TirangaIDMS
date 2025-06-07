@@ -4,16 +4,14 @@ import {
   Users, 
   FileText, 
   Smartphone, 
-  CreditCard, 
-  Laptop, 
-  Car, 
+  
   Calendar, 
   CheckCircle, 
-  XCircle, 
+  
   TrendingUp, 
   Award, 
   UserPlus, 
-  UserMinus,
+ 
   Clock,
   LucideIcon,
   Building,

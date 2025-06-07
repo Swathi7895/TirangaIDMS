@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Upload, Download, Search, Filter, ArrowLeft, Edit, Trash2, FileText, Calendar } from 'lucide-react';
+import {  Search, Filter, ArrowLeft} from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';

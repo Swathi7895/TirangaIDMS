@@ -3,14 +3,13 @@ import React, { useState } from 'react';
 import { 
   Search, 
   Filter, 
-  Plus, 
+ 
   X, 
   User, 
-  Calendar, 
+  
   Building,
   FileText,
-  Edit,
-  Trash2,
+
   Eye,
   CheckCircle,
   XCircle

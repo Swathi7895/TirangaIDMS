@@ -2,20 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Clock, 
-  Calendar, 
+ 
   CheckCircle, 
   XCircle, 
   AlertCircle,
-  Download,
-  ChevronLeft,
-  ChevronRight,
+ 
   ArrowLeft,
   Users,
   TrendingUp,
-  Filter,
+ 
   Search,
-  BarChart3,
-  PieChart
+ 
 } from 'lucide-react';
 import Link from 'next/link';
 interface Employee {
@@ -306,10 +303,10 @@ export default function AdminAttendanceDashboard() {
                   <option key={dept} value={dept}>{dept}</option>
                 ))}
               </select>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+              {/* <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                 <Download className="w-4 h-4" />
                 <span>Export</span>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>

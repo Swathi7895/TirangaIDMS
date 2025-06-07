@@ -12,10 +12,7 @@ import {
   X, 
   Trash2, 
   Edit2, 
-  User, 
-  Calendar,
-  CheckCircle,
-  AlertCircle,
+  
   Clock
 } from 'lucide-react';
 

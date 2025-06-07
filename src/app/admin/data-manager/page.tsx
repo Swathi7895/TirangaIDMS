@@ -17,8 +17,7 @@ import {
   ArrowLeft,
  
 } from 'lucide-react';
-import Sidebar from './components/Sidebar';
-import MemoViewer from '@/app/components/memos/MemoViewer';
+
 
 interface Module {
   id: string;

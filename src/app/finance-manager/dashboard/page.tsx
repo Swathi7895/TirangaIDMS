@@ -7,7 +7,7 @@ import {
   ChartBarIcon,
   ArrowTrendingUpIcon,
   BanknotesIcon,
-  CurrencyDollarIcon
+ 
 } from '@heroicons/react/24/outline';
 import QuickActions from '@/components/QuickActions';
 

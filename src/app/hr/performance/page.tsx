@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Award, TrendingUp, Star, Search, Filter, Plus, Eye, Edit, Trash2, X, Calendar, User, Building } from 'lucide-react';
+import { Award,  Star, Search, Filter, Plus, Eye, Edit, Trash2, X, User, Building } from 'lucide-react';
 
 interface PerformanceReview {
   id: string;
