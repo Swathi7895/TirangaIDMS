@@ -22,10 +22,10 @@ interface Activity {
   notes?: string;
 }
 
-type ModalType = 'add' | 'edit' | 'view';
+
 
 export default function ActivitiesPage() {
-  const [activities, setActivities] = useState<Activity[]>([
+  const [activities] = useState<Activity[]>([
     {
       id: '1',
       title: 'Team Building Workshop',
@@ -65,79 +65,16 @@ export default function ActivitiesPage() {
   ]);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<ModalType>('add');
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
-  const [formData, setFormData] = useState<Partial<Activity>>({});
+ 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
-  const isEditMode = modalType === 'edit';
-  const isViewMode = modalType === 'view';
 
-  const openModal = (type: ModalType, activity?: Activity) => {
-    setModalType(type);
-    setSelectedActivity(activity || null);
-    if (type === 'add') {
-      setFormData({
-        title: '',
-        description: '',
-        date: '',
-        time: '',
-        status: 'pending',
-        assignedTo: '',
-        priority: 'medium',
-        category: '',
-        notes: ''
-      });
-    } else if (activity) {
-      setFormData({ ...activity });
-    }
-    setShowModal(true);
-  };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setSelectedActivity(null);
-    setFormData({});
-  };
+  
 
-  const handleSubmit = () => {
-    if (!formData.title || !formData.description || !formData.date || !formData.time || !formData.assignedTo || !formData.category) {
-      alert('Please fill in all required fields');
-      return;
-    }
 
-    if (modalType === 'add') {
-      const newActivity: Activity = {
-        ...formData as Activity,
-        id: Date.now().toString()
-      };
-      setActivities([...activities, newActivity]);
-    } else if (modalType === 'edit' && selectedActivity) {
-      setActivities(activities.map(activity => 
-        activity.id === selectedActivity.id 
-          ? { ...formData as Activity, id: selectedActivity.id }
-          : activity
-      ));
-    }
-    
-    closeModal();
-  };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this activity?')) {
-      setActivities(activities.filter(activity => activity.id !== id));
-    }
-  };
-
-  const handleStatusChange = (id: string, newStatus: Activity['status']) => {
-    setActivities(activities.map(activity => 
-      activity.id === id 
-        ? { ...activity, status: newStatus }
-        : activity
-    ));
-  };
 
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = 

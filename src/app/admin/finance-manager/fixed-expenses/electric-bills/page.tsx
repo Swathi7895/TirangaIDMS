@@ -12,13 +12,12 @@ interface ElectricBillExpense {
 }
 
 export default function ElectricBillsPage() {
-  const [expenses, setExpenses] = useState<ElectricBillExpense[]>([
+  const [expenses] = useState<ElectricBillExpense[]>([
     { id: 1, date: '2023-10-15', amount: 120.50, description: 'October Billing Period' },
     { id: 2, date: '2023-11-18', amount: 135.75, description: 'November Billing Period' },
     { id: 3, date: '2023-12-20', amount: 110.00, description: 'December Billing Period' },
   ]);
-  const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+
 
 
 

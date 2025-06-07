@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PlusIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import {  ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { 
  
   ArrowLeft,
@@ -20,7 +20,7 @@ interface InventoryTransaction {
 }
 
 export default function StationaryInventoryPage() {
-  const [transactions, setTransactions] = useState<InventoryTransaction[]>([
+  const [transactions] = useState<InventoryTransaction[]>([
     {
       id: '1',
       itemName: 'A4 Paper',
@@ -41,14 +41,7 @@ export default function StationaryInventoryPage() {
     },
   ]);
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newTransaction, setNewTransaction] = useState<Omit<InventoryTransaction, 'id' | 'date'>>({
-    itemName: '',
-    type: 'in',
-    quantity: 0,
-    location: '',
-    notes: '',
-  });
+ 
 
 
 

@@ -52,7 +52,7 @@ export default function AssetsPage() {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [assetToDelete, setAssetToDelete] = useState<Asset | null>(null);
   const [assetToEdit, setAssetToEdit] = useState<Asset | null>(null);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedAsset] = useState<Asset | null>(null);
   const [newAsset, setNewAsset] = useState<Partial<Asset>>({
     name: '',
     type: 'laptop',
@@ -208,10 +208,7 @@ export default function AssetsPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const handleDeleteClick = (asset: Asset) => {
-    setAssetToDelete(asset);
-    setShowDeleteModal(true);
-  };
+
 
   const handleDeleteConfirm = () => {
     if (assetToDelete) {
@@ -275,10 +272,6 @@ export default function AssetsPage() {
     }
   };
 
-  const handleViewHistory = (asset: Asset) => {
-    setSelectedAsset(asset);
-    setShowHistoryModal(true);
-  };
 
   return (
     <div className="space-y-6">

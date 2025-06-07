@@ -45,7 +45,7 @@ export default function AttendancePage() {
     } else {
       setTodayAttendance(existingTodayAttendance);
     }
-  }, []);
+  }, [attendance]);
 
   const handleSignIn = () => {
     if (!todayAttendance) return;
@@ -228,7 +228,7 @@ export default function AttendancePage() {
         <div className="space-y-6">
           {/* Today's Attendance */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Today's Attendance</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Today&rsquo;s Attendance</h3>
             <div className="flex space-x-4">
               <button
                 onClick={handleSignIn}

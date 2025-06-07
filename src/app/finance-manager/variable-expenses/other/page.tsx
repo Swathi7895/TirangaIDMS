@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import BackButton from '@/components/BackButton';
 
 // ... rest of the code remains the same ...

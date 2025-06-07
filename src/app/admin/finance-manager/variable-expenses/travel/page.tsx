@@ -12,54 +12,12 @@ interface TravelExpense {
 }
 
 export default function TravelPage() {
-  const [expenses, setExpenses] = useState<TravelExpense[]>([
+  const [expenses] = useState<TravelExpense[]>([
     { id: 1, date: '2023-11-15', amount: 250.00, description: 'Business trip to City A' },
     { id: 2, date: '2023-12-01', amount: 150.00, description: 'Conference travel' },
   ]);
-  const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+ 
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewExpense({ ...newExpense, [name]: value });
-  };
-
-  const handleAddExpense = () => {
-    if (!newExpense.date || !newExpense.amount || !newExpense.description) return;
-    const expenseToAdd: TravelExpense = {
-      id: Date.now(), // Simple unique ID
-      date: newExpense.date,
-      amount: parseFloat(newExpense.amount),
-      description: newExpense.description,
-    };
-    setExpenses([...expenses, expenseToAdd]);
-    setNewExpense({ date: '', amount: '', description: '' });
-  };
-
-  const handleDeleteExpense = (id: number) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
-  };
-
-  const handleEditClick = (expense: TravelExpense) => {
-    setEditingId(expense.id);
-    setNewExpense({ date: expense.date, amount: expense.amount.toString(), description: expense.description });
-  };
-
-  const handleUpdateExpense = () => {
-    if (!newExpense.date || !newExpense.amount || !newExpense.description || editingId === null) return;
-    setExpenses(expenses.map(expense =>
-      expense.id === editingId
-        ? { ...expense, date: newExpense.date, amount: parseFloat(newExpense.amount), description: newExpense.description }
-        : expense
-    ));
-    setNewExpense({ date: '', amount: '', description: '' });
-    setEditingId(null);
-  };
-
-  const handleCancelEdit = () => {
-    setNewExpense({ date: '', amount: '', description: '' });
-    setEditingId(null);
-  };
 
   return (
     <div className="container mx-auto py-8">

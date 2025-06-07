@@ -45,11 +45,11 @@ interface AttendanceStats {
 
 export default function AdminAttendanceDashboard() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
+
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showStats, setShowStats] = useState(true);
+ 
 
   // Sample data initialization
   useEffect(() => {
@@ -384,7 +384,7 @@ export default function AdminAttendanceDashboard() {
                 {['today', 'week', 'month', 'year'].map((mode) => (
                   <button
                     key={mode}
-                    onClick={() => setViewMode(mode as any)}
+                    onClick={() => setViewMode(mode as 'today' | 'week' | 'month' | 'year')}
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       viewMode === mode
                         ? 'bg-blue-600 text-white shadow-sm'

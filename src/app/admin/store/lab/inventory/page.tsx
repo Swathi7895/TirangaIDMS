@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PlusIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { 
  
   ArrowLeft,
@@ -20,7 +20,7 @@ interface LabInventoryTransaction {
 }
 
 export default function LabInventoryPage() {
-  const [transactions, setTransactions] = useState<LabInventoryTransaction[]>([
+  const [transactions,] = useState<LabInventoryTransaction[]>([
     {
       id: '1',
       itemName: 'Microscope',
@@ -43,15 +43,7 @@ export default function LabInventoryPage() {
     },
   ]);
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newTransaction, setNewTransaction] = useState<Omit<LabInventoryTransaction, 'id' | 'date'>>({
-    itemName: '',
-    type: 'in',
-    quantity: 0,
-    location: '',
-    notes: '',
-    category: 'material',
-  });
+ 
 
   
 

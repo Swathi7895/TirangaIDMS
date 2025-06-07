@@ -50,7 +50,7 @@ export default function TenderManagementPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Tender | null>(null);
+  const [selectedItem] = useState<Tender | null>(null);
   const [data, setData] = useState<Tender[]>(sampleData);
 
  

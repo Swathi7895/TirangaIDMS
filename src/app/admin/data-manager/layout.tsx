@@ -1,19 +1,7 @@
  'use client';
 import React from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { 
- 
-  LucideIcon,
-
-} from 'lucide-react';
 
 
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  path: string;
-}
 
 
 export default function DatamanagerLayout({
@@ -21,14 +9,10 @@ export default function DatamanagerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const router = useRouter();
+  
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
-    router.push('/login');
-  };
+
+ 
 
   return (
     <div className="min-h-screen bg-gray-50">

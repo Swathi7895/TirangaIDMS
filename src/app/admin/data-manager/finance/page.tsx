@@ -86,7 +86,7 @@ export default function FinancePage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<FinanceReport | null>(null);
+  const [selectedItem] = useState<FinanceReport | null>(null);
   const [data, setData] = useState<FinanceReport[]>(sampleData);
 
 

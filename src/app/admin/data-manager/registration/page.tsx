@@ -41,7 +41,7 @@ export default function RegistrationPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<RegistrationItem | null>(null);
+  const [selectedItem] = useState<RegistrationItem | null>(null);
   const [data, setData] = useState<RegistrationItem[]>(sampleData);
 
  

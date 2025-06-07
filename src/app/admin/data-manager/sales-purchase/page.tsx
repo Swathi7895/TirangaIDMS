@@ -83,7 +83,7 @@ export default function SalesPurchasePage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<SalesPurchaseItem | null>(null);
+  const [selectedItem] = useState<SalesPurchaseItem | null>(null);
   const [data, setData] = useState<SalesPurchaseItem[]>(sampleData);
 
  

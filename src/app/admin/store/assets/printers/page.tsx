@@ -24,7 +24,7 @@ interface Printer {
 }
 
 export default function PrintersPage() {
-  const [items, setItems] = useState<Printer[]>([
+  const [items] = useState<Printer[]>([
     {
       id: '1',
       name: 'Laser Printer',

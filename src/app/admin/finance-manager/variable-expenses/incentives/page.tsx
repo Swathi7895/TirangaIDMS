@@ -12,55 +12,13 @@ interface IncentiveExpense {
 }
 
 export default function IncentivesPage() {
-  const [expenses, setExpenses] = useState<IncentiveExpense[]>([
+  const [expenses] = useState<IncentiveExpense[]>([
     { id: 1, date: '2023-12-15', amount: 500.00, recipient: 'Sales Team', description: 'Q4 Sales Bonus' },
     { id: 2, date: '2023-12-15', amount: 1000.00, recipient: 'Employee of the Month', description: 'December Recognition' },
   ]);
-  const [newExpense, setNewExpense] = useState({ date: '', amount: '', recipient: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewExpense({ ...newExpense, [name]: value });
-  };
-
-  const handleAddExpense = () => {
-    if (!newExpense.date || !newExpense.amount || !newExpense.recipient || !newExpense.description) return;
-    const expenseToAdd: IncentiveExpense = {
-      id: Date.now(), // Simple unique ID
-      date: newExpense.date,
-      amount: parseFloat(newExpense.amount),
-      recipient: newExpense.recipient,
-      description: newExpense.description,
-    };
-    setExpenses([...expenses, expenseToAdd]);
-    setNewExpense({ date: '', amount: '', recipient: '', description: '' });
-  };
-
-  const handleDeleteExpense = (id: number) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
-  };
-
-  const handleEditClick = (expense: IncentiveExpense) => {
-    setEditingId(expense.id);
-    setNewExpense({ date: expense.date, amount: expense.amount.toString(), recipient: expense.recipient, description: expense.description });
-  };
-
-  const handleUpdateExpense = () => {
-    if (!newExpense.date || !newExpense.amount || !newExpense.recipient || !newExpense.description || editingId === null) return;
-    setExpenses(expenses.map(expense =>
-      expense.id === editingId
-        ? { ...expense, date: newExpense.date, amount: parseFloat(newExpense.amount), recipient: newExpense.recipient, description: newExpense.description }
-        : expense
-    ));
-    setNewExpense({ date: '', amount: '', recipient: '', description: '' });
-    setEditingId(null);
-  };
-
-  const handleCancelEdit = () => {
-    setNewExpense({ date: '', amount: '', recipient: '', description: '' });
-    setEditingId(null);
-  };
+ 
 
   return (
     <div className="container mx-auto py-8">

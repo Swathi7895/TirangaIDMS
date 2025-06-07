@@ -1,17 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import {  Search, Filter, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
-import DataView, { ViewField } from '../components/DataView';
+import { Search, Filter, ArrowLeft } from 'lucide-react';
+import DataForm, { FormField, FormValue } from '../components/DataForm';
+import DataView, { ViewField, ViewValue } from '../components/DataView';
 import Link from 'next/link';
-interface BankDocument {
-  id: number;
+
+type BankDocumentData = {
   documentType: string;
   bankName: string;
   accountNumber: string;
   date: string;
   status: 'Valid' | 'Expired' | 'Pending';
+};
+
+interface BankDocument extends BankDocumentData {
+  id: number;
 }
 
 const sampleData: BankDocument[] = [
@@ -44,25 +48,28 @@ export default function BankDocumentsPage() {
   const [selectedItem, setSelectedItem] = useState<BankDocument | null>(null);
   const [data, setData] = useState<BankDocument[]>(sampleData);
 
- 
-
- 
-
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Record<string, FormValue>) => {
+    const bankData = formData as BankDocumentData;
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 
-        item.id === selectedItem.id ? { ...item, ...formData } : item
+        item.id === selectedItem.id ? { ...item, ...bankData } : item
       ));
     } else {
       // Add new item
-      const newItem = {
-        ...formData,
+      const newItem: BankDocument = {
+        ...bankData,
         id: Math.max(...data.map(item => item.id)) + 1
       };
       setData(prev => [...prev, newItem]);
     }
     setIsFormOpen(false);
+    setSelectedItem(null);
+  };
+
+  const handleView = (item: BankDocument) => {
+    setSelectedItem(item);
+    setIsViewOpen(true);
   };
 
   return (
@@ -149,7 +156,7 @@ export default function BankDocumentsPage() {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((item) => (
-              <tr key={item.id}>
+              <tr key={item.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleView(item)}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.documentType}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bankName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.accountNumber}</td>
@@ -170,7 +177,7 @@ export default function BankDocumentsPage() {
         </table>
       </div>
 
-      <DataForm
+      <DataForm<BankDocument>
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleFormSubmit}
@@ -179,12 +186,12 @@ export default function BankDocumentsPage() {
         initialData={selectedItem}
       />
 
-      <DataView
+      <DataView<BankDocument>
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
         title="Bank Document Details"
         fields={viewFields}
-        data={selectedItem || {}}
+        data={selectedItem || {} as BankDocument}
       />
     </div>
   );

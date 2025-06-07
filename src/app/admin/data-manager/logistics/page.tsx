@@ -86,7 +86,7 @@ export default function LogisticsPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<LogisticsDocument | null>(null);
+  const [selectedItem] = useState<LogisticsDocument | null>(null);
   const [data, setData] = useState<LogisticsDocument[]>(sampleData);
 
 

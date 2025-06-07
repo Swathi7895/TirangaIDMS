@@ -33,7 +33,7 @@ interface Report {
 }
 
 export default function ReportsPage() {
-  const [reports, setReports] = useState<Report[]>([
+  const [reports,] = useState<Report[]>([
     {
       id: 1,
       type: 'employee',
@@ -78,18 +78,12 @@ export default function ReportsPage() {
 
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('all');
-  const [showNewReportForm, setShowNewReportForm] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [newReport, setNewReport] = useState<Partial<Report>>({
-    type: 'employee',
-    subtype: 'daily',
-    title: '',
-    content: '',
-    status: 'draft'
-  });
+
 
   const reportTypes = [
     { id: 'employee', label: 'Employee Report', icon: <FileText className="w-5 h-5" /> },

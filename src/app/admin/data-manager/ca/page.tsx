@@ -44,12 +44,12 @@ export default function CADocumentsPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<CADocument | null>(null);
+  const [selectedItem] = useState<CADocument | null>(null);
   const [data, setData] = useState<CADocument[]>(sampleData);
 
  
 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<CADocument, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 

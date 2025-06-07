@@ -143,7 +143,7 @@ export default function SalesPurchasePage() {
     }
   };
 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<SalesPurchaseItem, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 
@@ -154,7 +154,7 @@ export default function SalesPurchasePage() {
       const newItem = {
         ...formData,
         id: Math.max(...data.map(item => item.id)) + 1
-      };
+      } as SalesPurchaseItem;
       setData(prev => [...prev, newItem]);
     }
     setIsFormOpen(false);

@@ -45,12 +45,12 @@ export default function BillingManagementPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<BillingItem | null>(null);
+  const [selectedItem] = useState<BillingItem | null>(null);
   const [data, setData] = useState<BillingItem[]>(sampleData);
 
 
 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<BillingItem, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 

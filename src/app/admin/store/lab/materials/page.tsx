@@ -22,7 +22,7 @@ interface LabMaterial {
 }
 
 export default function LabMaterialsPage() {
-  const [items, setItems] = useState<LabMaterial[]>([
+  const [items,] = useState<LabMaterial[]>([
     {
       id: '1',
       name: 'Buffer Solution',

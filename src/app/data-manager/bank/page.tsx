@@ -41,11 +41,11 @@ export default function BankDocumentsPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<BankDocument | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<BankDocument | null>(null);
   const [data, setData] = useState<BankDocument[]>(sampleData);
 
   const handleAddNew = () => {
-    setSelectedItem(null);
+    setSelectedDocument(null);
     setIsFormOpen(true);
   };
 
@@ -83,12 +83,12 @@ export default function BankDocumentsPage() {
   };
 
   const handleView = (item: BankDocument) => {
-    setSelectedItem(item);
+    setSelectedDocument(item);
     setIsViewOpen(true);
   };
 
   const handleEdit = (item: BankDocument) => {
-    setSelectedItem(item);
+    setSelectedDocument(item);
     setIsFormOpen(true);
   };
 
@@ -98,11 +98,11 @@ export default function BankDocumentsPage() {
     }
   };
 
-  const handleFormSubmit = (formData: any) => {
-    if (selectedItem) {
+  const handleFormSubmit = (formData: Omit<BankDocument, 'id'>) => {
+    if (selectedDocument) {
       // Edit existing item
       setData(prev => prev.map(item => 
-        item.id === selectedItem.id ? { ...item, ...formData } : item
+        item.id === selectedDocument.id ? { ...item, ...formData } : item
       ));
     } else {
       // Add new item
@@ -116,7 +116,7 @@ export default function BankDocumentsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">Bank Documents</h2>
         <div className="flex flex-wrap gap-2">
@@ -252,21 +252,27 @@ export default function BankDocumentsPage() {
         </table>
       </div>
 
-      <DataForm
+      <DataForm<BankDocument>
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          setSelectedDocument(null);
+        }}
         onSubmit={handleFormSubmit}
-        title={selectedItem ? 'Edit Bank Document' : 'Add New Bank Document'}
+        title={selectedDocument ? 'Edit Bank Document' : 'Add Bank Document'}
         fields={formFields}
-        initialData={selectedItem}
+        initialData={selectedDocument}
       />
 
-      <DataView
+      <DataView<BankDocument>
         isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Bank Document Details"
+        onClose={() => {
+          setIsViewOpen(false);
+          setSelectedDocument(null);
+        }}
+        data={selectedDocument || {} as BankDocument}
         fields={viewFields}
-        data={selectedItem || {}}
+        title="Bank Document Details"
       />
     </div>
   );

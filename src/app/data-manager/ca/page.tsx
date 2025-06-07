@@ -1,47 +1,48 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, FileText } from 'lucide-react';
+import { Plus, Download, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
 
 interface CADocument {
   id: number;
-  documentType: string;
-  reference: string;
-  submissionDate: string;
-  dueDate: string;
-  status: 'Submitted' | 'Pending' | 'Rejected';
-  category: 'Tax' | 'Audit' | 'Compliance';
+  documentNumber: string;
+  clientName: string;
+  amount: number;
+  date: string;
+  status: 'active' | 'expired' | 'pending';
+  description: string;
 }
 
 const sampleData: CADocument[] = [
-  { id: 1, documentType: 'Income Tax Return', reference: 'ITR-2024-001', submissionDate: '2024-03-15', dueDate: '2024-03-31', status: 'Submitted', category: 'Tax' },
-  { id: 2, documentType: 'Annual Audit Report', reference: 'AUD-2024-001', submissionDate: '2024-04-01', dueDate: '2024-04-30', status: 'Pending', category: 'Audit' },
-  { id: 3, documentType: 'GST Return', reference: 'GST-2024-001', submissionDate: '2024-03-20', dueDate: '2024-03-25', status: 'Rejected', category: 'Compliance' }
+  { id: 1, documentNumber: 'CA-2024-001', clientName: 'ABC Corp', amount: 5000.00, date: '2024-04-15', status: 'active', description: 'Annual Contract' },
+  { id: 2, documentNumber: 'CA-2024-002', clientName: 'XYZ Ltd', amount: 7500.00, date: '2024-04-20', status: 'pending', description: 'Service Agreement' },
+  { id: 3, documentNumber: 'CA-2024-003', clientName: 'DEF Inc', amount: 10000.00, date: '2024-04-10', status: 'expired', description: 'Consulting Contract' }
 ];
 
 const formFields: FormField[] = [
-  { name: 'documentType', label: 'Document Type', type: 'text', required: true },
-  { name: 'reference', label: 'Reference', type: 'text', required: true },
-  { name: 'submissionDate', label: 'Submission Date', type: 'date', required: true },
-  { name: 'dueDate', label: 'Due Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Submitted', 'Pending', 'Rejected'], required: true },
-  { name: 'category', label: 'Category', type: 'select', options: ['Tax', 'Audit', 'Compliance'], required: true }
+  { name: 'documentNumber', label: 'Document Number', type: 'text', required: true },
+  { name: 'clientName', label: 'Client', type: 'text', required: true },
+  { name: 'amount', label: 'Amount', type: 'number', required: true },
+  { name: 'date', label: 'Date', type: 'date', required: true },
+  { name: 'status', label: 'Status', type: 'select', options: ['active', 'expired', 'pending'], required: true },
+  { name: 'description', label: 'Description', type: 'text', required: true }
 ];
 
 const viewFields: ViewField[] = [
-  { name: 'documentType', label: 'Document Type', type: 'text' },
-  { name: 'reference', label: 'Reference', type: 'text' },
-  { name: 'submissionDate', label: 'Submission Date', type: 'date' },
-  { name: 'dueDate', label: 'Due Date', type: 'date' },
+  { name: 'documentNumber', label: 'Document Number', type: 'text' },
+  { name: 'clientName', label: 'Client', type: 'text' },
+  { name: 'amount', label: 'Amount', type: 'currency' },
+  { name: 'date', label: 'Date', type: 'date' },
   { name: 'status', label: 'Status', type: 'status' },
-  { name: 'category', label: 'Category', type: 'text' }
+  { name: 'description', label: 'Description', type: 'text' }
 ];
 
-export default function CADocumentsPage() {
+export default function CAPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<'all' | CADocument['status']>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CADocument | null>(null);
@@ -50,40 +51,6 @@ export default function CADocumentsPage() {
   const handleAddNew = () => {
     setSelectedItem(null);
     setIsFormOpen(true);
-  };
-
-  const handleImport = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.csv,.xlsx,.pdf';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        alert(`Importing file: ${file.name}`);
-      }
-    };
-    input.click();
-  };
-
-  const handleExport = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + "Document Type,Reference,Category,Submission Date,Due Date,Status\n"
-      + data.map(item => [
-          item.documentType,
-          item.reference,
-          item.category,
-          item.submissionDate,
-          item.dueDate,
-          item.status
-        ].join(",")).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ca_documents.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleView = (item: CADocument) => {
@@ -96,13 +63,13 @@ export default function CADocumentsPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (item: CADocument) => {
-    if (confirm(`Are you sure you want to delete document ${item.reference}?`)) {
-      setData(prev => prev.filter(i => i.id !== item.id));
+  const handleDelete = (id: number) => {
+    if (window.confirm('Are you sure you want to delete this item?')) {
+      setData(prev => prev.filter(item => item.id !== id));
     }
   };
 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<CADocument, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 
@@ -110,147 +77,226 @@ export default function CADocumentsPage() {
       ));
     } else {
       // Add new item
-      const newItem = {
-        ...formData,
-        id: Math.max(...data.map(item => item.id)) + 1
+      const newItem: CADocument = {
+        id: Math.max(...data.map(item => item.id)) + 1,
+        ...formData
       };
       setData(prev => [...prev, newItem]);
     }
     setIsFormOpen(false);
+    setSelectedItem(null);
+  };
+
+  const filteredData = data.filter(item => {
+    const matchesSearch = 
+      item.documentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = selectedStatus === 'all' || item.status === selectedStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + "Document Number,Client,Amount,Date,Description,Status\n"
+      + data.map(item => [
+        item.documentNumber,
+        item.clientName,
+        item.amount,
+        item.date,
+        item.description,
+        item.status
+      ].join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "ca_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getStatusColor = (status: CADocument['status']) => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'expired':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-2xl font-bold text-gray-900">CA Documents</h2>
         <div className="flex flex-wrap gap-2">
-          <button 
+          <button
             onClick={handleAddNew}
-            className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="h-4 w-4 mr-2" />
             Add New
           </button>
-          <button 
-            onClick={handleImport}
-            className="flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            Import
-          </button>
-          <button 
+          <button
             onClick={handleExport}
-            className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
           >
-            <Download className="w-4 h-4 mr-2" />
+            <Download className="h-4 w-4 mr-2" />
             Export
           </button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search CA documents..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      <div className="mt-6 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
           </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by document number, client, or description..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
-        <button 
-          onClick={() => setShowFilter(!showFilter)}
-          className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filter
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </button>
+          {showFilter && (
+            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="py-1">
+                <button
+                  onClick={() => {
+                    setSelectedStatus('all');
+                    setShowFilter(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    selectedStatus === 'all' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedStatus('active');
+                    setShowFilter(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    selectedStatus === 'active' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedStatus('pending');
+                    setShowFilter(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    selectedStatus === 'pending' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                  }`}
+                >
+                  Pending
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedStatus('expired');
+                    setShowFilter(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    selectedStatus === 'expired' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                  }`}
+                >
+                  Expired
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {showFilter && (
-        <div className="bg-white p-4 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold mb-4">Filter Options</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Submission Date Range</label>
-              <input type="date" className="mt-1 block w-full rounded-md border-gray-300 shadow-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Status</label>
-              <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option>All</option>
-                <option>Submitted</option>
-                <option>Pending</option>
-                <option>Rejected</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Category</label>
-              <select className="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                <option>All</option>
-                <option>Tax</option>
-                <option>Audit</option>
-                <option>Compliance</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="w-full">
+      <div className="mt-6 overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Document Number
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Client
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Amount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Description
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((item) => (
+            {filteredData.map((item) => (
               <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.documentType}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.reference}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.category}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.submissionDate}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.dueDate}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {item.documentNumber}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {item.clientName}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  ${item.amount.toLocaleString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {new Date(item.date).toLocaleDateString()}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {item.description}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    item.status === 'Submitted' ? 'bg-green-100 text-green-800' :
-                    item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
                     {item.status}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => handleView(item)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleEdit(item)}
-                      className="text-green-600 hover:text-green-900"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(item)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button
+                    onClick={() => handleView(item)}
+                    className="text-blue-600 hover:text-blue-900 mr-4"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="text-yellow-600 hover:text-yellow-900 mr-4"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -258,21 +304,27 @@ export default function CADocumentsPage() {
         </table>
       </div>
 
-      <DataForm
+      <DataForm<CADocument>
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        onClose={() => {
+          setIsFormOpen(false);
+          setSelectedItem(null);
+        }}
         onSubmit={handleFormSubmit}
-        title={selectedItem ? 'Edit Document' : 'Add New Document'}
+        title={selectedItem ? 'Edit CA Document' : 'Add CA Document'}
         fields={formFields}
         initialData={selectedItem}
       />
 
-      <DataView
+      <DataView<CADocument>
         isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Document Details"
+        onClose={() => {
+          setIsViewOpen(false);
+          setSelectedItem(null);
+        }}
+        data={selectedItem || {} as CADocument}
         fields={viewFields}
-        data={selectedItem || {}}
+        title="CA Document Details"
       />
     </div>
   );

@@ -46,7 +46,7 @@ interface LeaveTableProps {
 }
 
 const LeaveManagementSystem = () => {
-  const [leaveData, setLeaveData] = useState<LeaveData>({
+  const [leaveData, ] = useState<LeaveData>({
     approved: [
       {
         id: 'EMP001',
@@ -148,49 +148,9 @@ const LeaveManagementSystem = () => {
 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showAddHolidayModal, setShowAddHolidayModal] = useState(false);
-  const [newHoliday, setNewHoliday] = useState<Holiday>({
-    name: '',
-    date: '',
-    day: '',
-    type: 'National Holiday',
-    coverage: 'All Employees'
-  });
+ 
 
-  const approveLeave = (empId: string) => {
-    if (window.confirm(`Are you sure you want to approve leave for employee ${empId}?`)) {
-      setLeaveData(prev => {
-        const pendingLeave = prev.pending.find(leave => leave.id === empId);
-        if (pendingLeave) {
-          return {
-            ...prev,
-            approved: [...prev.approved, { ...pendingLeave, status: 'approved' }],
-            pending: prev.pending.filter(leave => leave.id !== empId)
-          };
-        }
-        return prev;
-      });
-      alert(`Leave approved for employee ${empId}`);
-    }
-  };
-
-  const rejectLeave = (empId: string) => {
-    const reason = window.prompt(`Please provide a reason for rejecting leave for employee ${empId}:`);
-    if (reason) {
-      setLeaveData(prev => {
-        const pendingLeave = prev.pending.find(leave => leave.id === empId);
-        if (pendingLeave) {
-          return {
-            ...prev,
-            rejected: [...prev.rejected, { ...pendingLeave, status: 'rejected', rejectionReason: reason }],
-            pending: prev.pending.filter(leave => leave.id !== empId)
-          };
-        }
-        return prev;
-      });
-      alert(`Leave rejected for employee ${empId}. Reason: ${reason}`);
-    }
-  };
+ 
 
   const viewDetails = (empId: string) => {
     const leave = [...leaveData.approved, ...leaveData.pending, ...leaveData.rejected].find(
@@ -202,37 +162,7 @@ const LeaveManagementSystem = () => {
     }
   };
 
-  const addHoliday = () => {
-    if (!newHoliday.name || !newHoliday.date) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    // Get day of week from date
-    const date = new Date(newHoliday.date);
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayOfWeek = days[date.getDay()];
-
-    const holidayToAdd = {
-      ...newHoliday,
-      day: dayOfWeek
-    };
-
-    setLeaveData(prev => ({
-      ...prev,
-      holidays: [...prev.holidays, holidayToAdd]
-    }));
-
-    // Reset form
-    setNewHoliday({
-      name: '',
-      date: '',
-      day: '',
-      type: 'National Holiday',
-      coverage: 'All Employees'
-    });
-    setShowAddHolidayModal(false);
-  };
+ 
 
   const StatusBadge = ({ status }: StatusBadgeProps) => {
     const statusClasses = {
@@ -308,7 +238,7 @@ const LeaveManagementSystem = () => {
               </tr>
             ))
           ) : (
-            (leaves as Leave[]).map((leave, index) => (
+            (leaves as Leave[]).map((leave) => (
               <tr key={leave.id} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
                 <td className="px-4 py-3 font-medium">{leave.id}</td>
                 <td className="px-4 py-3">{leave.name}</td>

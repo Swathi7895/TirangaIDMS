@@ -22,7 +22,7 @@ interface LabInstrument {
 }
 
 export default function LabInstrumentsPage() {
-  const [items, setItems] = useState<LabInstrument[]>([
+  const [items,] = useState<LabInstrument[]>([
     {
       id: '1',
       name: 'Microscope',

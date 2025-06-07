@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React from 'react';
 import { Laptop, Smartphone, CreditCard, Car, Wifi, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -16,7 +16,7 @@ interface Asset {
 }
 
 export default function AssetsPage() {
-  const [assets, setAssets] = useState<Asset[]>([
+ const assets: Asset[] = [
     {
       id: 1,
       name: 'MacBook Pro 2023',
@@ -63,7 +63,7 @@ export default function AssetsPage() {
       condition: 'fair',
       notes: 'Regular maintenance due'
     }
-  ]);
+  ];
 
   const getAssetIcon = (type: Asset['type']) => {
     switch (type) {

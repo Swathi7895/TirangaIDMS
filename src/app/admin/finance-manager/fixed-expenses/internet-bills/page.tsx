@@ -12,15 +12,12 @@ interface InternetBillExpense {
 }
 
 export default function InternetBillsPage() {
-  const [expenses, setExpenses] = useState<InternetBillExpense[]>([
+  const [expenses] = useState<InternetBillExpense[]>([
     { id: 1, date: '2023-10-25', amount: 75.00, description: 'October Service' },
     { id: 2, date: '2023-11-25', amount: 75.00, description: 'November Service' },
     { id: 3, date: '2023-12-25', amount: 75.00, description: 'December Service' },
   ]);
-  const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
 
- 
 
   return (
     <div className="container mx-auto py-8">

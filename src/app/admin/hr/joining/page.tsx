@@ -146,11 +146,7 @@ export default function JoiningPage() {
     closeModal();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this record?')) {
-      setRecords(records.filter(record => record.id !== id));
-    }
-  };
+
 
   const handleDocumentStatusChange = (recordId: string, documentId: string, newStatus: Document['status']) => {
     setRecords(records.map(record => {

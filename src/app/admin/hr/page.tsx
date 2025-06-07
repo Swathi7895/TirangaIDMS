@@ -140,7 +140,7 @@ export default function HRDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div>
+          {/* <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">HR Management</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <QuickActionCard
@@ -148,14 +148,14 @@ export default function HRDashboard() {
                 title="Document Management"
                 description="Manage employee documents, contracts, and compliance records"
                 color="blue"
-                path="/hr/documents"
+                path="/admin/hr/documents"
               />
               <QuickActionCard
                 icon={Smartphone}
                 title="Asset Management"
                 description="Track and manage company assets and equipment"
                 color="green"
-                path="/hr/assets"
+                path="/admin/hr/assets"
               />
               <QuickActionCard
                 icon={Calendar}
@@ -186,7 +186,7 @@ export default function HRDashboard() {
                 path="/hr/activities"
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Recent Activities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

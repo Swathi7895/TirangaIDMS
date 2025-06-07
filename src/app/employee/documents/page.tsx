@@ -13,7 +13,7 @@ interface Document {
 }
 
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<Document[]>([
+  const [documents] = useState<Document[]>([
     { 
       id: 1, 
       name: 'Resume.pdf', 

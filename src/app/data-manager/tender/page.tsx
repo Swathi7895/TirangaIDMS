@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, FileText, Calendar } from 'lucide-react';
+import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, } from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
 
@@ -110,7 +110,7 @@ export default function TenderManagementPage() {
     }
   };
 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<Tender, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 
@@ -121,7 +121,7 @@ export default function TenderManagementPage() {
       const newItem = {
         ...formData,
         id: Math.max(...data.map(item => item.id)) + 1
-      };
+      } as Tender;
       setData(prev => [...prev, newItem]);
     }
     setIsFormOpen(false);

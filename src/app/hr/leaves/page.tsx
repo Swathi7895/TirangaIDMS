@@ -308,7 +308,7 @@ const LeaveManagementSystem = () => {
               </tr>
             ))
           ) : (
-            (leaves as Leave[]).map((leave, index) => (
+            (leaves as Leave[]).map((leave) => (
               <tr key={leave.id} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
                 <td className="px-4 py-3 font-medium">{leave.id}</td>
                 <td className="px-4 py-3">{leave.name}</td>

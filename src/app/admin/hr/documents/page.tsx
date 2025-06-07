@@ -24,13 +24,11 @@ interface DocumentType {
 export default function DocumentsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [selectedDocType, setSelectedDocType] = useState('');
+
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
-  const [documents, setDocuments] = useState<Document[]>([
+  
+  const [documents] = useState<Document[]>([
     { id: 1, name: 'John Doe Resume', type: 'resume', size: '2.4 MB', uploadDate: '2024-06-03', employee: 'John Doe', status: 'approved', fileUrl: 'https://example.com/resume1.pdf' },
     { id: 2, name: 'Jane Smith Marks Card', type: 'marks', size: '1.8 MB', uploadDate: '2024-06-02', employee: 'Jane Smith', status: 'pending', fileUrl: 'https://example.com/marks1.pdf' },
     { id: 3, name: 'Mike Johnson ID Proof', type: 'id', size: '3.1 MB', uploadDate: '2024-06-01', employee: 'Mike Johnson', status: 'approved', fileUrl: 'https://example.com/id1.pdf' },
@@ -80,28 +78,7 @@ export default function DocumentsPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && selectedDocType) {
-      // Create a URL for the uploaded file (in a real app, this would be uploaded to a server)
-      const fileUrl = URL.createObjectURL(file);
-      
-      const newDocument: Document = {
-        id: documents.length + 1,
-        name: file.name,
-        type: selectedDocType,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        uploadDate: new Date().toISOString().split('T')[0],
-        employee: 'Current User',
-        status: 'pending',
-        fileUrl: fileUrl,
-        file: file // Store the actual file for demo purposes
-      };
-      setDocuments([...documents, newDocument]);
-      setShowUploadModal(false);
-      setSelectedDocType('');
-    }
-  };
+ 
 
   const handleViewDocument = (document: Document) => {
     setViewingDocument(document);
@@ -127,18 +104,7 @@ export default function DocumentsPage() {
     window.document.body.removeChild(link);
   };
 
-  const handleDeleteDocument = (document: Document) => {
-    setDocumentToDelete(document);
-    setShowDeleteModal(true);
-  };
 
-  const confirmDelete = () => {
-    if (documentToDelete) {
-      setDocuments(documents.filter(doc => doc.id !== documentToDelete.id));
-      setShowDeleteModal(false);
-      setDocumentToDelete(null);
-    }
-  };
 
   return (
     <div className="space-y-6">

@@ -12,55 +12,14 @@ interface WaterBillExpense {
 }
 
 export default function WaterBillsPage() {
-  const [expenses, setExpenses] = useState<WaterBillExpense[]>([
+  const [expenses] = useState<WaterBillExpense[]>([
     { id: 1, date: '2023-10-20', amount: 50.00, description: 'October Usage' },
     { id: 2, date: '2023-11-20', amount: 55.50, description: 'November Usage' },
     { id: 3, date: '2023-12-20', amount: 60.00, description: 'December Usage' },
   ]);
-  const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+ 
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewExpense({ ...newExpense, [name]: value });
-  };
 
-  const handleAddExpense = () => {
-    if (!newExpense.date || !newExpense.amount || !newExpense.description) return;
-    const expenseToAdd: WaterBillExpense = {
-      id: Date.now(), // Simple unique ID
-      date: newExpense.date,
-      amount: parseFloat(newExpense.amount),
-      description: newExpense.description,
-    };
-    setExpenses([...expenses, expenseToAdd]);
-    setNewExpense({ date: '', amount: '', description: '' });
-  };
-
-  const handleDeleteExpense = (id: number) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
-  };
-
-  const handleEditClick = (expense: WaterBillExpense) => {
-    setEditingId(expense.id);
-    setNewExpense({ date: expense.date, amount: expense.amount.toString(), description: expense.description });
-  };
-
-  const handleUpdateExpense = () => {
-    if (!newExpense.date || !newExpense.amount || !newExpense.description || editingId === null) return;
-    setExpenses(expenses.map(expense =>
-      expense.id === editingId
-        ? { ...expense, date: newExpense.date, amount: parseFloat(newExpense.amount), description: newExpense.description }
-        : expense
-    ));
-    setNewExpense({ date: '', amount: '', description: '' });
-    setEditingId(null);
-  };
-
-  const handleCancelEdit = () => {
-    setNewExpense({ date: '', amount: '', description: '' });
-    setEditingId(null);
-  };
 
   return (
     <div className="container mx-auto py-8">

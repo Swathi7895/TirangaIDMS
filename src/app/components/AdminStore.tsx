@@ -29,7 +29,7 @@ interface ViewOnlyItemManagementProps {
 export default function ItemManagement({
   title,
   items,
-  categories,
+ 
 }: ViewOnlyItemManagementProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-5 mt-5">

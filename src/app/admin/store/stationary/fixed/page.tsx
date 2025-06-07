@@ -20,7 +20,7 @@ interface FixedItem {
 }
 
 export default function FixedStationaryPage() {
-  const [items, setItems] = useState<FixedItem[]>([
+  const [items] = useState<FixedItem[]>([
     {
       id: '1',
       name: 'Whiteboard',

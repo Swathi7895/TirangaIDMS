@@ -111,11 +111,7 @@ export default function PerformanceManagement() {
     closeModal();
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this performance review?')) {
-      setReviews(reviews.filter(review => review.id !== id));
-    }
-  };
+ 
 
   const filteredReviews = reviews.filter(review =>
     review.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||

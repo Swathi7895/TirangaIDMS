@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 

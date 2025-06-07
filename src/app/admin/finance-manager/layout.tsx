@@ -17,11 +17,7 @@ export default function FinanceManagerLayout({ children }: { children: React.Rea
     }
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
-    router.push('/login');
-  };
+ 
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">

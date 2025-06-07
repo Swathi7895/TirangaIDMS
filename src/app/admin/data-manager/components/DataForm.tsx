@@ -9,41 +9,53 @@ export interface FormField {
   required?: boolean;
 }
 
-interface DataFormProps {
+export type FormValue = string | number | null;
+
+interface DataFormProps<T> {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: Omit<T, 'id'>) => void;
   title: string;
   fields: FormField[];
-  initialData?: any;
+  initialData?: T | null;
 }
 
-export default function DataForm({ isOpen, onClose, onSubmit, title, fields, initialData }: DataFormProps) {
-  const [formData, setFormData] = useState<any>({});
+export default function DataForm<T extends { id: number | string }>({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  title, 
+  fields, 
+  initialData 
+}: DataFormProps<T>) {
+  const [formData, setFormData] = useState<Partial<T>>({});
 
   useEffect(() => {
     if (initialData) {
       setFormData(initialData);
     } else {
-      const emptyData: any = {};
+      const emptyData: Partial<T> = {};
       fields.forEach(field => {
-        emptyData[field.name] = '';
+        const defaultValue = field.type === 'number' ? 0 : '';
+        emptyData[field.name as keyof T] = defaultValue as T[keyof T];
       });
       setFormData(emptyData);
     }
   }, [initialData, fields]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev: any) => ({
+    const { name, value, type } = e.target;
+    const typedValue = type === 'number' ? Number(value) : value;
+    setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: typedValue
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const submitData = { ...formData } as Omit<T, 'id'>;
+    onSubmit(submitData);
   };
 
   if (!isOpen) return null;
@@ -72,7 +84,7 @@ export default function DataForm({ isOpen, onClose, onSubmit, title, fields, ini
               {field.type === 'select' ? (
                 <select
                   name={field.name}
-                  value={formData[field.name] || ''}
+                  value={formData[field.name as keyof T] as string || ''}
                   onChange={handleChange}
                   required={field.required}
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -87,7 +99,7 @@ export default function DataForm({ isOpen, onClose, onSubmit, title, fields, ini
               ) : field.type === 'textarea' ? (
                 <textarea
                   name={field.name}
-                  value={formData[field.name] || ''}
+                  value={formData[field.name as keyof T] as string || ''}
                   onChange={handleChange}
                   required={field.required}
                   rows={4}
@@ -97,7 +109,7 @@ export default function DataForm({ isOpen, onClose, onSubmit, title, fields, ini
                 <input
                   type={field.type}
                   name={field.name}
-                  value={formData[field.name] || ''}
+                  value={formData[field.name as keyof T] as string || ''}
                   onChange={handleChange}
                   required={field.required}
                   className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
