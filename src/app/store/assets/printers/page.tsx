@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
-
+import BackButton from '@/app/components/BackButton';
 interface Printer {
   id: string;
   name: string;
@@ -78,6 +78,7 @@ export default function PrintersPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton />
       <ItemManagement
         title="Printers & Equipment"
         items={items}
