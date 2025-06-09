@@ -38,15 +38,6 @@ interface FormData {
   phone: string;
 }
 
-// Mock employee database - replace with actual API call
-const validEmployees: Employee[] = [
-  { id: 'EMP001', name: 'John Doe', department: 'Engineering' },
-  { id: 'EMP002', name: 'Jane Smith', department: 'Marketing' },
-  { id: 'EMP003', name: 'Bob Johnson', department: 'Sales' },
-  { id: 'EMP004', name: 'Alice Brown', department: 'HR' },
-  { id: 'EMP005', name: 'Charlie Wilson', department: 'Finance' }
-];
-
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState<FormData>({
@@ -80,27 +71,35 @@ export default function Register() {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // In a real application, this would be an API call to your backend
-    const employee = validEmployees.find(emp => emp.id.toLowerCase() === employeeId.toLowerCase());
-    
-    if (employee) {
-      setEmployeeValidation({
-        isValid: true,
-        isChecked: true,
-        employeeInfo: employee,
-        error: ''
-      });
-      // Pre-fill the name field if employee is found
-      setFormData(prev => ({ ...prev, fullName: employee.name }));
-    } else {
+    try {
+      // TODO: Replace with actual API call to validate employee
+      // For now, we'll just validate that the ID is not empty
+      if (employeeId.trim().length > 0) {
+        setEmployeeValidation({
+          isValid: true,
+          isChecked: true,
+          employeeInfo: {
+            id: employeeId,
+            name: '', // This would come from the API
+            department: '' // This would come from the API
+          },
+          error: ''
+        });
+      } else {
+        setEmployeeValidation({
+          isValid: false,
+          isChecked: true,
+          employeeInfo: null,
+          error: 'Please enter a valid Employee ID'
+        });
+      }
+    } catch (error) {
       setEmployeeValidation({
         isValid: false,
         isChecked: true,
         employeeInfo: null,
-        error: 'Employee ID not found. Please contact HR for assistance.'
+        error: 'Failed to validate employee ID. Please try again.'
       });
-      // Clear the name field if employee is not found
-      setFormData(prev => ({ ...prev, fullName: '' }));
     }
   };
 
@@ -410,20 +409,6 @@ export default function Register() {
               </button>
             </div>
           </form>
-
-          {/* Demo Information */}
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <h3 className="text-sm font-medium text-blue-800">Demo Employee IDs:</h3>
-            <div className="mt-2 text-xs text-blue-700 space-y-1">
-              <div>EMP001 - John Doe (Engineering)</div>
-              <div>EMP002 - Jane Smith (Marketing)</div>
-              <div>EMP003 - Bob Johnson (Sales)</div>
-              <div>EMP004 - Alice Brown (HR)</div>
-              <div>EMP005 - Charlie Wilson (Finance)</div>
-            </div>
-          </div>
-
-        
         </div>
       </div>
     </div>
