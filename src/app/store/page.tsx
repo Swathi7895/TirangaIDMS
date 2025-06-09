@@ -21,7 +21,7 @@ import {
   PencilSquareIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
-  EyeIcon,
+
 } from '@heroicons/react/24/outline';
 
 type SectionColor = 'indigo' | 'teal' | 'rose';

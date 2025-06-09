@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { 
   Search, 
   Filter, 
@@ -13,8 +14,7 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  CheckCircle,
-  XCircle,
+ 
   Mail,
   Phone,
   Droplet,
@@ -128,9 +128,8 @@ export default function JoiningPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [viewShowPassword, setViewShowPassword] = useState(false);
-  const [viewShowConfirmPassword, setViewShowConfirmPassword] = useState(false);
 
-  const isEditMode = modalType === 'edit';
+  
   const isViewMode = modalType === 'view';
 
   const openModal = (type: ModalType, record?: JoiningRecord) => {
@@ -206,33 +205,8 @@ export default function JoiningPage() {
     }
   };
 
-  const handleDocumentStatusChange = (recordId: string, documentId: string, newStatus: Document['status']) => {
-    setRecords(records.map(record => {
-      if (record.id === recordId) {
-        return {
-          ...record,
-          documents: record.documents.map(doc => 
-            doc.id === documentId ? { ...doc, status: newStatus } : doc
-          )
-        };
-      }
-      return record;
-    }));
-  };
+ 
 
-  const handleTaskStatusChange = (recordId: string, taskId: string, newStatus: OnboardingTask['status']) => {
-    setRecords(records.map(record => {
-      if (record.id === recordId) {
-        return {
-          ...record,
-          onboardingTasks: record.onboardingTasks.map(task => 
-            task.id === taskId ? { ...task, status: newStatus } : task
-          )
-        };
-      }
-      return record;
-    }));
-  };
 
   const filteredRecords = records.filter(record =>
     record.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -358,7 +332,7 @@ export default function JoiningPage() {
                   {selectedRecord?.profilePhoto && (
                     <div className="flex justify-center mb-6">
                       <div className="relative">
-                        <img 
+                        <Image 
                           src={selectedRecord.profilePhoto} 
                           alt="Profile" 
                           className="w-32 h-32 rounded-full object-cover border-4 border-blue-100"

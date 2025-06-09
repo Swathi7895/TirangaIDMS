@@ -14,7 +14,7 @@ import {
   Settings,
   LogOut,
   LucideIcon,
-  User
+ 
 } from 'lucide-react';
 
 interface MenuItem {
@@ -47,10 +47,7 @@ export default function HRLayout({
     localStorage.removeItem('userRole');
     router.push('/login');
   };
- const handleClick = () => {
-  
-    router.push('/hr/employeeRegister');
-  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
