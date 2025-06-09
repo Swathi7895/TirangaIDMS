@@ -6,7 +6,6 @@ import {
   Mail,
   Lock,
   Phone,
-  ArrowLeft,
   Eye,
   EyeOff,
   BadgeCheck,
@@ -16,6 +15,7 @@ import {
   MapPin, // Icon for Address
   Image as ImageIcon // Icon for Photo Upload
 } from 'lucide-react';
+import Image from 'next/image';
 
 
 interface Employee {
@@ -243,9 +243,13 @@ export default function Register() {
       <div className="sm:mx-auto sm:w-full sm:max-w-2xl">
         <div className="bg-white py-8 px-4 shadow-xl rounded-lg sm:px-10">
           <div className="flex items-center justify-center mb-8">
-            <div className="bg-blue-600 p-3 rounded-full">
-              <User className="h-8 w-8 text-white" />
-            </div>
+            <Image
+              src="/logo.png"
+              alt="Company Logo"
+              width={150}
+              height={150}
+              className="h-24 w-auto"
+            />
           </div>
           
           <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-2">
@@ -513,9 +517,11 @@ export default function Register() {
                 <div className="mt-1 flex items-center space-x-4">
                   <div className="flex-shrink-0">
                     {photoPreview ? (
-                      <img
+                      <Image
                         src={photoPreview}
                         alt="Profile preview"
+                        width={80}
+                        height={80}
                         className="h-20 w-20 rounded-full object-cover"
                       />
                     ) : (

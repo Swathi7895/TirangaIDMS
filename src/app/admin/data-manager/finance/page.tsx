@@ -89,9 +89,7 @@ export default function FinancePage() {
   const [selectedItem] = useState<FinanceReport | null>(null);
   const [data, setData] = useState<FinanceReport[]>(sampleData);
 
-
-
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<FinanceReport, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 

@@ -7,7 +7,7 @@ export interface ViewField {
   type: 'text' | 'number' | 'date' | 'currency' | 'percentage' | 'status';
 }
 
-export type ViewValue = string | number | null;
+
 
 interface DataViewProps<T> {
   isOpen: boolean;

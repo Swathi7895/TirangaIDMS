@@ -147,7 +147,7 @@ export default function LogisticsPage() {
     }
   };
 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<LogisticsDocument, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 

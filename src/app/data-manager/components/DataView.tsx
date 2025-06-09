@@ -1,10 +1,13 @@
 import { X } from 'lucide-react';
+import { ReactNode } from 'react';
 
 export interface ViewField {
   name: string;
   label: string;
   type: 'text' | 'number' | 'date' | 'currency' | 'percentage' | 'status';
 }
+
+
 
 interface DataViewProps<T> {
   isOpen: boolean;
@@ -14,7 +17,7 @@ interface DataViewProps<T> {
   title: string;
 }
 
-export default function DataView<T extends Record<string, any>>({ 
+export default function DataView<T>({ 
   isOpen, 
   onClose, 
   data, 
@@ -23,28 +26,30 @@ export default function DataView<T extends Record<string, any>>({
 }: DataViewProps<T>) {
   if (!isOpen) return null;
 
-  const formatValue = (value: string | number | null | undefined, type: ViewField['type']) => {
+  const formatValue = (value: unknown, type: ViewField['type']): ReactNode => {
     if (value === null || value === undefined) return '-';
 
     switch (type) {
       case 'date':
-        return new Date(value).toLocaleDateString();
+        return new Date(value as string).toLocaleDateString();
       case 'currency':
-        return typeof value === 'number' ? `$${value.toLocaleString()}` : value;
+        return typeof value === 'number' ? `$${value.toLocaleString()}` : String(value);
       case 'percentage':
-        return typeof value === 'number' ? `${value}%` : value;
+        return typeof value === 'number' ? `${value}%` : String(value);
       case 'status':
+        const statusValue = String(value).toLowerCase();
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            value === 'active' ? 'bg-green-100 text-green-800' :
-            value === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-red-100 text-red-800'
+            statusValue === 'paid' || statusValue === 'valid' ? 'bg-green-100 text-green-800' :
+            statusValue === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+            statusValue === 'overdue' || statusValue === 'expired' ? 'bg-red-100 text-red-800' :
+            'bg-gray-100 text-gray-800'
           }`}>
-            {value}
+            {String(value)}
           </span>
         );
       default:
-        return value;
+        return String(value);
     }
   };
 
@@ -68,7 +73,7 @@ export default function DataView<T extends Record<string, any>>({
                 {field.label}
               </label>
               <div className="text-gray-900">
-                {formatValue(data[field.name], field.type)}
+                {formatValue((data as Record<string, unknown>)[field.name], field.type)}
               </div>
             </div>
           ))}

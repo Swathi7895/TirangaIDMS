@@ -181,7 +181,7 @@ export default function AdminMemosPage() {
               {['compose', 'sent', 'drafts'].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab as any)}
+                  onClick={() => setActiveTab(tab as 'compose' | 'sent' | 'drafts')}
                   className={`${
                     activeTab === tab
                       ? 'border-blue-500 text-blue-600'

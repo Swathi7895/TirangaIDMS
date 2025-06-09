@@ -86,8 +86,7 @@ export default function SalesPurchasePage() {
   const [selectedItem] = useState<SalesPurchaseItem | null>(null);
   const [data, setData] = useState<SalesPurchaseItem[]>(sampleData);
 
- 
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<SalesPurchaseItem, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 

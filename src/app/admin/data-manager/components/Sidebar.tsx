@@ -11,13 +11,14 @@ import {
   Calculator, 
   Gavel, 
   X, 
-  Menu 
+  Menu,
+  LucideIcon
 } from 'lucide-react';
 
 interface Module {
   id: string;
   name: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   path: string;
 }

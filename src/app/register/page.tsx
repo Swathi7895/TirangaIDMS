@@ -93,7 +93,7 @@ export default function Register() {
           error: 'Please enter a valid Employee ID'
         });
       }
-    } catch (error) {
+    } catch {
       setEmployeeValidation({
         isValid: false,
         isChecked: true,
@@ -162,9 +162,8 @@ export default function Register() {
       
       alert('Account created successfully!');
       
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create account. Please try again.';
-      alert(errorMessage);
+    } catch {
+      alert('Failed to create account. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

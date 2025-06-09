@@ -25,7 +25,7 @@ import {
   X
 } from 'lucide-react';
 import Link from 'next/link';
-import MemoViewer from '@/app/components/memos/MemoViewer';
+
 import Image from 'next/image';
 
 // interface Attendance {
@@ -409,9 +409,9 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* Memos Section */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <MemoViewer userId="current-user-id" userRole="employee" />
-        </div>
+        </div> */}
 
         {/* Quick Links */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

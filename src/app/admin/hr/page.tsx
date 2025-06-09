@@ -3,7 +3,7 @@ import React from 'react';
 import { 
   Users, 
   FileText, 
-  Smartphone, 
+ 
  
   Calendar, 
   CheckCircle, 
@@ -12,7 +12,7 @@ import {
   Award, 
   UserPlus, 
 
-  Clock,
+ 
   LucideIcon,
   Building,
   GraduationCap,
@@ -27,15 +27,6 @@ interface StatCardProps {
   trend?: string;
   color?: string;
   bgColor?: string;
-}
-
-
-interface QuickActionCardProps {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  color?: string;
-  path: string;
 }
 
 interface RecentActivityProps {
@@ -67,18 +58,18 @@ export default function HRDashboard() {
     </div>
   );
 
-  const QuickActionCard = ({ icon: Icon, title, description, color = 'blue', path }: QuickActionCardProps) => (
-    <a 
-      href={path}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group block"
-    >
-      <div className={`p-3 rounded-lg bg-${color}-50 w-fit mb-4 group-hover:bg-${color}-100 transition-colors`}>
-        <Icon className={`w-6 h-6 text-${color}-600`} />
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
-    </a>
-  );
+  // const QuickActionCard = ({ icon: Icon, title, description, color = 'blue', path }: QuickActionCardProps) => (
+  //   <a 
+  //     href={path}
+  //     className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group block"
+  //   >
+  //     <div className={`p-3 rounded-lg bg-${color}-50 w-fit mb-4 group-hover:bg-${color}-100 transition-colors`}>
+  //       <Icon className={`w-6 h-6 text-${color}-600`} />
+  //     </div>
+  //     <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+  //     <p className="text-sm text-gray-600">{description}</p>
+  //   </a>
+  // );
 
   const RecentActivity = ({ icon: Icon, title, time, status }: RecentActivityProps) => (
     <div className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">

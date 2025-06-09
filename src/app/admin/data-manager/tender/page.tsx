@@ -53,9 +53,7 @@ export default function TenderManagementPage() {
   const [selectedItem] = useState<Tender | null>(null);
   const [data, setData] = useState<Tender[]>(sampleData);
 
- 
-
-  const handleFormSubmit = (formData: any) => {
+  const handleFormSubmit = (formData: Omit<Tender, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 

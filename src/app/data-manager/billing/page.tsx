@@ -15,11 +15,32 @@ interface BillingItem {
   description: string;
 }
 
-const sampleData: BillingItem[] = [
-  { id: 1, invoiceNumber: 'INV-2024-001', clientName: 'ABC Corp', amount: 5000.00, date: '2024-04-15', status: 'paid', description: 'Invoice' },
-  { id: 2, invoiceNumber: 'INV-2024-002', clientName: 'XYZ Ltd', amount: 7500.00, date: '2024-04-20', status: 'pending', description: 'Invoice' },
-  { id: 3, invoiceNumber: 'CN-2024-001', clientName: 'DEF Inc', amount: -1500.00, date: '2024-04-10', status: 'overdue', description: 'Credit Note' }
-];
+// Type-safe wrapper for DataView
+function BillingDataView({ isOpen, onClose, data, fields, title }: {
+  isOpen: boolean;
+  onClose: () => void;
+  data: BillingItem;
+  fields: ViewField[];
+  title: string;
+}) {
+  // Convert BillingItem to a type that DataView can accept
+  const viewData = {
+    ...data,
+    id: data.id.toString(),
+    amount: data.amount.toString(),
+    status: data.status
+  };
+
+  return (
+    <DataView
+      isOpen={isOpen}
+      onClose={onClose}
+      data={viewData}
+      fields={fields}
+      title={title}
+    />
+  );
+}
 
 const formFields: FormField[] = [
   { name: 'invoiceNumber', label: 'Invoice Number', type: 'text', required: true },
@@ -42,11 +63,15 @@ const viewFields: ViewField[] = [
 export default function BillingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<'all' | BillingItem['status']>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<BillingItem | null>(null);
-  const [data, setData] = useState<BillingItem[]>(sampleData);
+  const [data, setData] = useState<BillingItem[]>([
+    { id: 1, invoiceNumber: 'INV-2024-001', clientName: 'ABC Corp', amount: 5000.00, date: '2024-04-15', status: 'paid', description: 'Invoice' },
+    { id: 2, invoiceNumber: 'INV-2024-002', clientName: 'XYZ Ltd', amount: 7500.00, date: '2024-04-20', status: 'pending', description: 'Invoice' },
+    { id: 3, invoiceNumber: 'CN-2024-001', clientName: 'DEF Inc', amount: -1500.00, date: '2024-04-10', status: 'overdue', description: 'Credit Note' }
+  ]);
 
   const handleAddNew = () => {
     setSelectedItem(null);
@@ -154,7 +179,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -316,16 +341,15 @@ export default function BillingPage() {
         initialData={selectedItem}
       />
 
-      <DataView<BillingItem>
-        isOpen={isViewOpen}
-        onClose={() => {
-          setIsViewOpen(false);
-          setSelectedItem(null);
-        }}
-        data={selectedItem || {} as BillingItem}
-        fields={viewFields}
-        title="Billing Item Details"
-      />
+      {isViewOpen && selectedItem && (
+        <BillingDataView
+          isOpen={isViewOpen}
+          onClose={() => setIsViewOpen(false)}
+          data={selectedItem}
+          fields={viewFields}
+          title="Billing Details"
+        />
+      )}
     </div>
   );
 } 

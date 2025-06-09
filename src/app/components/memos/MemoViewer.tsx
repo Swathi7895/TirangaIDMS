@@ -23,12 +23,7 @@ interface Memo {
   read?: boolean;
 }
 
-interface MemoViewerProps {
-  userId: string;
-  userRole: 'hr' | 'store' | 'employee' | 'finance' | 'data_manager';
-}
-
-export default function MemoViewer({ userId, userRole }: MemoViewerProps) {
+export default function MemoViewer() {
   const [memos, setMemos] = useState<Memo[]>([]);
   const [filteredMemos, setFilteredMemos] = useState<Memo[]>([]);
   const [searchTerm, setSearchTerm] = useState('');

@@ -34,7 +34,7 @@ export default function DataForm<T extends { id: number | string }>({
     } else {
       const emptyData: Partial<T> = {};
       fields.forEach(field => {
-        emptyData[field.name as keyof T] = '' as any;
+        emptyData[field.name as keyof T] = (field.type === 'number' ? 0 : '') as T[keyof T];
       });
       setFormData(emptyData);
     }

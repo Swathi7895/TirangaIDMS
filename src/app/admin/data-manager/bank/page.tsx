@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Search, Filter, ArrowLeft } from 'lucide-react';
 import DataForm, { FormField, FormValue } from '../components/DataForm';
-import DataView, { ViewField, ViewValue } from '../components/DataView';
+import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 
 type BankDocumentData = {

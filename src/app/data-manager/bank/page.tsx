@@ -14,11 +14,31 @@ interface BankDocument {
   status: 'Valid' | 'Expired' | 'Pending';
 }
 
-const sampleData: BankDocument[] = [
-  { id: 1, documentType: 'Bank Statement', bankName: 'HDFC Bank', accountNumber: 'XXXX1234', date: '2024-01-15', status: 'Valid' },
-  { id: 2, documentType: 'Bank Guarantee', bankName: 'ICICI Bank', accountNumber: 'XXXX5678', date: '2024-02-20', status: 'Pending' },
-  { id: 3, documentType: 'Bank Certificate', bankName: 'SBI', accountNumber: 'XXXX9012', date: '2024-03-10', status: 'Expired' }
-];
+// Type-safe wrapper for DataView
+function BankDataView({ isOpen, onClose, data, fields, title }: {
+  isOpen: boolean;
+  onClose: () => void;
+  data: BankDocument;
+  fields: ViewField[];
+  title: string;
+}) {
+  // Convert BankDocument to a type that DataView can accept
+  const viewData = {
+    ...data,
+    id: data.id.toString(),
+    status: data.status
+  };
+
+  return (
+    <DataView
+      isOpen={isOpen}
+      onClose={onClose}
+      data={viewData}
+      fields={fields}
+      title={title}
+    />
+  );
+}
 
 const formFields: FormField[] = [
   { name: 'documentType', label: 'Document Type', type: 'select', options: ['Bank Statement', 'Bank Guarantee', 'Bank Certificate'], required: true },
@@ -42,7 +62,11 @@ export default function BankDocumentsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<BankDocument | null>(null);
-  const [data, setData] = useState<BankDocument[]>(sampleData);
+  const [data, setData] = useState<BankDocument[]>([
+    { id: 1, documentType: 'Bank Statement', bankName: 'HDFC Bank', accountNumber: 'XXXX1234', date: '2024-01-15', status: 'Valid' },
+    { id: 2, documentType: 'Bank Guarantee', bankName: 'ICICI Bank', accountNumber: 'XXXX5678', date: '2024-02-20', status: 'Pending' },
+    { id: 3, documentType: 'Bank Certificate', bankName: 'SBI', accountNumber: 'XXXX9012', date: '2024-03-10', status: 'Expired' }
+  ]);
 
   const handleAddNew = () => {
     setSelectedDocument(null);
@@ -264,16 +288,18 @@ export default function BankDocumentsPage() {
         initialData={selectedDocument}
       />
 
-      <DataView<BankDocument>
-        isOpen={isViewOpen}
-        onClose={() => {
-          setIsViewOpen(false);
-          setSelectedDocument(null);
-        }}
-        data={selectedDocument || {} as BankDocument}
-        fields={viewFields}
-        title="Bank Document Details"
-      />
+      {isViewOpen && selectedDocument && (
+        <BankDataView
+          isOpen={isViewOpen}
+          onClose={() => {
+            setIsViewOpen(false);
+            setSelectedDocument(null);
+          }}
+          data={selectedDocument}
+          fields={viewFields}
+          title="Bank Document Details"
+        />
+      )}
     </div>
   );
 } 
