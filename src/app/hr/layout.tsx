@@ -88,13 +88,7 @@ export default function HRLayout({
                 <LogOut className="w-5 h-5" />
                 <span>Logout</span>
               </button>
-               <button
-                onClick={handleClick}
-                className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                <User className="w-5 h-5" />
-                <span>Create Employee</span>
-              </button>
+             
             </div>
           </div>
         </div>

@@ -15,8 +15,9 @@ import {
   Clock,
   LucideIcon,
   Building,
-  GraduationCap,
-  Briefcase
+
+ UserCheck ,
+ UserX
 } from 'lucide-react';
 
 interface StatCardProps {
@@ -117,18 +118,18 @@ export default function HRDashboard() {
           bgColor="bg-purple-50"
         />
         <StatCard
-          icon={GraduationCap}
-          title="Open Positions"
+          icon={UserCheck }
+          title="Today Present"
           value="15"
-          trend="+5 this week"
+         
           color="green"
           bgColor="bg-green-50"
         />
         <StatCard
-          icon={Briefcase}
-          title="New Hires"
+          icon={UserX}
+          title="Today Absent"
           value="8"
-          trend="This month"
+         
           color="orange"
           bgColor="bg-orange-50"
         />

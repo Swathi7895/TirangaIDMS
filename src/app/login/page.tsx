@@ -14,11 +14,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedRole, setSelectedRole] = useState('');
   const [validationErrors, setValidationErrors] = useState<{
     email?: string;
     password?: string;
-    role?: string;
   }>({});
 
   // Check if user is already authenticated
@@ -39,60 +37,44 @@ export default function LoginPage() {
     }
   }, [router]);
 
-  // Predefined credentials
-  const CREDENTIALS = {
-    admin: {
-      email: 'admin@company.com',
-      password: 'Admin@123'
+  // Predefined credentials with email-to-role mapping
+  const USER_CREDENTIALS = {
+    'admin@company.com': {
+      password: 'Admin@123',
+      role: 'admin',
+      dashboardPath: '/admin'
     },
-    employee: {
-      email: 'employee@company.com',
-      password: 'Employee@123'
+    'employee@company.com': {
+      password: 'Employee@123',
+      role: 'employee',
+      dashboardPath: '/employee'
     },
-    store: {
-      email: 'store@company.com',
-      password: 'Store@123'
+    'store@company.com': {
+      password: 'Store@123',
+      role: 'store',
+      dashboardPath: '/store'
     },
-    hr: {
-      email: 'hr@company.com',
-      password: 'HRmanage@123'
+    'hr@company.com': {
+      password: 'HRmanage@123',
+      role: 'hr',
+      dashboardPath: '/hr'
     },
-    datamanager: {
-      email: 'data@company.com',
-      password: 'Data@123'
+    'data@company.com': {
+      password: 'Data@123',
+      role: 'datamanager',
+      dashboardPath: '/data-manager'
     },
-    financemanager: {
-      email: 'finance@company.com',
-      password: 'Finance@123'
+    'finance@company.com': {
+      password: 'Finance@123',
+      role: 'financemanager',
+      dashboardPath: '/finance-manager/dashboard'
     },
-  };
-
-  // Handle role selection and auto-populate fields
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const role = e.target.value as keyof typeof CREDENTIALS;
-    setSelectedRole(role);
-    
-    if (role && CREDENTIALS[role]) {
-      setEmail(CREDENTIALS[role].email);
-      setPassword(CREDENTIALS[role].password);
-    } else {
-      setEmail('');
-      setPassword('');
-    }
-    
-    // Clear role validation error
-    setValidationErrors(prev => ({ ...prev, role: undefined }));
   };
 
   const validateForm = (formData: FormData) => {
-    const errors: { email?: string; password?: string; role?: string } = {};
+    const errors: { email?: string; password?: string } = {};
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const role = formData.get('role') as string;
-
-    if (!role) {
-      errors.role = 'Please select a role';
-    }
     
     if (!email) {
       errors.email = 'Email is required';
@@ -123,29 +105,22 @@ export default function LoginPage() {
 
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const role = formData.get('role') as keyof typeof CREDENTIALS;
 
     try {
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Check credentials based on role
-      if (CREDENTIALS[role] && email === CREDENTIALS[role].email && password === CREDENTIALS[role].password) {
+      // Check credentials based on email
+      const userCredentials = USER_CREDENTIALS[email as keyof typeof USER_CREDENTIALS];
+      
+      if (userCredentials && password === userCredentials.password) {
         // Store authentication state
         localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', role);
+        localStorage.setItem('userRole', userCredentials.role);
         localStorage.setItem('userEmail', email);
 
-        // Redirect to role-specific dashboard
-        const redirectPath = 
-          role === 'admin' ? '/admin' :
-          role === 'employee' ? '/employee' :
-          role === 'store' ? '/store' :
-          role === 'hr' ? '/hr' :
-          role === 'datamanager' ? '/data-manager' :
-          '/finance-manager/dashboard';
-
-        router.push(redirectPath);
+        // Redirect to user-specific dashboard
+        router.push(userCredentials.dashboardPath);
       } else {
         throw new Error('Invalid email or password');
       }
@@ -177,18 +152,6 @@ export default function LoginPage() {
               create a new account
             </Link>
           </p>
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-            <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Demo Credentials:</strong><br />
-              Simply select a role above and the credentials will be auto-filled!<br /><br />
-              <strong>Admin:</strong> admin@company.com / Admin@123<br />
-              <strong>Employee:</strong> employee@company.com / Employee@123<br />
-              <strong>Store:</strong> store@company.com / Store@123<br />
-              <strong>HR:</strong> hr@company.com / HRmanage@123<br />
-              <strong>Data Manager:</strong> data@company.com / Data@123<br />
-              <strong>Finance Manager:</strong> finance@company.com / Finance@123
-            </p>
-          </div>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
@@ -197,30 +160,6 @@ export default function LoginPage() {
             </div>
           )}
           <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Role <span className="text-blue-500">(Auto-fills credentials)</span>
-              </label>
-              <select
-                id="role"
-                name="role"
-                required
-                value={selectedRole}
-                className={`appearance-none rounded-md relative block w-full px-3 py-2 border ${validationErrors.role ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700`}
-                onChange={handleRoleChange}
-              >
-                <option value="">Select a role</option>
-                <option value="admin">Admin</option>
-                <option value="employee">Employee</option>
-                <option value="store">Store</option>
-                <option value="hr">HR Operations</option>
-                <option value="datamanager">Data Manager</option>
-                <option value="financemanager">Finance Manager</option>
-              </select>
-              {validationErrors.role && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.role}</p>
-              )}
-            </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email address
@@ -313,7 +252,13 @@ export default function LoginPage() {
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <span className="flex items-center"><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Signing in...</span>
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Signing in...
+                </span>
               ) : (
                 'Sign in'
               )}
@@ -321,8 +266,17 @@ export default function LoginPage() {
           </div>
         </form>
 
-        <div className="mt-6">
-         
+        {/* Demo credentials section */}
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Demo Credentials:</h3>
+          <div className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
+            <div>Admin: admin@company.com / Admin@123</div>
+            <div>Employee: employee@company.com / Employee@123</div>
+            <div>Store: store@company.com / Store@123</div>
+            <div>HR: hr@company.com / HRmanage@123</div>
+            <div>Data Manager: data@company.com / Data@123</div>
+            <div>Finance: finance@company.com / Finance@123</div>
+          </div>
         </div>
       </div>
     </div>

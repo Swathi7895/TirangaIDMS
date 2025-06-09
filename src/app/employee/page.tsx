@@ -4,76 +4,20 @@ import {
   Calendar, 
   FileText, 
   Clock,
-
-
   Mail,
   Phone,
   MapPin,
   Briefcase,
- 
   Star,
   TrendingUp,
- 
-
   Laptop,
-
-
- 
-  
   Edit2,
   Save,
-  X
+  X,
+  Camera
 } from 'lucide-react';
 import Link from 'next/link';
-
 import Image from 'next/image';
-
-// interface Attendance {
-//   date: string;
-//   signIn: string;
-//   signOut: string;
-//   status: 'present' | 'absent' | 'half-day';
-// }
-
-// interface Document {
-//   id: number;
-//   name: string;
-//   type: 'resume' | 'marksCard' | 'idProof' | 'offerLetter';
-//   url: string;
-//   uploadDate: string;
-// }
-
-// interface Asset {
-//   id: number;
-//   name: string;
-//   type: 'laptop' | 'phone' | 'sim' | 'idCard' | 'vehicle';
-//   assignedDate: string;
-//   status: 'active' | 'returned';
-// }
-
-// interface Leave {
-//   id: number;
-//   type: 'holiday' | 'sick' | 'casual';
-//   startDate: string;
-//   endDate: string;
-//   status: 'pending' | 'approved' | 'rejected';
-//   reason: string;
-// }
-
-// interface Performance {
-//   position: string;
-//   promotionDate: string;
-//   rating: number;
-//   achievements: string[];
-// }
-
-// interface Report {
-//   id: number;
-//   type: 'employee' | 'visit' | 'oem' | 'customer' | 'blueprint' | 'projection' | 'achievement';
-//   title: string;
-//   date: string;
-//   status: 'draft' | 'submitted' | 'approved';
-// }
 
 interface QuickLink {
   title: string;
@@ -84,7 +28,6 @@ interface QuickLink {
 }
 
 export default function EmployeeDashboard() {
-
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({
     name: 'John Doe',
@@ -94,6 +37,7 @@ export default function EmployeeDashboard() {
     phone: '+1-555-0123',
     address: '123 Main St, City, State'
   });
+  const [profilePhoto, setProfilePhoto] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face');
 
   const quickLinks: QuickLink[] = [
     {
@@ -160,43 +104,6 @@ export default function EmployeeDashboard() {
     ]
   };
 
-  // const attendance: Attendance[] = [
-  //   { date: '2024-03-18', signIn: '09:00', signOut: '18:00', status: 'present' },
-  //   { date: '2024-03-17', signIn: '09:15', signOut: '18:30', status: 'present' },
-  //   { date: '2024-03-16', signIn: '09:30', signOut: '17:45', status: 'half-day' },
-  // ];
-
-  // const documents: Document[] = [
-  //   { id: 1, name: 'Resume.pdf', type: 'resume', url: '/documents/resume.pdf', uploadDate: '2024-03-01' },
-  //   { id: 2, name: 'Marks Card.pdf', type: 'marksCard', url: '/documents/marks.pdf', uploadDate: '2024-03-01' },
-  //   { id: 3, name: 'Aadhar Card.pdf', type: 'idProof', url: '/documents/aadhar.pdf', uploadDate: '2024-03-01' },
-  //   { id: 4, name: 'Offer Letter.pdf', type: 'offerLetter', url: '/documents/offer.pdf', uploadDate: '2024-03-01' },
-  // ];
-
-  // const assets: Asset[] = [
-  //   { id: 1, name: 'MacBook Pro 2023', type: 'laptop', assignedDate: '2024-01-01', status: 'active' },
-  //   { id: 2, name: 'iPhone 14', type: 'phone', assignedDate: '2024-01-01', status: 'active' },
-  //   { id: 3, name: 'Company ID Card', type: 'idCard', assignedDate: '2024-01-01', status: 'active' },
-  // ];
-
-  // const leaves: Leave[] = [
-  //   { id: 1, type: 'holiday', startDate: '2024-03-25', endDate: '2024-03-25', status: 'approved', reason: 'Holi Festival' },
-  //   { id: 2, type: 'sick', startDate: '2024-03-20', endDate: '2024-03-21', status: 'pending', reason: 'Fever' },
-  // ];
-
-  // const performance: Performance = {
-  //   position: 'Senior Software Engineer',
-  //   promotionDate: '2024-01-01',
-  //   rating: 4.5,
-  //   achievements: ['Best Employee Q4 2023', 'Project Excellence Award']
-  // };
-
-  // const reports: Report[] = [
-  //   { id: 1, type: 'employee', title: 'Weekly Activity Report', date: '2024-03-18', status: 'submitted' },
-  //   { id: 2, type: 'visit', title: 'Client Visit Report', date: '2024-03-17', status: 'approved' },
-  //   { id: 3, type: 'oem', title: 'OEM Meeting Report', date: '2024-03-16', status: 'draft' },
-  // ];
-
   const handleEdit = () => {
     setIsEditing(true);
   };
@@ -204,6 +111,8 @@ export default function EmployeeDashboard() {
   const handleSave = () => {
     // Here you would typically make an API call to update the profile
     setIsEditing(false);
+    // Show success message or handle the update response
+    alert('Profile updated successfully!');
   };
 
   const handleCancel = () => {
@@ -226,7 +135,36 @@ export default function EmployeeDashboard() {
     }));
   };
 
- 
+  const handlePhotoUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // Create an image element to get the dimensions
+        const img = new window.Image();
+        img.onload = () => {
+          // Create a canvas to resize and crop the image
+          const canvas = document.createElement('canvas');
+          const size = 150; // Match the default image size
+          canvas.width = size;
+          canvas.height = size;
+          
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Calculate the center crop
+            const scale = Math.max(size / img.width, size / img.height);
+            const x = (img.width * scale - size) / 2;
+            const y = (img.height * scale - size) / 2;
+            
+            ctx.drawImage(img, -x, -y, img.width * scale, img.height * scale);
+            setProfilePhoto(canvas.toDataURL('image/jpeg', 0.9));
+          }
+        };
+        img.src = reader.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -234,15 +172,31 @@ export default function EmployeeDashboard() {
         {/* Profile Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-start space-x-6">
-          
-            <Image
-  src={employee.photo}
-  alt={employee.name}
-  width={96} // 24 * 4 (tailwind unit) = 96px
-  height={96}
-  className="rounded-full object-cover"
-/>
-
+            <div className="relative">
+              <div className="w-24 h-24 relative overflow-hidden rounded-full">
+                <Image
+                  src={profilePhoto}
+                  alt={employee.name}
+                  fill
+                  sizes="96px"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              <label 
+                htmlFor="photo-upload" 
+                className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
+              >
+                <Camera className="w-4 h-4 text-white" />
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoUpdate}
+                />
+              </label>
+            </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
                 {isEditing ? (
@@ -313,7 +267,7 @@ export default function EmployeeDashboard() {
                         className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
                         <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                        Update Profile
                       </button>
                       <button
                         onClick={handleCancel}
@@ -347,14 +301,16 @@ export default function EmployeeDashboard() {
                           <span className="text-gray-600">ID: {employee.employeeId}</span>
                         </div>
                       </div>
+                      <div className="mt-4">
+                        <button
+                          onClick={handleEdit}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          <Edit2 className="w-4 h-4 mr-2" />
+                          Update Profile
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      onClick={handleEdit}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <Edit2 className="w-4 h-4 mr-2" />
-                      Edit Profile
-                    </button>
                   </>
                 )}
               </div>

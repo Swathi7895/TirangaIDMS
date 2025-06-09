@@ -12,8 +12,18 @@ import {
   Edit,
   Trash2,
   Eye,
+  EyeOff,
   CheckCircle,
-  XCircle
+  XCircle,
+  Mail,
+  Phone,
+  Droplet,
+  MapPin,
+  Hash,
+  Briefcase,
+  Calendar,
+  Badge,
+  Lock
 } from 'lucide-react';
 
 interface Document {
@@ -34,6 +44,14 @@ interface JoiningRecord {
   id: string;
   employeeName: string;
   employeeId: string;
+  email: string;
+  phoneNumber: string;
+  bloodGroup: string;
+  currentAddress: string;
+  permanentAddress: string;
+  password: string;
+  confirmPassword: string;
+  profilePhoto: string;
   department: string;
   position: string;
   joiningDate: string;
@@ -41,7 +59,6 @@ interface JoiningRecord {
   status: 'joining' | 'relieving' | 'completed';
   documents: Document[];
   onboardingTasks: OnboardingTask[];
-  notes?: string;
 }
 
 type ModalType = 'add' | 'edit' | 'view';
@@ -52,6 +69,14 @@ export default function JoiningPage() {
       id: '1',
       employeeName: 'John Doe',
       employeeId: 'EMP001',
+      email: 'john.doe@example.com',
+      phoneNumber: '+1234567890',
+      bloodGroup: 'O+',
+      currentAddress: '123 Current St, City',
+      permanentAddress: '456 Permanent St, City',
+      password: '12345678',
+      confirmPassword: '12345678',
+      profilePhoto: '',
       department: 'Engineering',
       position: 'Senior Developer',
       joiningDate: '2024-03-15',
@@ -71,6 +96,14 @@ export default function JoiningPage() {
       id: '2',
       employeeName: 'Jane Smith',
       employeeId: 'EMP002',
+      email: 'jane.smith@example.com',
+      phoneNumber: '+1987654321',
+      bloodGroup: 'B+',
+      currentAddress: '789 Current Ave, City',
+      permanentAddress: '101 Permanent Ave, City',
+      password: '12345678',
+      confirmPassword: '12345678',
+      profilePhoto: '',
       department: 'Marketing',
       position: 'Marketing Manager',
       joiningDate: '2024-02-01',
@@ -92,6 +125,10 @@ export default function JoiningPage() {
   const [modalType, setModalType] = useState<ModalType>('add');
   const [selectedRecord, setSelectedRecord] = useState<JoiningRecord | null>(null);
   const [formData, setFormData] = useState<Partial<JoiningRecord>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [viewShowPassword, setViewShowPassword] = useState(false);
+  const [viewShowConfirmPassword, setViewShowConfirmPassword] = useState(false);
 
   const isEditMode = modalType === 'edit';
   const isViewMode = modalType === 'view';
@@ -103,6 +140,14 @@ export default function JoiningPage() {
       setFormData({
         employeeName: '',
         employeeId: '',
+        email: '',
+        phoneNumber: '',
+        bloodGroup: '',
+        currentAddress: '',
+        permanentAddress: '',
+        password: '',
+        confirmPassword: '',
+        profilePhoto: '',
         department: '',
         position: '',
         joiningDate: '',
@@ -123,8 +168,16 @@ export default function JoiningPage() {
   };
 
   const handleSubmit = () => {
-    if (!formData.employeeName || !formData.employeeId || !formData.department || !formData.position || !formData.joiningDate) {
+    if (!formData.employeeName || !formData.employeeId || !formData.email || 
+        !formData.phoneNumber || !formData.bloodGroup || !formData.currentAddress || 
+        !formData.permanentAddress || !formData.password || !formData.confirmPassword || 
+        !formData.department || !formData.position || !formData.joiningDate) {
       alert('Please fill in all required fields');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
       return;
     }
 
@@ -196,7 +249,7 @@ export default function JoiningPage() {
           className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
-          <span>New Record</span>
+          <span>New Employee Create</span>
         </button>
       </div>
 
@@ -301,89 +354,189 @@ export default function JoiningPage() {
             <div className="p-6">
               {isViewMode ? (
                 <div className="space-y-6">
-                  {/* Employee Info */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-3">
-                      <User className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Employee Name</p>
-                        <p className="font-medium">{selectedRecord?.employeeName}</p>
+                  {/* Profile Photo */}
+                  {selectedRecord?.profilePhoto && (
+                    <div className="flex justify-center mb-6">
+                      <div className="relative">
+                        <img 
+                          src={selectedRecord.profilePhoto} 
+                          alt="Profile" 
+                          className="w-32 h-32 rounded-full object-cover border-4 border-blue-100"
+                        />
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Building className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Department</p>
-                        <p className="font-medium">{selectedRecord?.department}</p>
+                  )}
+
+                  {/* Employee Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <User className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Employee Name</p>
+                            <p className="font-medium">{selectedRecord?.employeeName}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Hash className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Employee ID</p>
+                            <p className="font-medium">{selectedRecord?.employeeId}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Mail className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Email</p>
+                            <p className="font-medium">{selectedRecord?.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Phone className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Phone Number</p>
+                            <p className="font-medium">{selectedRecord?.phoneNumber}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Droplet className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Blood Group</p>
+                            <p className="font-medium">{selectedRecord?.bloodGroup}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Lock className="w-5 h-5 text-blue-500" />
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-600">Password</p>
+                            <div className="relative">
+                              <p className="font-medium font-mono">
+                                {viewShowPassword ? selectedRecord?.password : '••••••••'}
+                              </p>
+                              <button
+                                type="button"
+                                className="absolute right-0 top-0 text-gray-400 hover:text-gray-600"
+                                onClick={() => setViewShowPassword(!viewShowPassword)}
+                              >
+                                {viewShowPassword ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      
+                      </div>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-lg shadow-sm">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Work Information</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <Building className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Department</p>
+                            <p className="font-medium">{selectedRecord?.department}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Briefcase className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Position</p>
+                            <p className="font-medium">{selectedRecord?.position}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <Calendar className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Joining Date</p>
+                            <p className="font-medium">{selectedRecord?.joiningDate}</p>
+                          </div>
+                        </div>
+                        {selectedRecord?.relievingDate && (
+                          <div className="flex items-center space-x-3">
+                            <Calendar className="w-5 h-5 text-blue-500" />
+                            <div>
+                              <p className="text-sm text-gray-600">Relieving Date</p>
+                              <p className="font-medium">{selectedRecord.relievingDate}</p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center space-x-3">
+                          <Badge className="w-5 h-5 text-blue-500" />
+                          <div>
+                            <p className="text-sm text-gray-600">Status</p>
+                            <p className="font-medium capitalize">{selectedRecord?.status}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="md:col-span-2 bg-white p-4 rounded-lg shadow-sm">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <MapPin className="w-5 h-5 text-blue-500" />
+                            <p className="text-sm font-medium text-gray-600">Current Address</p>
+                          </div>
+                          <p className="text-gray-700 pl-8">{selectedRecord?.currentAddress}</p>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-3">
+                            <MapPin className="w-5 h-5 text-blue-500" />
+                            <p className="text-sm font-medium text-gray-600">Permanent Address</p>
+                          </div>
+                          <p className="text-gray-700 pl-8">{selectedRecord?.permanentAddress}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Documents Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Documents</h3>
-                    <div className="space-y-3">
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Documents</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedRecord?.documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div key={doc.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
                           <div className="flex items-center space-x-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
+                            <FileText className="w-5 h-5 text-blue-500" />
                             <div>
                               <p className="font-medium">{doc.name}</p>
                               <p className="text-sm text-gray-500">{doc.type}</p>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              doc.status === 'verified' ? 'bg-green-100 text-green-800' :
-                              doc.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                            </span>
-                            {isEditMode && selectedRecord && (
-                              <select
-                                value={doc.status}
-                                onChange={(e) => handleDocumentStatusChange(selectedRecord.id, doc.id, e.target.value as Document['status'])}
-                                className="text-sm border border-gray-300 rounded-lg px-2 py-1"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="submitted">Submitted</option>
-                                <option value="verified">Verified</option>
-                              </select>
-                            )}
-                          </div>
+                          <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                            doc.status === 'verified' ? 'bg-green-100 text-green-800' :
+                            doc.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Onboarding Tasks Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Onboarding Tasks</h3>
-                    <div className="space-y-3">
+                  <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Onboarding Tasks</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {selectedRecord?.onboardingTasks.map((task) => (
-                        <div key={task.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                        <div key={task.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
                           <div>
                             <p className="font-medium">{task.name}</p>
                             <p className="text-sm text-gray-500">Assigned to: {task.assignedTo}</p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                            </span>
-                            {isEditMode && selectedRecord && (
-                              <button
-                                onClick={() => handleTaskStatusChange(selectedRecord.id, task.id, task.status === 'completed' ? 'pending' : 'completed')}
-                                className={`p-1 rounded-full ${
-                                  task.status === 'completed' ? 'text-green-600 hover:bg-green-50' : 'text-yellow-600 hover:bg-yellow-50'
-                                }`}
-                              >
-                                {task.status === 'completed' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                              </button>
-                            )}
-                          </div>
+                          <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                            task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -411,6 +564,129 @@ export default function JoiningPage() {
                         value={formData.employeeId || ''}
                         onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                      <input
+                        type="tel"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.phoneNumber || ''}
+                        onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
+                      <select
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.bloodGroup || ''}
+                        onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}
+                      >
+                        <option value="">Select Blood Group</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setFormData({...formData, profilePhoto: reader.result as string});
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Current Address</label>
+                      <textarea
+                        required
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.currentAddress || ''}
+                        onChange={(e) => setFormData({...formData, currentAddress: e.target.value})}
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address</label>
+                      <textarea
+                        required
+                        rows={2}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.permanentAddress || ''}
+                        onChange={(e) => setFormData({...formData, permanentAddress: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                          value={formData.password || ''}
+                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        />
+                        <button
+                          type="button"
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmPassword ? "text" : "password"}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+                          value={formData.confirmPassword || ''}
+                          onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                        />
+                        <button
+                          type="button"
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
@@ -460,17 +736,6 @@ export default function JoiningPage() {
                         })}
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                    <textarea
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={formData.notes || ''}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                      placeholder="Add any additional notes..."
-                    />
                   </div>
 
                   <div className="flex space-x-3 pt-4">
