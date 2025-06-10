@@ -25,7 +25,8 @@ interface Module {
 
 const modules: Module[] = [
   { id: 'dashboard', name: 'Dashboard', icon: TrendingUp, color: 'bg-blue-500', path: '/admin/data-manager' },
-  { id: 'sales-purchase', name: 'Sales & Purchase', icon: ShoppingCart, color: 'bg-green-500', path: '/admin/data-manager/sales-purchase' },
+  { id: 'sales', name: 'Sales Management', icon: TrendingUp, color: 'bg-green-500', path: '/admin/data-manager/sales' },
+  { id: 'purchase', name: 'Purchase Management', icon: ShoppingCart, color: 'bg-orange-500', path: '/admin/data-manager/purchase' },
   { id: 'logistics', name: 'Logistics Documents', icon: Truck, color: 'bg-orange-500', path: '/admin/data-manager/logistics' },
   { id: 'registration', name: 'Company Registration', icon: FileText, color: 'bg-purple-500', path: '/admin/data-manager/registration' },
   { id: 'banking', name: 'Bank Documents', icon: CreditCard, color: 'bg-indigo-500', path: '/admin/data-manager/bank' },

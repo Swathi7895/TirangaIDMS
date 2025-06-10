@@ -98,7 +98,7 @@ export default function StoreDashboard() {
       ]
     },
     {
-      title: "Fixed Office Assets",
+      title: "Capital Office Assets",
       description: "Manage permanent office equipment and furniture",
       icon: BuildingOfficeIcon,
       color: "purple",

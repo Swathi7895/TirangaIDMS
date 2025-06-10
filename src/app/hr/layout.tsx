@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { 
   Home, 
@@ -41,6 +41,16 @@ export default function HRLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    // Check if user is authenticated and is an HR user
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    const userRole = localStorage.getItem('userRole');
+
+    if (!isAuthenticated || userRole !== 'hr') {
+      router.push('/login');
+    }
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');

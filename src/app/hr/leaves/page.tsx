@@ -361,22 +361,10 @@ const LeaveManagementSystem = () => {
 
         {/* Layout Container */}
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Sidebar (Placeholder) */}
-          <div className="md:w-1/4 bg-gray-100 rounded-lg p-6">
-            <h3 className="text-xl font-bold text-gray-700 mb-4">Navigation</h3>
-            <ul className="space-y-3">
-              <li><a href="#" className="text-blue-600 hover:underline">Overview</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Employee Documents</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Asset Management</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Leave Management</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Performance</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Joining/Relieving</a></li>
-              <li><a href="#" className="text-blue-600 hover:underline">Weekly Activities</a></li>
-            </ul>
-          </div>
+          
 
           {/* Main Content */}
-          <div className="md:w-3/4">
+          <div >
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">

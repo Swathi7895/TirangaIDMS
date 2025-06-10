@@ -5,11 +5,9 @@ import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2 } from 'lucid
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
 
-interface SalesPurchaseItem {
+interface PurchaseItem {
   id: number;
-  type: 'Sale' | 'Purchase';
-  customer?: string;
-  vendor?: string;
+  vendor: string;
   amount: number;
   date: string;
   status: 'Completed' | 'Pending' | 'Processing' | 'Cancelled';
@@ -18,21 +16,9 @@ interface SalesPurchaseItem {
   description: string;
 }
 
-const sampleData: SalesPurchaseItem[] = [
-  { 
-    id: 1, 
-    type: 'Sale', 
-    customer: 'ABC Corp', 
-    amount: 250000, 
-    date: '2024-06-01', 
-    status: 'Completed', 
-    paymentStatus: 'Paid',
-    paymentMethod: 'Bank Transfer',
-    description: 'IT Equipment Sale'
-  },
+const sampleData: PurchaseItem[] = [
   { 
     id: 2, 
-    type: 'Purchase', 
     vendor: 'XYZ Supplies', 
     amount: 120000, 
     date: '2024-06-02', 
@@ -40,23 +26,10 @@ const sampleData: SalesPurchaseItem[] = [
     paymentStatus: 'Pending',
     paymentMethod: 'Cheque',
     description: 'Office Supplies'
-  },
-  { 
-    id: 3, 
-    type: 'Sale', 
-    customer: 'DEF Ltd', 
-    amount: 380000, 
-    date: '2024-06-03', 
-    status: 'Processing', 
-    paymentStatus: 'Partial',
-    paymentMethod: 'Credit Card',
-    description: 'Software License'
   }
 ];
 
 const formFields: FormField[] = [
-  { name: 'type', label: 'Type', type: 'select', options: ['Sale', 'Purchase'], required: true },
-  { name: 'customer', label: 'Customer', type: 'text', required: true },
   { name: 'vendor', label: 'Vendor', type: 'text', required: true },
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'date', label: 'Date', type: 'date', required: true },
@@ -67,8 +40,6 @@ const formFields: FormField[] = [
 ];
 
 const viewFields: ViewField[] = [
-  { name: 'type', label: 'Type', type: 'text' },
-  { name: 'customer', label: 'Customer', type: 'text' },
   { name: 'vendor', label: 'Vendor', type: 'text' },
   { name: 'amount', label: 'Amount', type: 'currency' },
   { name: 'date', label: 'Date', type: 'date' },
@@ -78,13 +49,13 @@ const viewFields: ViewField[] = [
   { name: 'description', label: 'Description', type: 'text' }
 ];
 
-export default function SalesPurchasePage() {
+export default function PurchasePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<SalesPurchaseItem | null>(null);
-  const [data, setData] = useState<SalesPurchaseItem[]>(sampleData);
+  const [selectedItem, setSelectedItem] = useState<PurchaseItem | null>(null);
+  const [data, setData] = useState<PurchaseItem[]>(sampleData);
 
   const handleAddNew = () => {
     setSelectedItem(null);
@@ -106,10 +77,9 @@ export default function SalesPurchasePage() {
 
   const handleExport = () => {
     const csvContent = "data:text/csv;charset=utf-8," 
-      + "Type,Customer/Vendor,Amount,Date,Status,Payment Status,Payment Method,Description\n"
+      + "Vendor,Amount,Date,Status,Payment Status,Payment Method,Description\n"
       + data.map(item => [
-          item.type,
-          item.type === 'Sale' ? item.customer : item.vendor,
+          item.vendor,
           item.amount,
           item.date,
           item.status,
@@ -121,29 +91,29 @@ export default function SalesPurchasePage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "sales_purchase.csv");
+    link.setAttribute("download", "purchases.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  const handleView = (item: SalesPurchaseItem) => {
+  const handleView = (item: PurchaseItem) => {
     setSelectedItem(item);
     setIsViewOpen(true);
   };
 
-  const handleEdit = (item: SalesPurchaseItem) => {
+  const handleEdit = (item: PurchaseItem) => {
     setSelectedItem(item);
     setIsFormOpen(true);
   };
 
-  const handleDelete = (item: SalesPurchaseItem) => {
-    if (confirm(`Are you sure you want to delete this ${item.type.toLowerCase()} record?`)) {
+  const handleDelete = (item: PurchaseItem) => {
+    if (confirm('Are you sure you want to delete this purchase record?')) {
       setData(prev => prev.filter(i => i.id !== item.id));
     }
   };
 
-  const handleFormSubmit = (formData: Omit<SalesPurchaseItem, 'id'>) => {
+  const handleFormSubmit = (formData: Omit<PurchaseItem, 'id'>) => {
     if (selectedItem) {
       // Edit existing item
       setData(prev => prev.map(item => 
@@ -154,7 +124,7 @@ export default function SalesPurchasePage() {
       const newItem = {
         ...formData,
         id: Math.max(...data.map(item => item.id)) + 1
-      } as SalesPurchaseItem;
+      } as PurchaseItem;
       setData(prev => [...prev, newItem]);
     }
     setIsFormOpen(false);
@@ -171,14 +141,14 @@ export default function SalesPurchasePage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">Sales & Purchase Management</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Purchase Management</h2>
         <div className="flex flex-wrap gap-2">
           <button 
             onClick={handleAddNew}
             className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Add New
+            Add New Purchase
           </button>
           <button 
             onClick={handleImport}
@@ -205,7 +175,7 @@ export default function SalesPurchasePage() {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search records..."
+                  placeholder="Search purchase records..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -226,8 +196,7 @@ export default function SalesPurchasePage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer/Vendor</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -239,16 +208,7 @@ export default function SalesPurchasePage() {
             <tbody className="bg-white divide-y divide-gray-200">
               {data.map((item) => (
                 <tr key={item.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      item.type === 'Sale' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {item.type}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {item.type === 'Sale' ? item.customer : item.vendor}
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.vendor}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.amount)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(item.date).toLocaleDateString()}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -271,21 +231,21 @@ export default function SalesPurchasePage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.paymentMethod}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2 justify-end">
-                      <button 
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="flex justify-end space-x-2">
+                      <button
                         onClick={() => handleView(item)}
                         className="text-blue-600 hover:text-blue-900"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEdit(item)}
-                        className="text-green-600 hover:text-green-900"
+                        className="text-yellow-600 hover:text-yellow-900"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(item)}
                         className="text-red-600 hover:text-red-900"
                       >
@@ -304,7 +264,7 @@ export default function SalesPurchasePage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         onSubmit={handleFormSubmit}
-        title={selectedItem ? 'Edit Record' : 'Add New Record'}
+        title={selectedItem ? 'Edit Purchase Record' : 'Add New Purchase'}
         fields={formFields}
         initialData={selectedItem}
       />
@@ -312,10 +272,10 @@ export default function SalesPurchasePage() {
       <DataView
         isOpen={isViewOpen}
         onClose={() => setIsViewOpen(false)}
-        title="Record Details"
+        title="Purchase Details"
         fields={viewFields}
         data={selectedItem || {}}
       />
     </div>
   );
-}
+} 

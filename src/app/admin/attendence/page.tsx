@@ -2,15 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Clock, 
- 
   CheckCircle, 
   XCircle, 
   AlertCircle,
- 
   ArrowLeft,
   Users,
   TrendingUp,
- 
   Search,
  
 } from 'lucide-react';
