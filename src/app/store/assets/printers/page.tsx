@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
 import BackButton from '@/app/components/BackButton';
+
 interface Printer {
   id: string;
   name: string;
@@ -16,69 +17,230 @@ interface Printer {
   model?: string;
   serialNumber?: string;
   lastMaintenance?: Date;
+  itemCondition?: string; // For API compatibility
 }
 
+// API service functions
+const API_BASE_URL = 'http://localhost:8080/api/store/assets/printers';
+
+const printersAPI = {
+  // GET - Fetch all printer items
+  getAll: async (): Promise<Printer[]> => {
+    try {
+      const response = await fetch(API_BASE_URL);
+      if (!response.ok) throw new Error('Failed to fetch printers');
+      const data = await response.json();
+      
+      // Transform API response to match our interface
+      return data.map((item: any) => ({
+        ...item,
+        condition: item.itemCondition || item.condition,
+        lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date(),
+        purchaseDate: item.purchaseDate ? new Date(item.purchaseDate) : undefined,
+        lastMaintenance: item.lastMaintenance ? new Date(item.lastMaintenance) : undefined,
+      }));
+    } catch (error) {
+      console.error('Error fetching printers:', error);
+      return [];
+    }
+  },
+
+  // POST - Create new printer item
+  create: async (item: Omit<Printer, 'id' | 'lastUpdated'>): Promise<Printer | null> => {
+    try {
+      const payload = {
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        location: item.location,
+        itemCondition: item.condition,
+        lastUpdated: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+        ...(item.manufacturer && { manufacturer: item.manufacturer }),
+        ...(item.model && { model: item.model }),
+        ...(item.serialNumber && { serialNumber: item.serialNumber }),
+        ...(item.purchaseDate && { purchaseDate: item.purchaseDate.toISOString().split('T')[0] }),
+        ...(item.lastMaintenance && { lastMaintenance: item.lastMaintenance.toISOString().split('T')[0] }),
+      };
+
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to create printer');
+      const data = await response.json();
+      
+      return {
+        ...data,
+        condition: data.itemCondition || data.condition,
+        lastUpdated: new Date(),
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : item.purchaseDate,
+        lastMaintenance: data.lastMaintenance ? new Date(data.lastMaintenance) : item.lastMaintenance,
+      };
+    } catch (error) {
+      console.error('Error creating printer:', error);
+      return null;
+    }
+  },
+
+  // PUT - Update printer item
+  update: async (id: string, updates: Partial<Printer>): Promise<Printer | null> => {
+    try {
+      const payload = {
+        ...(updates.name && { name: updates.name }),
+        ...(updates.category && { category: updates.category }),
+        ...(updates.quantity !== undefined && { quantity: updates.quantity }),
+        ...(updates.location && { location: updates.location }),
+        ...(updates.condition && { itemCondition: updates.condition }),
+        lastUpdated: new Date().toISOString().split('T')[0],
+        ...(updates.manufacturer && { manufacturer: updates.manufacturer }),
+        ...(updates.model && { model: updates.model }),
+        ...(updates.serialNumber && { serialNumber: updates.serialNumber }),
+        ...(updates.purchaseDate && { purchaseDate: updates.purchaseDate.toISOString().split('T')[0] }),
+        ...(updates.lastMaintenance && { lastMaintenance: updates.lastMaintenance.toISOString().split('T')[0] }),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to update printer');
+      const data = await response.json();
+      
+      return {
+        ...data,
+        condition: data.itemCondition || data.condition,
+        lastUpdated: new Date(),
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
+        lastMaintenance: data.lastMaintenance ? new Date(data.lastMaintenance) : undefined,
+      };
+    } catch (error) {
+      console.error('Error updating printer:', error);
+      return null;
+    }
+  },
+
+  // DELETE - Remove printer item
+  delete: async (id: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error deleting printer:', error);
+      return false;
+    }
+  },
+};
+
 export default function PrintersPage() {
-  const [items, setItems] = useState<Printer[]>([
-    {
-      id: '1',
-      name: 'Laser Printer',
-      quantity: 5,
-      category: 'Printers',
-      location: 'Floor 1',
-      lastUpdated: new Date(),
-      condition: 'good',
-      purchaseDate: new Date('2023-03-15'),
-      manufacturer: 'HP',
-      model: 'LaserJet Pro',
-      serialNumber: 'SN456789',
-      lastMaintenance: new Date('2024-01-15'),
-    },
-    {
-      id: '2',
-      name: 'Scanner',
-      quantity: 2,
-      category: 'Scanners',
-      location: 'Floor 2',
-      lastUpdated: new Date(),
-      condition: 'new',
-      purchaseDate: new Date('2024-02-01'),
-      manufacturer: 'Epson',
-      model: 'Perfection V600',
-      serialNumber: 'SN789012',
-    },
-  ]);
+  const [items, setItems] = useState<Printer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = ['Printers', 'Scanners', 'Copiers', 'Fax Machines', 'Other'];
 
-  const handleAdd = (newItem: Omit<Printer, 'id' | 'lastUpdated'>) => {
-    setItems([
-      ...items,
-      {
-        ...newItem,
-        id: Math.random().toString(36).substr(2, 9),
-        lastUpdated: new Date(),
-      },
-    ]);
+  // Load printer items on component mount
+  useEffect(() => {
+    loadPrinters();
+  }, []);
+
+  const loadPrinters = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const printerItems = await printersAPI.getAll();
+      setItems(printerItems);
+    } catch (err) {
+      setError('Failed to load printer items');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEdit = (id: string, updatedItem: Partial<Printer>) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, ...updatedItem, lastUpdated: new Date() }
-          : item
-      )
+  const handleAdd = async (newItem: Omit<Printer, 'id' | 'lastUpdated'>) => {
+    try {
+      const createdItem = await printersAPI.create(newItem);
+      if (createdItem) {
+        setItems(prevItems => [...prevItems, createdItem]);
+      } else {
+        setError('Failed to create printer item');
+      }
+    } catch (err) {
+      setError('Failed to create printer item');
+      console.error(err);
+    }
+  };
+
+  const handleEdit = async (id: string, updatedItem: Partial<Printer>) => {
+    try {
+      const updated = await printersAPI.update(id, updatedItem);
+      if (updated) {
+        setItems(prevItems =>
+          prevItems.map(item =>
+            item.id === id ? { ...item, ...updated } : item
+          )
+        );
+      } else {
+        setError('Failed to update printer item');
+      }
+    } catch (err) {
+      setError('Failed to update printer item');
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await printersAPI.delete(id);
+      if (success) {
+        setItems(prevItems => prevItems.filter(item => item.id !== id));
+      } else {
+        setError('Failed to delete printer item');
+      }
+    } catch (err) {
+      setError('Failed to delete printer item');
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Loading printer items...</div>
+        </div>
+      </div>
     );
-  };
-
-  const handleDelete = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
+      <BackButton />
+      
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+          <button 
+            onClick={() => setError(null)}
+            className="ml-2 text-red-500 hover:text-red-700"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <ItemManagement
         title="Printers & Equipment"
         items={items}
@@ -89,4 +251,4 @@ export default function PrintersPage() {
       />
     </div>
   );
-} 
+}

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
 import BackButton from '@/app/components/BackButton';
+
 interface System {
   id: string;
   name: string;
@@ -15,68 +16,225 @@ interface System {
   manufacturer?: string;
   model?: string;
   serialNumber?: string;
+  itemCondition?: string; // For API compatibility
 }
 
+// API service functions
+const API_BASE_URL = 'http://localhost:8080/api/store/assets/printers';
+
+const systemsAPI = {
+  // GET - Fetch all system items
+  getAll: async (): Promise<System[]> => {
+    try {
+      const response = await fetch(API_BASE_URL);
+      if (!response.ok) throw new Error('Failed to fetch systems');
+      const data = await response.json();
+      
+      // Transform API response to match our interface
+      return data.map((item: any) => ({
+        ...item,
+        condition: item.itemCondition || item.condition,
+        lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date(),
+        purchaseDate: item.purchaseDate ? new Date(item.purchaseDate) : undefined,
+      }));
+    } catch (error) {
+      console.error('Error fetching systems:', error);
+      return [];
+    }
+  },
+
+  // POST - Create new system item
+  create: async (item: Omit<System, 'id' | 'lastUpdated'>): Promise<System | null> => {
+    try {
+      const payload = {
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        location: item.location,
+        itemCondition: item.condition,
+        lastUpdated: new Date().toISOString().split('T')[0], // Format: YYYY-MM-DD
+        ...(item.manufacturer && { manufacturer: item.manufacturer }),
+        ...(item.model && { model: item.model }),
+        ...(item.serialNumber && { serialNumber: item.serialNumber }),
+        ...(item.purchaseDate && { purchaseDate: item.purchaseDate.toISOString().split('T')[0] }),
+      };
+
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to create system');
+      const data = await response.json();
+      
+      return {
+        ...data,
+        condition: data.itemCondition || data.condition,
+        lastUpdated: new Date(),
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : item.purchaseDate,
+      };
+    } catch (error) {
+      console.error('Error creating system:', error);
+      return null;
+    }
+  },
+
+  // PUT - Update system item
+  update: async (id: string, updates: Partial<System>): Promise<System | null> => {
+    try {
+      const payload = {
+        ...(updates.name && { name: updates.name }),
+        ...(updates.category && { category: updates.category }),
+        ...(updates.quantity !== undefined && { quantity: updates.quantity }),
+        ...(updates.location && { location: updates.location }),
+        ...(updates.condition && { itemCondition: updates.condition }),
+        lastUpdated: new Date().toISOString().split('T')[0],
+        ...(updates.manufacturer && { manufacturer: updates.manufacturer }),
+        ...(updates.model && { model: updates.model }),
+        ...(updates.serialNumber && { serialNumber: updates.serialNumber }),
+        ...(updates.purchaseDate && { purchaseDate: updates.purchaseDate.toISOString().split('T')[0] }),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) throw new Error('Failed to update system');
+      const data = await response.json();
+      
+      return {
+        ...data,
+        condition: data.itemCondition || data.condition,
+        lastUpdated: new Date(),
+        purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
+      };
+    } catch (error) {
+      console.error('Error updating system:', error);
+      return null;
+    }
+  },
+
+  // DELETE - Remove system item
+  delete: async (id: string): Promise<boolean> => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error deleting system:', error);
+      return false;
+    }
+  },
+};
+
 export default function SystemsPage() {
-  const [items, setItems] = useState<System[]>([
-    {
-      id: '1',
-      name: 'Desktop Computer',
-      quantity: 20,
-      category: 'Computers',
-      location: 'Floor 1',
-      lastUpdated: new Date(),
-      condition: 'good',
-      purchaseDate: new Date('2023-06-15'),
-      manufacturer: 'Dell',
-      model: 'OptiPlex 7090',
-      serialNumber: 'SN123456',
-    },
-    {
-      id: '2',
-      name: 'Laptop',
-      quantity: 10,
-      category: 'Portable',
-      location: 'Floor 2',
-      lastUpdated: new Date(),
-      condition: 'new',
-      purchaseDate: new Date('2024-01-01'),
-      manufacturer: 'Lenovo',
-      model: 'ThinkPad X1',
-      serialNumber: 'SN789012',
-    },
-  ]);
+  const [items, setItems] = useState<System[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const categories = ['Computers', 'Portable', 'Servers', 'Networking', 'Other'];
 
-  const handleAdd = (newItem: Omit<System, 'id' | 'lastUpdated'>) => {
-    setItems([
-      ...items,
-      {
-        ...newItem,
-        id: Math.random().toString(36).substr(2, 9),
-        lastUpdated: new Date(),
-      },
-    ]);
+  // Load system items on component mount
+  useEffect(() => {
+    loadSystems();
+  }, []);
+
+  const loadSystems = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const systemItems = await systemsAPI.getAll();
+      setItems(systemItems);
+    } catch (err) {
+      setError('Failed to load system items');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleEdit = (id: string, updatedItem: Partial<System>) => {
-    setItems(
-      items.map((item) =>
-        item.id === id
-          ? { ...item, ...updatedItem, lastUpdated: new Date() }
-          : item
-      )
+  const handleAdd = async (newItem: Omit<System, 'id' | 'lastUpdated'>) => {
+    try {
+      const createdItem = await systemsAPI.create(newItem);
+      if (createdItem) {
+        setItems(prevItems => [...prevItems, createdItem]);
+      } else {
+        setError('Failed to create system item');
+      }
+    } catch (err) {
+      setError('Failed to create system item');
+      console.error(err);
+    }
+  };
+
+  const handleEdit = async (id: string, updatedItem: Partial<System>) => {
+    try {
+      const updated = await systemsAPI.update(id, updatedItem);
+      if (updated) {
+        setItems(prevItems =>
+          prevItems.map(item =>
+            item.id === id ? { ...item, ...updated } : item
+          )
+        );
+      } else {
+        setError('Failed to update system item');
+      }
+    } catch (err) {
+      setError('Failed to update system item');
+      console.error(err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      const success = await systemsAPI.delete(id);
+      if (success) {
+        setItems(prevItems => prevItems.filter(item => item.id !== id));
+      } else {
+        setError('Failed to delete system item');
+      }
+    } catch (err) {
+      setError('Failed to delete system item');
+      console.error(err);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton />
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Loading system items...</div>
+        </div>
+      </div>
     );
-  };
-
-  const handleDelete = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <BackButton />
+      <BackButton />
+      
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+          <button 
+            onClick={() => setError(null)}
+            className="ml-2 text-red-500 hover:text-red-700"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       <ItemManagement
         title="Office Systems"
         items={items}
@@ -87,4 +245,4 @@ export default function SystemsPage() {
       />
     </div>
   );
-} 
+}
