@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Download, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
@@ -8,45 +8,178 @@ import DataView, { ViewField } from '../components/DataView';
 interface CADocument {
   id: number;
   documentNumber: string;
-  clientName: string;
+  client: string;
   amount: number;
   date: string;
-  status: 'active' | 'expired' | 'pending';
   description: string;
+  status: 'active' | 'inactive' | 'pending';
 }
 
-const sampleData: CADocument[] = [
-  { id: 1, documentNumber: 'CA-2024-001', clientName: 'ABC Corp', amount: 5000.00, date: '2024-04-15', status: 'active', description: 'Annual Contract' },
-  { id: 2, documentNumber: 'CA-2024-002', clientName: 'XYZ Ltd', amount: 7500.00, date: '2024-04-20', status: 'pending', description: 'Service Agreement' },
-  { id: 3, documentNumber: 'CA-2024-003', clientName: 'DEF Inc', amount: 10000.00, date: '2024-04-10', status: 'expired', description: 'Consulting Contract' }
-];
+// Type-safe wrapper for DataView
+function CADataView({ isOpen, onClose, data, fields, title }: {
+  isOpen: boolean;
+  onClose: () => void;
+  data: CADocument;
+  fields: ViewField[];
+  title: string;
+}) {
+  const viewData = {
+    ...data,
+    id: data.id.toString(),
+    amount: data.amount.toString(),
+    status: data.status
+  };
+
+  return (
+    <DataView
+      isOpen={isOpen}
+      onClose={onClose}
+      data={viewData}
+      fields={fields}
+      title={title}
+    />
+  );
+}
 
 const formFields: FormField[] = [
   { name: 'documentNumber', label: 'Document Number', type: 'text', required: true },
-  { name: 'clientName', label: 'Client', type: 'text', required: true },
+  { name: 'client', label: 'Client', type: 'text', required: true },
   { name: 'amount', label: 'Amount', type: 'number', required: true },
   { name: 'date', label: 'Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['active', 'expired', 'pending'], required: true },
-  { name: 'description', label: 'Description', type: 'text', required: true }
+  { name: 'description', label: 'Description', type: 'text', required: true },
+  { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending'], required: true }
 ];
 
 const viewFields: ViewField[] = [
   { name: 'documentNumber', label: 'Document Number', type: 'text' },
-  { name: 'clientName', label: 'Client', type: 'text' },
+  { name: 'client', label: 'Client', type: 'text' },
   { name: 'amount', label: 'Amount', type: 'currency' },
   { name: 'date', label: 'Date', type: 'date' },
-  { name: 'status', label: 'Status', type: 'status' },
-  { name: 'description', label: 'Description', type: 'text' }
+  { name: 'description', label: 'Description', type: 'text' },
+  { name: 'status', label: 'Status', type: 'status' }
 ];
+
+const API_BASE_URL = 'http://localhost:8080/api/cadocuments';
 
 export default function CAPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<'all' | CADocument['status']>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CADocument | null>(null);
-  const [data, setData] = useState<CADocument[]>(sampleData);
+  const [data, setData] = useState<CADocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(API_BASE_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const fetchedRawData: any[] = await response.json();
+  
+      const processedData: CADocument[] = fetchedRawData.map(rawItem => ({
+        id: rawItem.id,
+        documentNumber: rawItem.documentNumber || '',
+        client: rawItem.client || '',
+        amount: parseFloat(rawItem.amount) || 0,
+        date: rawItem.date || '',
+        description: rawItem.description || '',
+        status: rawItem.status || 'pending'
+      }));
+  
+      setData(processedData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createItem = async (formData: Omit<CADocument, 'id'>) => {
+    setError(null);
+    try {
+      const payloadToSend = {
+        documentNumber: formData.documentNumber,
+        client: formData.client,
+        amount: formData.amount,
+        date: formData.date,
+        description: formData.description,
+        status: formData.status
+      };
+  
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payloadToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const updateItem = async (id: number, formData: Omit<CADocument, 'id'>) => {
+    setError(null);
+    try {
+      const payloadToSend = {
+        documentNumber: formData.documentNumber,
+        client: formData.client,
+        amount: formData.amount,
+        date: formData.date,
+        description: formData.description,
+        status: formData.status
+      };
+
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payloadToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const deleteItem = async (id: number) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleAddNew = () => {
     setSelectedItem(null);
@@ -63,34 +196,26 @@ export default function CAPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      setData(prev => prev.filter(item => item.id !== id));
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Are you sure you want to delete this document?')) {
+      await deleteItem(id);
     }
   };
 
-  const handleFormSubmit = (formData: Omit<CADocument, 'id'>) => {
+  const handleFormSubmit = async (formData: Omit<CADocument, 'id'>) => {
     if (selectedItem) {
-      // Edit existing item
-      setData(prev => prev.map(item => 
-        item.id === selectedItem.id ? { ...item, ...formData } : item
-      ));
+      await updateItem(selectedItem.id, formData);
     } else {
-      // Add new item
-      const newItem: CADocument = {
-        id: Math.max(...data.map(item => item.id)) + 1,
-        ...formData
-      };
-      setData(prev => [...prev, newItem]);
+      await createItem(formData);
     }
     setIsFormOpen(false);
     setSelectedItem(null);
   };
 
   const filteredData = data.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.documentNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus = selectedStatus === 'all' || item.status === selectedStatus;
@@ -99,11 +224,11 @@ export default function CAPage() {
   });
 
   const handleExport = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + "Document Number,Client,Amount,Date,Description,Status\n"
       + data.map(item => [
         item.documentNumber,
-        item.clientName,
+        item.client,
         item.amount,
         item.date,
         item.description,
@@ -113,7 +238,7 @@ export default function CAPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "ca_data.csv");
+    link.setAttribute("download", "ca_documents.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -123,10 +248,10 @@ export default function CAPage() {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800';
+      case 'inactive':
+        return 'bg-red-100 text-red-800';
       case 'pending':
         return 'bg-yellow-100 text-yellow-800';
-      case 'expired':
-        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -135,7 +260,7 @@ export default function CAPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold text-gray-900">CA Documents</h2>
+        <h2 className="text-2xl font-bold text-gray-900">CA Documents Management</h2>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={handleAddNew}
@@ -154,7 +279,7 @@ export default function CAPage() {
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-4 mt-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -176,7 +301,7 @@ export default function CAPage() {
             Filter
           </button>
           {showFilter && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
               <div className="py-1">
                 <button
                   onClick={() => {
@@ -202,6 +327,17 @@ export default function CAPage() {
                 </button>
                 <button
                   onClick={() => {
+                    setSelectedStatus('inactive');
+                    setShowFilter(false);
+                  }}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    selectedStatus === 'inactive' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                  }`}
+                >
+                  Inactive
+                </button>
+                <button
+                  onClick={() => {
                     setSelectedStatus('pending');
                     setShowFilter(false);
                   }}
@@ -211,98 +347,98 @@ export default function CAPage() {
                 >
                   Pending
                 </button>
-                <button
-                  onClick={() => {
-                    setSelectedStatus('expired');
-                    setShowFilter(false);
-                  }}
-                  className={`block w-full text-left px-4 py-2 text-sm ${
-                    selectedStatus === 'expired' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                  }`}
-                >
-                  Expired
-                </button>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Document Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Client
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredData.map((item) => (
-              <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.documentNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.clientName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${item.amount.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(item.date).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.description}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleView(item)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="text-yellow-600 hover:text-yellow-900 mr-4"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </td>
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-600">Loading CA documents...</div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-600">Error: {error}</div>
+      ) : (
+        <div className="mt-6 overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Document Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Client
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Description
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredData.map((item) => (
+                <tr key={item.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.documentNumber}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.client}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {typeof item.amount === 'number' 
+                      ? `$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '$0.00'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(item.date).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.description}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleView(item)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="text-yellow-600 hover:text-yellow-900 mr-4"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredData.length === 0 && !isLoading && !error && (
+            <p className="text-center py-8 text-gray-500">No CA documents found.</p>
+          )}
+        </div>
+      )}
 
       <DataForm<CADocument>
         isOpen={isFormOpen}
@@ -316,16 +452,15 @@ export default function CAPage() {
         initialData={selectedItem}
       />
 
-      <DataView<CADocument>
-        isOpen={isViewOpen}
-        onClose={() => {
-          setIsViewOpen(false);
-          setSelectedItem(null);
-        }}
-        data={selectedItem || {} as CADocument}
-        fields={viewFields}
-        title="CA Document Details"
-      />
+      {isViewOpen && selectedItem && (
+        <CADataView
+          isOpen={isViewOpen}
+          onClose={() => setIsViewOpen(false)}
+          data={selectedItem}
+          fields={viewFields}
+          title="CA Document Details"
+        />
+      )}
     </div>
   );
 } 

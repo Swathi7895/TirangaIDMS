@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus,  Download, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Download, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
 
@@ -23,7 +23,6 @@ function BillingDataView({ isOpen, onClose, data, fields, title }: {
   fields: ViewField[];
   title: string;
 }) {
-  // Convert BillingItem to a type that DataView can accept
   const viewData = {
     ...data,
     id: data.id.toString(),
@@ -60,6 +59,8 @@ const viewFields: ViewField[] = [
   { name: 'description', label: 'Type', type: 'text' }
 ];
 
+const API_BASE_URL = 'http://localhost:8080/api/billings';
+
 export default function BillingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
@@ -67,11 +68,121 @@ export default function BillingPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<BillingItem | null>(null);
-  const [data, setData] = useState<BillingItem[]>([
-    { id: 1, invoiceNumber: 'INV-2024-001', clientName: 'ABC Corp', amount: 5000.00, date: '2024-04-15', status: 'paid', description: 'Invoice' },
-    { id: 2, invoiceNumber: 'INV-2024-002', clientName: 'XYZ Ltd', amount: 7500.00, date: '2024-04-20', status: 'pending', description: 'Invoice' },
-    { id: 3, invoiceNumber: 'CN-2024-001', clientName: 'DEF Inc', amount: -1500.00, date: '2024-04-10', status: 'overdue', description: 'Credit Note' }
-  ]);
+  const [data, setData] = useState<BillingItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // --- API Functions ---
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(API_BASE_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const fetchedRawData: any[] = await response.json();
+  
+      const processedData: BillingItem[] = fetchedRawData.map(rawItem => ({
+        id: rawItem.id,
+        invoiceNumber: rawItem.invoiceNumber || '',
+        clientName: rawItem.client || '',
+        amount: parseFloat(rawItem.amount) || 0,
+        date: rawItem.dueDate || '',
+        status: rawItem.status || 'pending',
+        description: rawItem.type || ''
+      }));
+  
+      setData(processedData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const createItem = async (formData: Omit<BillingItem, 'id'>) => {
+    setError(null);
+    try {
+      const payloadToSend = {
+        invoiceNumber: formData.invoiceNumber,
+        client: formData.clientName,
+        amount: formData.amount,
+        dueDate: formData.date,
+        type: formData.description,
+        status: formData.status
+      };
+  
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payloadToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchData(); // Refresh the data after creating
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const updateItem = async (id: number, formData: Omit<BillingItem, 'id'>) => {
+    setError(null);
+    try {
+      const payloadToSend = {
+        invoiceNumber: formData.invoiceNumber,
+        client: formData.clientName,
+        amount: formData.amount,
+        dueDate: formData.date,
+        type: formData.description,
+        status: formData.status
+      };
+
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payloadToSend),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchData(); // Refresh the data after updating
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const deleteItem = async (id: number) => {
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await fetchData(); // Refresh the data after deleting
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  // --- useEffect to fetch data on component mount ---
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const handleAddNew = () => {
     setSelectedItem(null);
@@ -88,32 +199,24 @@ export default function BillingPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      setData(prev => prev.filter(item => item.id !== id));
+      await deleteItem(id);
     }
   };
 
-  const handleFormSubmit = (formData: Omit<BillingItem, 'id'>) => {
+  const handleFormSubmit = async (formData: Omit<BillingItem, 'id'>) => {
     if (selectedItem) {
-      // Edit existing item
-      setData(prev => prev.map(item => 
-        item.id === selectedItem.id ? { ...item, ...formData } : item
-      ));
+      await updateItem(selectedItem.id, formData);
     } else {
-      // Add new item
-      const newItem: BillingItem = {
-        id: Math.max(...data.map(item => item.id)) + 1,
-        ...formData
-      };
-      setData(prev => [...prev, newItem]);
+      await createItem(formData);
     }
     setIsFormOpen(false);
     setSelectedItem(null);
   };
 
   const filteredData = data.filter(item => {
-    const matchesSearch = 
+    const matchesSearch =
       item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -124,7 +227,7 @@ export default function BillingPage() {
   });
 
   const handleExport = () => {
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
       + "Invoice Number,Client,Amount,Due Date,Type,Status\n"
       + data.map(item => [
         item.invoiceNumber,
@@ -179,7 +282,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row gap-4 mt-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
@@ -201,7 +304,7 @@ export default function BillingPage() {
             Filter
           </button>
           {showFilter && (
-            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+            <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
               <div className="py-1">
                 <button
                   onClick={() => {
@@ -253,81 +356,92 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="mt-6 overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Invoice Number
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Client
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Due Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredData.map((item) => (
-              <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.invoiceNumber}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.clientName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${item.amount.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {new Date(item.date).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.description}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
-                    {item.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleView(item)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="text-yellow-600 hover:text-yellow-900 mr-4"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </td>
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-600">Loading billing data...</div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-600">Error: {error}</div>
+      ) : (
+        <div className="mt-6 overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Invoice Number
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Client
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Due Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredData.map((item) => (
+                <tr key={item.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.invoiceNumber}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.clientName}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {typeof item.amount === 'number' 
+                      ? `$${item.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                      : '$0.00'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {new Date(item.date).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {item.description}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item.status)}`}>
+                      {item.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button
+                      onClick={() => handleView(item)}
+                      className="text-blue-600 hover:text-blue-900 mr-4"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="text-yellow-600 hover:text-yellow-900 mr-4"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-600 hover:text-red-900"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredData.length === 0 && !isLoading && !error && (
+            <p className="text-center py-8 text-gray-500">No billing items found.</p>
+          )}
+        </div>
+      )}
 
       <DataForm<BillingItem>
         isOpen={isFormOpen}
@@ -338,7 +452,13 @@ export default function BillingPage() {
         onSubmit={handleFormSubmit}
         title={selectedItem ? 'Edit Billing Item' : 'Add Billing Item'}
         fields={formFields}
-        initialData={selectedItem}
+        initialData={selectedItem ? {
+          ...selectedItem,
+          // Ensure initialData matches form field names if different from BillingItem
+          clientName: selectedItem.clientName,
+          date: selectedItem.date,
+          description: selectedItem.description
+        } : undefined}
       />
 
       {isViewOpen && selectedItem && (
@@ -352,4 +472,4 @@ export default function BillingPage() {
       )}
     </div>
   );
-} 
+}

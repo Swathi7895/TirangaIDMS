@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState,useEffect, useCallback } from 'react';
 import AdminStore from '@/app/components/AdminStore';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -15,29 +15,75 @@ interface StationaryItem {
   condition: 'new' | 'good' | 'fair' | 'poor';
 }
 
-export default function RegularStationaryPage() {
-  const [items] = useState<StationaryItem[]>([
-    {
-      id: '1',
-      name: 'A4 Paper',
-      quantity: 5000,
-      category: 'Paper',
-      location: 'Storage Room A',
-      lastUpdated: new Date(),
-      condition: 'new',
-    },
-    {
-      id: '2',
-      name: 'Blue Pens',
-      quantity: 100,
-      category: 'Writing',
-      location: 'Storage Room B',
-      lastUpdated: new Date(),
-      condition: 'good',
-    },
-  ]);
+interface ApiStationaryItem {
+  id: number;
+  name: string;
+  quantity: number;
+  category: string;
+  location: string;
+  itemCondition: string | null;
+  lastUpdated: [number, number, number]; // [year, month, day]
+}
 
-  const categories = ['Paper', 'Writing', 'Desk Accessories', 'Binders', 'Other'];
+interface ApiRequestBody {
+  name: string;
+  category: string;
+  quantity: number;
+  location: string;
+  Condition: string;
+  lastUpdated: string;
+}
+
+const API_BASE_URL = 'http://localhost:8080/api/store/stationary/regular';
+
+export default function RegularStationaryPage() {
+  const [items, setItems] = useState<StationaryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const categories = ['Paper', 'Writing', 'Desk Accessories', 'Binders', 'Seating', 'Other'];
+
+  // Helper function to convert API response to local format
+  const convertApiToLocal = (apiItem: ApiStationaryItem): StationaryItem => {
+    const [year, month, day] = apiItem.lastUpdated;
+    return {
+      id: apiItem.id.toString(),
+      name: apiItem.name,
+      quantity: apiItem.quantity,
+      category: apiItem.category,
+      location: apiItem.location,
+      lastUpdated: new Date(year, month - 1, day), // month is 0-indexed in JS Date
+      condition: (apiItem.itemCondition?.toLowerCase() as 'new' | 'good' | 'fair' | 'poor') || 'good',
+    };
+  };
+
+
+  // Fetch all items
+  const fetchItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(API_BASE_URL);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: ApiStationaryItem[] = await response.json();
+      const convertedItems = data.map(convertApiToLocal);
+      setItems(convertedItems);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch items');
+      console.error('Error fetching items:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Load items on component mount
+  useEffect(() => {
+    fetchItems();
+  }, [fetchItems]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

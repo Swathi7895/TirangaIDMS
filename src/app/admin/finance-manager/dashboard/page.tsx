@@ -58,7 +58,9 @@ export default function FinanceManagerDashboard() {
     { name: 'Savings', value: '₹45,000', change: '+15%', icon: ArrowTrendingUpIcon },
   ];
 
-return (
+
+
+  return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
        <div>
      <Link href="/admin" className="flex items-center text-gray-600 hover:text-gray-900">
@@ -129,7 +131,7 @@ return (
                   </div>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent rounded-full -mr-16 -mt-16"></div>
                 </div>
-
+   
                 {/* Features Grid */}
                 <div className="p-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
