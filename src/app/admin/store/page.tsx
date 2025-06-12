@@ -1,8 +1,7 @@
 'use client';
 
-
 import Link from 'next/link';
-import { 
+import {
   ShoppingCartIcon,
   ClipboardDocumentCheckIcon,
   ExclamationTriangleIcon,
@@ -13,35 +12,26 @@ import {
   BeakerIcon,
   PaintBrushIcon,
   WrenchScrewdriverIcon,
- 
   CubeTransparentIcon,
   ChartBarIcon,
   BuildingOfficeIcon,
   TableCellsIcon,
   CpuChipIcon,
   PrinterIcon,
-
   PencilSquareIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline';
-import { 
- 
-  ArrowLeft,
- 
-} from 'lucide-react';
-
+import { ArrowLeft } from 'lucide-react';
 
 export default function StoreDashboard() {
-
-
   const sections = [
     {
       title: "Stationary",
       description: "Manage office supplies and daily consumables",
       icon: PencilSquareIcon,
       color: "blue",
-      gradient: "from-blue-500 to-blue-600",
-      bgColor: "bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20",
+      gradient: "from-blue-400 to-blue-500", // Slightly less saturated
+      bgColor: "bg-gradient-to-br from-blue-50/70 to-blue-100/70 dark:from-blue-950/40 dark:to-blue-900/40", // More translucent
       items: [
         {
           title: "Regular Usage",
@@ -68,8 +58,8 @@ export default function StoreDashboard() {
       description: "Laboratory equipment and supplies management",
       icon: BeakerIcon,
       color: "emerald",
-      gradient: "from-emerald-500 to-emerald-600",
-      bgColor: "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/30 dark:to-emerald-800/20",
+      gradient: "from-emerald-400 to-emerald-500", // Slightly less saturated
+      bgColor: "bg-gradient-to-br from-emerald-50/70 to-emerald-100/70 dark:from-emerald-950/40 dark:to-emerald-900/40", // More translucent
       items: [
         {
           title: "Instruments",
@@ -102,8 +92,8 @@ export default function StoreDashboard() {
       description: "Manage permanent office equipment and furniture",
       icon: BuildingOfficeIcon,
       color: "purple",
-      gradient: "from-purple-500 to-purple-600",
-      bgColor: "bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20",
+      gradient: "from-purple-400 to-purple-500", // Slightly less saturated
+      bgColor: "bg-gradient-to-br from-purple-50/70 to-purple-100/70 dark:from-purple-950/40 dark:to-purple-900/40", // More translucent
       items: [
         {
           title: "Furniture",
@@ -123,7 +113,6 @@ export default function StoreDashboard() {
           href: "/admin/store/assets/printers",
           icon: PrinterIcon
         },
-       
       ]
     }
   ];
@@ -131,73 +120,74 @@ export default function StoreDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div>
-     <Link href="/admin" className="flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
-            </Link>
-            </div>
+        <div className="mb-8"> {/* Adjusted spacing for back link */}
+          <Link href="/admin" className="inline-flex items-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors duration-200">
+            <ArrowLeft className="w-4 h-4 mr-2" /> {/* Slightly smaller icon */}
+            Back to Dashboard
+          </Link>
+        </div>
+
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg transform hover:scale-105 transition-transform duration-300">
-            <ShoppingCartIcon className="w-10 h-10 text-white" />
+        <div className="text-center mb-16"> {/* Increased bottom margin */}
+          <div className="inline-flex items-center justify-center w-18 h-18 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl mb-6 shadow-xl transform hover:scale-105 transition-transform duration-300"> {/* Slightly smaller, rounded-2xl */}
+            <ShoppingCartIcon className="w-9 h-9 text-white" /> {/* Icon slightly smaller */}
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-4 leading-tight"> {/* Removed text gradient for simplicity and readability */}
             Store Management
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            Comprehensive inventory management system for all your business needs
+          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light"> {/* Lighter font-weight */}
+            Comprehensive inventory management system for all your business needs.
           </p>
         </div>
 
         {/* Quick Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16"> {/* Increased gap and margin */}
           {[
-            { 
-              label: "Total Items", 
-              value: "2,847", 
-              change: "+12%", 
+            {
+              label: "Total Items",
+              value: "2,847",
+              change: "+12%",
               color: "blue",
               icon: ClipboardDocumentCheckIcon
             },
-            { 
-              label: "Active Assets", 
-              value: "156", 
-              change: "+5%", 
+            {
+              label: "Active Assets",
+              value: "156",
+              change: "+5%",
               color: "emerald",
               icon: BuildingOfficeIcon
             },
-            { 
-              label: "Low Stock Alerts", 
-              value: "23", 
-              change: "-8%", 
+            {
+              label: "Low Stock Alerts",
+              value: "23",
+              change: "-8%",
               color: "amber",
               icon: ExclamationTriangleIcon
             },
-            { 
-              label: "Monthly Requests", 
-              value: "89", 
-              change: "+18%", 
+            {
+              label: "Monthly Requests",
+              value: "89",
+              change: "+18%",
               color: "purple",
               icon: ClipboardIcon
             }
           ].map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div key={index} className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-lg border border-slate-200/50 dark:border-slate-700/50 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center justify-between">
+              <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"> {/* rounded-xl, shadow-sm, subtle border */}
+                <div className="flex items-start justify-between"> {/* Align to start for better icon positioning */}
                   <div>
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-5 h-5 text-${stat.color}-500`} />
-                      <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">{stat.label}</p>
+                    <div className="flex items-center gap-2 mb-2"> {/* Added mb-2 for space */}
+                      <Icon className={`w-5 h-5 text-${stat.color}-500`} /> {/* Icon color kept for distinction */}
+                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium tracking-wide">{stat.label}</p> {/* Slightly muted text, tracking wide */}
                     </div>
-                    <p className="text-2xl font-bold text-slate-800 dark:text-white mt-2">{stat.value}</p>
+                    <p className="text-3xl font-bold text-slate-800 dark:text-white">{stat.value}</p> {/* Larger value */}
                   </div>
-                  <div className={`text-sm font-semibold ${
-                    stat.change.startsWith('+') 
-                      ? 'text-emerald-600 dark:text-emerald-400' 
-                      : 'text-red-600 dark:text-red-400'
-                  }`}>
+                  <div className={`text-xs font-semibold px-2 py-1 rounded-full ${ // Smaller font, pill shape
+                    stat.change.startsWith('+')
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                    }`}>
                     {stat.change}
                   </div>
                 </div>
@@ -206,51 +196,49 @@ export default function StoreDashboard() {
           })}
         </div>
 
-      
-
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8"> {/* Consistent gap */}
           {sections.map((section, sectionIndex) => {
             const IconComponent = section.icon;
             return (
               <div key={sectionIndex} className="group">
-                <div className={`${section.bgColor} rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm transform hover:-translate-y-1`}>
+                <div className={`${section.bgColor} rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-transparent dark:border-slate-700/50 transform hover:-translate-y-1`}> {/* Rounded-2xl, subtle border on dark, no border on light */}
                   {/* Section Header */}
                   <div className="flex items-center mb-6">
-                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-r ${section.gradient} flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
-                      <IconComponent className="w-7 h-7 text-white" />
+                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${section.gradient} flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-300`}> {/* Slightly smaller, rounded-xl */}
+                      <IconComponent className="w-6 h-6 text-white" /> {/* Icon slightly smaller */}
                     </div>
                     <div className="ml-4">
                       <h2 className="text-xl font-bold text-slate-800 dark:text-white">
                         {section.title}
                       </h2>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 font-light"> {/* Lighter font for description */}
                         {section.description}
                       </p>
                     </div>
                   </div>
 
                   {/* Section Items */}
-                  <div className="space-y-3">
+                  <div className="space-y-4"> {/* Increased space between items */}
                     {section.items.map((item, itemIndex) => {
                       const ItemIcon = item.icon;
                       return (
-                        <Link 
+                        <Link
                           key={itemIndex}
-                          href={item.href} 
+                          href={item.href}
                           className="group/item block"
                         >
-                          <div className="bg-white/70 dark:bg-slate-700/50 backdrop-blur-sm rounded-xl p-4 hover:bg-white dark:hover:bg-slate-700 transition-all duration-200 border border-white/50 dark:border-slate-600/30 hover:shadow-md hover:scale-[1.02]">
+                          <div className="bg-white/70 dark:bg-slate-700/50 backdrop-blur-sm rounded-xl p-4 hover:bg-slate-50/80 dark:hover:bg-slate-700 transition-all duration-200 border border-slate-100 dark:border-slate-600/30 hover:shadow-md hover:scale-[1.02]"> {/* Softer hover background, slightly stronger border */}
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${section.gradient} flex items-center justify-center shadow-sm transform group-hover/item:scale-110 transition-transform duration-300`}>
-                                  <ItemIcon className="w-5 h-5 text-white" />
+                                <div className={`w-9 h-9 rounded-lg bg-gradient-to-r ${section.gradient} flex items-center justify-center shadow-sm transform group-hover/item:scale-105 transition-transform duration-300`}> {/* Slightly smaller icon container */}
+                                  <ItemIcon className="w-4 h-4 text-white" /> {/* Icon slightly smaller */}
                                 </div>
                                 <div>
                                   <h3 className="font-semibold text-slate-800 dark:text-white group-hover/item:text-slate-900 dark:group-hover/item:text-slate-100 transition-colors">
                                     {item.title}
                                   </h3>
-                                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                                  <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5 font-light"> {/* Lighter font for description */}
                                     {item.description}
                                   </p>
                                 </div>

@@ -2,7 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
+// You might import an icon library or define your own SVG here
+// import { AdminIcon } from './icons'; // Example: if you have an AdminIcon component
 
 export default function StoreLayout({
   children,
@@ -12,7 +13,6 @@ export default function StoreLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated and is an HR user
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     const userRole = localStorage.getItem('userRole');
 
@@ -30,21 +30,19 @@ export default function StoreLayout({
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Navigation Bar */}
-      <nav className="bg-white dark:bg-gray-800 shadow-lg">
+      <nav className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg"> {/* Gradient background */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  Admin
-                </h1>
-              </div>
-            
+          <div className="flex justify-between items-center h-16">
+            <div className="flex-shrink-0 flex items-center space-x-2"> {/* Added space-x-2 for icon */}
+              {/* <AdminIcon className="h-6 w-6 text-white" /> Uncomment and replace with actual icon */}
+              <h1 className="text-2xl font-extrabold text-white tracking-wide">
+                Admin Portal
+              </h1>
             </div>
             <div className="flex items-center">
               <button
                 onClick={handleLogout}
-                className="ml-4 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="px-6 py-2 border-2 border-white text-sm font-semibold rounded-full text-white hover:bg-white hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition ease-in-out duration-300" // Styled as a pill button with inverse hover
               >
                 Logout
               </button>
@@ -57,4 +55,4 @@ export default function StoreLayout({
       <main>{children}</main>
     </div>
   );
-} 
+}

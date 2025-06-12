@@ -1,121 +1,117 @@
 'use client';
 
-
 import Link from 'next/link';
-import { 
-  Calendar, 
-  Package, 
-  Users, 
-  Database, 
-  DollarSign, 
-  FileText, 
+import {
+  Calendar,
+  Package,
+  Users,
+  Database,
+  DollarSign,
+  FileText,
   MessageSquare,
   ChevronRight,
   Activity,
-
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-
-
   const dashboardItems = [
     {
       id: 'attendance',
       title: 'Attendance',
       icon: Calendar,
       color: 'blue',
-      gradient: 'from-blue-500 to-cyan-500',
-      bgGradient: 'from-blue-50 to-cyan-50',
-      darkBgGradient: 'from-blue-900/20 to-cyan-900/20',
+      gradient: 'from-blue-500 to-blue-600', // Solid gradient for icons
+      bgOpacity: 'bg-blue-500/10', // Consistent opacity for card background
+      darkBgOpacity: 'dark:bg-blue-600/10',
       items: ['Daily', 'Weekly', 'Monthly', 'Yearly', 'Attendance Summary'],
-      href: '/admin/attendence'
+      href: '/admin/attendence',
     },
     {
       id: 'store',
       title: 'Store',
       icon: Package,
       color: 'green',
-      gradient: 'from-green-500 to-emerald-500',
-      bgGradient: 'from-green-50 to-emerald-50',
-      darkBgGradient: 'from-green-900/20 to-emerald-900/20',
-      items: ['House Keeping/Stationary', 'Lab Materials', 'Fixed Office Assets'],
-      href: '/admin/store'
+      gradient: 'from-green-500 to-green-600',
+      bgOpacity: 'bg-green-500/10',
+      darkBgOpacity: 'dark:bg-green-600/10',
+      items: ['House Keeping/Stationary', 'Lab Materials', 'Capital Office Assets'],
+      href: '/admin/store',
     },
     {
       id: 'hr',
       title: 'HR',
       icon: Users,
       color: 'amber',
-      gradient: 'from-amber-500 to-orange-500',
-      bgGradient: 'from-amber-50 to-orange-50',
-      darkBgGradient: 'from-amber-900/20 to-orange-900/20',
+      gradient: 'from-amber-500 to-amber-600',
+      bgOpacity: 'bg-amber-500/10',
+      darkBgOpacity: 'dark:bg-amber-600/10',
       items: ['Employee Details', 'Asset Management', 'Leave Management', 'Performance', 'Joining/Relieving', 'Weekly Activities'],
-      href: '/admin/hr'
+      href: '/admin/hr',
     },
     {
       id: 'data',
       title: 'Data Management',
       icon: Database,
       color: 'red',
-      gradient: 'from-red-500 to-pink-500',
-      bgGradient: 'from-red-50 to-pink-50',
-      darkBgGradient: 'from-red-900/20 to-pink-900/20',
-      items: ['Sales & Purchases', 'Logistics', 'Company Registration', 'Bank Documents', 'Billing', 'CA Doc', 'Tender Management', 'Finance reports' ],
-      href: '/admin/data-manager'
+      gradient: 'from-red-500 to-red-600',
+      bgOpacity: 'bg-red-500/10',
+      darkBgOpacity: 'dark:bg-red-600/10',
+      items: ['Sales & Purchases', 'Logistics', 'Company Registration', 'Bank Documents', 'Billing', 'CA Doc', 'Tender Management', 'Finance reports'],
+      href: '/admin/data-manager',
     },
     {
       id: 'finance',
       title: 'Finance',
       icon: DollarSign,
       color: 'indigo',
-      gradient: 'from-indigo-500 to-purple-500',
-      bgGradient: 'from-indigo-50 to-purple-50',
-      darkBgGradient: 'from-indigo-900/20 to-purple-900/20',
+      gradient: 'from-indigo-500 to-indigo-600',
+      bgOpacity: 'bg-indigo-500/10',
+      darkBgOpacity: 'dark:bg-indigo-600/10',
       items: ['Fixed Expenses', 'Variable Expenses'],
-      href: '/admin/finance-manager/dashboard'
+      href: '/admin/finance-manager/dashboard',
     },
     {
       id: 'reports',
       title: 'Reports',
       icon: FileText,
       color: 'purple',
-      gradient: 'from-purple-500 to-violet-500',
-      bgGradient: 'from-purple-50 to-violet-50',
-      darkBgGradient: 'from-purple-900/20 to-violet-900/20',
-      items: ['Employee Reports', 'Visit Report', 'OEM Report', 'Customer Report', 'Blueprint Reports', 'Projection Reports', 'Projection Achieved Reports', 'Visit Inquiries', 'BQ Quatitions'  ],
-      href: '/admin/reports'
+      gradient: 'from-purple-500 to-purple-600',
+      bgOpacity: 'bg-purple-500/10',
+      darkBgOpacity: 'dark:bg-purple-600/10',
+      items: ['Employee Reports', 'Visit Report', 'OEM Report', 'Customer Report', 'Blueprint Reports', 'Projection Reports', 'Projection Achieved Reports', 'Visit Inquiries', 'BQ Quatitions'],
+      href: '/admin/reports',
     },
     {
       id: 'memo',
       title: 'Memo',
       icon: MessageSquare,
       color: 'teal',
-      gradient: 'from-teal-500 to-green-500',
-      bgGradient: 'from-teal-50 to-green-50',
-      darkBgGradient: 'from-teal-900/20 to-green-900/20',
+      gradient: 'from-teal-500 to-teal-600',
+      bgOpacity: 'bg-teal-500/10',
+      darkBgOpacity: 'dark:bg-teal-600/10',
       items: ['Admin Memos', 'Employee Notices'],
-      href: '/admin/memos'
-    }
+      href: '/admin/memos',
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-black text-gray-900 dark:text-gray-100 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-3xl mb-6 shadow-lg">
-            <Activity className="w-10 h-10 text-white" />
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 dark:bg-blue-500 shadow-md mb-6">
+            <Activity className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-4">
-            Admin Dashboard
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-800 dark:text-white tracking-tight mb-4">
+            Admin Overview
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            View and manage all aspects of your organization
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto font-light">
+            Centralized access to all organizational management tools.
           </p>
         </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {dashboardItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -124,22 +120,30 @@ export default function AdminDashboard() {
                 href={item.href}
                 className="group h-full"
               >
-                <div className={`h-full bg-gradient-to-br ${item.bgGradient} dark:${item.darkBgGradient} rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20 backdrop-blur-sm transform hover:-translate-y-1`}>
-                  <div className="flex items-center mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.gradient} flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`h-full relative overflow-hidden rounded-2xl p-7 shadow-lg backdrop-blur-xl
+                  ${item.bgOpacity} ${item.darkBgOpacity}
+                  border border-white/20 dark:border-gray-700/50
+                  transform group-hover:scale-105 group-hover:shadow-2xl transition-all duration-300 ease-in-out`}>
+
+                  {/* Top Section: Icon and Title */}
+                  <div className="flex items-center mb-5">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform duration-300
+                      bg-gradient-to-br ${item.gradient}
+                      transform group-hover:scale-110 group-hover:shadow-xl`}>
                       <Icon className="w-6 h-6 text-white" />
                     </div>
-                    <div className="ml-3">
-                      <h2 className="text-lg font-bold text-slate-800 dark:text-white">
+                    <div className="ml-4">
+                      <h2 className="text-xl font-semibold text-gray-800 dark:text-white">
                         {item.title}
                       </h2>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
+                  {/* Sub-items List */}
+                  <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                     {item.items.map((subItem, index) => (
-                      <div key={index} className="flex items-center text-sm text-slate-600 dark:text-slate-300">
-                        <ChevronRight className="w-3.5 h-3.5 mr-1.5" />
+                      <div key={index} className="flex items-center">
+                        <ChevronRight className="w-3.5 h-3.5 mr-2 text-gray-400 dark:text-gray-500" />
                         <span className="line-clamp-1">{subItem}</span>
                       </div>
                     ))}

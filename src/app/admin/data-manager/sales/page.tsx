@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import { Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 
@@ -40,15 +40,7 @@ const sampleData: SalesItem[] = [
   }
 ];
 
-const formFields: FormField[] = [
-  { name: 'customer', label: 'Customer', type: 'text', required: true },
-  { name: 'amount', label: 'Amount', type: 'number', required: true },
-  { name: 'date', label: 'Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Completed', 'Pending', 'Processing', 'Cancelled'], required: true },
-  { name: 'paymentStatus', label: 'Payment Status', type: 'select', options: ['Paid', 'Pending', 'Partial'], required: true },
-  { name: 'paymentMethod', label: 'Payment Method', type: 'select', options: ['Cash', 'Bank Transfer', 'Cheque', 'Credit Card'], required: true },
-  { name: 'description', label: 'Description', type: 'textarea', required: true }
-];
+
 
 const viewFields: ViewField[] = [
   { name: 'customer', label: 'Customer', type: 'text' },
@@ -63,15 +55,11 @@ const viewFields: ViewField[] = [
 export default function SalesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SalesItem | null>(null);
-  const [data, setData] = useState<SalesItem[]>(sampleData);
+  const [data,] = useState<SalesItem[]>(sampleData);
 
-  const handleAddNew = () => {
-    setSelectedItem(null);
-    setIsFormOpen(true);
-  };
 
 
   const handleView = (item: SalesItem) => {

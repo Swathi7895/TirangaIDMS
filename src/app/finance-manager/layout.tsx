@@ -24,38 +24,31 @@ export default function FinanceManagerLayout({ children }: { children: React.Rea
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Basic Navigation (can be expanded) */}
-      <nav className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                {/* Replace with your logo */}
-                <span className="text-xl font-bold text-gray-900 dark:text-white">Finance Manager</span>
-              </div>
-              <div className="hidden sm:-my-px sm:ml-6 sm:flex sm:space-x-8">
-              
-                {/* Add more navigation links here */}
-              </div>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:items-center">
-              <button
-                onClick={handleLogout}
-                className="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Logout
-              </button>
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    {/* Navigation Bar */}
+    <nav className="bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg"> {/* Gradient background */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex-shrink-0 flex items-center space-x-2"> {/* Added space-x-2 for icon */}
+            {/* <AdminIcon className="h-6 w-6 text-white" /> Uncomment and replace with actual icon */}
+            <h1 className="text-2xl font-extrabold text-white tracking-wide">
+        Finance manager
+            </h1>
+          </div>
+          <div className="flex items-center">
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2 border-2 border-white text-sm font-semibold rounded-full text-white hover:bg-white hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition ease-in-out duration-300" // Styled as a pill button with inverse hover
+            >
+              Logout
+            </button>
           </div>
         </div>
-      </nav>
+      </div>
+    </nav>
 
-      <main>
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          {children}
-        </div>
-      </main>
-    </div>
+    {/* Main Content */}
+    <main>{children}</main>
+  </div>
   );
 } 

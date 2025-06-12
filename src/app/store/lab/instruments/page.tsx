@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
 import BackButton from '@/app/components/BackButton';
 
@@ -89,7 +89,7 @@ export default function LabInstrumentsPage() {
   };
 
   // Fetch all items from API
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -105,17 +105,16 @@ export default function LabInstrumentsPage() {
     } catch (err) {
       console.error('Error fetching items:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch items');
-      // Removed the fallback to sample data here
       setItems([]); // Ensure items are cleared on error
     } finally {
       setLoading(false);
     }
-  };
+  }, [transformApiToInternal]);
 
   // Load items on component mount
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
   // Add new item via API
   const handleAdd = async (newItem: Omit<LabInstrument, 'id' | 'lastUpdated'>) => {

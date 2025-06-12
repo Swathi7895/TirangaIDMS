@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
 import BackButton from '@/app/components/BackButton';
 
@@ -69,7 +69,7 @@ export default function RegularStationaryPage() {
   };
 
   // Fetch all items
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -88,12 +88,12 @@ export default function RegularStationaryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Load items on component mount
   useEffect(() => {
     fetchItems();
-  }, []);
+  }, [fetchItems]);
 
   // Add new item
   const handleAdd = async (newItem: Omit<StationaryItem, 'id' | 'lastUpdated'>) => {

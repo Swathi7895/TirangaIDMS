@@ -16,6 +16,18 @@ interface Furniture {
   itemCondition?: string; // For API compatibility
 }
 
+interface ApiFurnitureItem {
+  id: string;
+  name: string;
+  quantity: number;
+  category: string;
+  location: string;
+  itemCondition?: string;
+  condition?: string;
+  lastUpdated?: string;
+  purchaseDate?: string;
+}
+
 // API service functions
 const API_BASE_URL = 'http://localhost:8080/api/store/assets/furniture';
 
@@ -28,7 +40,7 @@ const furnitureAPI = {
       const data = await response.json();
       
       // Transform API response to match our interface
-      return data.map((item: any) => ({
+      return data.map((item: ApiFurnitureItem) => ({
         ...item,
         condition: item.itemCondition || item.condition,
         lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date(),

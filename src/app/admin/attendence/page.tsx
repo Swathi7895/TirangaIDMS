@@ -6,8 +6,7 @@ import {
   XCircle, 
   AlertCircle,
   ArrowLeft,
-  Users,
-  TrendingUp,
+ 
   Search,
  
 } from 'lucide-react';
@@ -399,42 +398,7 @@ export default function AdminAttendanceDashboard() {
         {/* Stats Cards */}
         {renderStatsCards()}
 
-        {/* Additional Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Records</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total || 0}</p>
-              </div>
-              <div className="p-3 rounded-full bg-blue-50">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Total Work Hours</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalWorkHours || 0}h</p>
-              </div>
-              <div className="p-3 rounded-full bg-purple-50">
-                <Clock className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 mb-1">Avg Work Hours</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.avgWorkHours || 0}h</p>
-              </div>
-              <div className="p-3 rounded-full bg-green-50">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-        </div>
+    
 
         {/* Attendance Table */}
         {renderAttendanceTable()}

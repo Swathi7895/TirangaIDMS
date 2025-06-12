@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, ArrowLeft } from 'lucide-react';
+import {  Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
 import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
@@ -65,16 +65,7 @@ export default function PurchasePage() {
     setIsViewOpen(true);
   };
 
-  const handleEdit = (item: PurchaseItem) => {
-    setSelectedItem(item);
-    setIsFormOpen(true);
-  };
-
-  const handleDelete = (item: PurchaseItem) => {
-    if (confirm('Are you sure you want to delete this purchase record?')) {
-      setData(prev => prev.filter(i => i.id !== item.id));
-    }
-  };
+ 
 
   const handleFormSubmit = (formData: Omit<PurchaseItem, 'id'>) => {
     if (selectedItem) {
