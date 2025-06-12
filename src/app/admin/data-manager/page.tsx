@@ -1,9 +1,8 @@
 'use client';
 
-
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
- 
   FileText, 
   Building2, 
   CreditCard, 
@@ -13,8 +12,7 @@ import {
   LineChart,
   ArrowRight,
   TrendingUp,
-  ShoppingCart,
-  ArrowLeft
+  ShoppingCart
 } from 'lucide-react';
 import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import {
@@ -50,6 +48,17 @@ interface Module {
   color: string;
   path: string;
   count: number;
+  apiUrl: string;
+}
+
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    borderColor?: string;
+    backgroundColor?: string | string[];
+  }[];
 }
 
 const modules: Module[] = [
@@ -59,7 +68,8 @@ const modules: Module[] = [
     icon: TrendingUp,
     color: 'bg-green-500',
     path: '/admin/data-manager/sales',
-    count: 8
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/sales'
   },
   {
     id: 'purchase',
@@ -67,7 +77,8 @@ const modules: Module[] = [
     icon: ShoppingCart,
     color: 'bg-orange-500',
     path: '/admin/data-manager/purchase',
-    count: 4
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/purchases'
   },
   {
     id: 'logistics',
@@ -75,7 +86,8 @@ const modules: Module[] = [
     icon: FileText,
     color: 'bg-green-500',
     path: '/admin/data-manager/logistics',
-    count: 8
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/logisticsdocuments'
   },
   {
     id: 'registration',
@@ -83,7 +95,8 @@ const modules: Module[] = [
     icon: Building2,
     color: 'bg-purple-500',
     path: '/admin/data-manager/registration',
-    count: 5
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/companyregistrations'
   },
   {
     id: 'bank',
@@ -91,7 +104,8 @@ const modules: Module[] = [
     icon: CreditCard,
     color: 'bg-yellow-500',
     path: '/admin/data-manager/bank',
-    count: 15
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/bankdocuments'
   },
   {
     id: 'billing',
@@ -99,7 +113,8 @@ const modules: Module[] = [
     icon: Receipt,
     color: 'bg-red-500',
     path: '/admin/data-manager/billing',
-    count: 20
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/billings'
   },
   {
     id: 'ca',
@@ -107,7 +122,8 @@ const modules: Module[] = [
     icon: Calculator,
     color: 'bg-indigo-500',
     path: '/admin/data-manager/ca',
-    count: 7
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/cadocuments'
   },
   {
     id: 'tender',
@@ -115,7 +131,8 @@ const modules: Module[] = [
     icon: Gavel,
     color: 'bg-orange-500',
     path: '/admin/data-manager/tender',
-    count: 10
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/tenders'
   },
   {
     id: 'finance',
@@ -123,65 +140,166 @@ const modules: Module[] = [
     icon: LineChart,
     color: 'bg-teal-500',
     path: '/admin/data-manager/finance',
-    count: 25
+    count: 0,
+    apiUrl: 'http://localhost:8080/api/financereports'
   }
 ];
 
-// Sample data for charts
-const salesData = {
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [
-    {
+export default function DataManagerDashboard() {
+  const [moduleCounts, setModuleCounts] = useState<{ [key: string]: number }>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [salesData, setSalesData] = useState<ChartData>({
+    labels: [],
+    datasets: [{
       label: 'Sales',
-      data: [1200000, 1900000, 1500000, 2100000, 1800000, 2500000],
+      data: [],
       borderColor: 'rgb(34, 197, 94)',
       backgroundColor: 'rgba(34, 197, 94, 0.5)',
-    },
-  ],
-};
-
-const purchaseData = {
-  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-  datasets: [
-    {
+    }]
+  });
+  const [purchaseData, setPurchaseData] = useState<ChartData>({
+    labels: [],
+    datasets: [{
       label: 'Purchases',
-      data: [800000, 1200000, 900000, 1500000, 1100000, 1300000],
+      data: [],
       borderColor: 'rgb(249, 115, 22)',
       backgroundColor: 'rgba(249, 115, 22, 0.5)',
-    },
-  ],
-};
-const paymentStatusData = {
-  labels: ['Paid', 'Pending', 'Partial'],
-  datasets: [
-    {
-      data: [65, 25, 10],
+    }]
+  });
+  const [paymentStatusData, setPaymentStatusData] = useState<ChartData>({
+    labels: ['Paid', 'Pending', 'Overdue', 'Partially Paid'],
+    datasets: [{
+      label: 'Payment Status',
+      data: [0, 0, 0, 0],
       backgroundColor: [
         'rgba(34, 197, 94, 0.8)',
         'rgba(234, 179, 8, 0.8)',
         'rgba(239, 68, 68, 0.8)',
+        'rgba(249, 115, 22, 0.8)',
       ],
-    },
-  ],
-};
+    }]
+  });
 
-export default function DataManagerDashboard() {
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      const counts: { [key: string]: number } = {};
+
+      try {
+        // Fetch module counts
+        await Promise.all(
+          modules.map(async (module) => {
+            try {
+              const response = await fetch(module.apiUrl);
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              const data = await response.json();
+              counts[module.id] = Array.isArray(data) ? data.length : 0;
+            } catch (e) {
+              console.error(`Error fetching count for ${module.name}:`, e);
+              counts[module.id] = 0;
+            }
+          })
+        );
+
+        // Fetch sales data for charts
+        const salesResponse = await fetch('http://localhost:8080/api/sales');
+        if (salesResponse.ok) {
+          const sales = await salesResponse.json();
+          const monthlySales = processMonthlyData(sales, 'date', 'amount');
+          setSalesData({
+            labels: monthlySales.labels,
+            datasets: [{
+              label: 'Sales',
+              data: monthlySales.data,
+              borderColor: 'rgb(34, 197, 94)',
+              backgroundColor: 'rgba(34, 197, 94, 0.5)',
+            }]
+          });
+        }
+
+        // Fetch purchase data for charts
+        const purchasesResponse = await fetch('http://localhost:8080/api/purchases');
+        if (purchasesResponse.ok) {
+          const purchases = await purchasesResponse.json();
+          const monthlyPurchases = processMonthlyData(purchases, 'date', 'amount');
+          setPurchaseData({
+            labels: monthlyPurchases.labels,
+            datasets: [{
+              label: 'Purchases',
+              data: monthlyPurchases.data,
+              borderColor: 'rgb(249, 115, 22)',
+              backgroundColor: 'rgba(249, 115, 22, 0.5)',
+            }]
+          });
+        }
+
+        // Fetch payment status data
+        const salesForPaymentStatus = await fetch('http://localhost:8080/api/sales').then(res => res.ok ? res.json() : []);
+        const paymentStatusCounts = {
+          'Paid': 0,
+          'Pending': 0,
+          'Overdue': 0,
+          'Partially Paid': 0
+        };
+
+        salesForPaymentStatus.forEach((sale: any) => {
+          if (sale.paymentStatus in paymentStatusCounts) {
+            paymentStatusCounts[sale.paymentStatus as keyof typeof paymentStatusCounts]++;
+          }
+        });
+
+        setPaymentStatusData({
+          labels: Object.keys(paymentStatusCounts),
+          datasets: [{
+            label: 'Payment Status',
+            data: Object.values(paymentStatusCounts),
+            backgroundColor: [
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(234, 179, 8, 0.8)',
+              'rgba(239, 68, 68, 0.8)',
+              'rgba(249, 115, 22, 0.8)',
+            ],
+          }]
+        });
+
+        setModuleCounts(counts);
+      } catch (e: any) {
+        setError(`Failed to fetch data: ${e.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Helper function to process monthly data
+  const processMonthlyData = (data: any[], dateField: string, amountField: string) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyTotals = new Array(12).fill(0);
+    const currentYear = new Date().getFullYear();
+
+    data.forEach((item: any) => {
+      const date = new Date(item[dateField]);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        monthlyTotals[month] += Number(item[amountField]) || 0;
+      }
+    });
+
+    return {
+      labels: months,
+      data: monthlyTotals
+    };
+  };
+
   return (
-    <div className="space-y-8">
-     <div className="mb-6">
-          <Link
-            href="/admin"
-            className="inline-flex items-center text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </Link>
-        </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Data Manager Dashboard</h2>
-          <p className="mt-1 text-sm text-gray-500">Overview of all data management features</p>
-        </div>
- {/* Charts Section */}
+    <div className="space-y-6">
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         {/* Sales Trend Chart */}
         <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -268,16 +386,16 @@ export default function DataManagerDashboard() {
           <div className="h-80">
             <Bar
               data={{
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: salesData.labels,
                 datasets: [
                   {
                     label: 'Sales',
-                    data: [1200000, 1900000, 1500000, 2100000, 1800000, 2500000],
+                    data: salesData.datasets[0].data,
                     backgroundColor: 'rgba(34, 197, 94, 0.5)',
                   },
                   {
                     label: 'Purchases',
-                    data: [800000, 1200000, 900000, 1500000, 1100000, 1300000],
+                    data: purchaseData.datasets[0].data,
                     backgroundColor: 'rgba(249, 115, 22, 0.5)',
                   },
                 ],
@@ -303,49 +421,36 @@ export default function DataManagerDashboard() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {modules.map((module) => (
-          <Link
-            key={module.id}
-            href={module.path}
-            className="block p-6 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
-          >
-            <div className="flex items-start justify-between">
-              <div className={`p-3 rounded-lg ${module.color}`}>
-                <module.icon className="w-6 h-6 text-white" />
+
+      {/* Modules Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {loading ? (
+          <div className="col-span-full text-center py-8 text-gray-600">Loading module counts...</div>
+        ) : error ? (
+          <div className="col-span-full text-center py-8 text-red-600">{error}</div>
+        ) : (
+          modules.map((module) => (
+            <Link
+              key={module.id}
+              href={module.path}
+              className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{module.name}</h3>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">{moduleCounts[module.id] || 0}</p>
+                </div>
+                <div className={`p-3 rounded-lg ${module.color}`}>
+                  <module.icon className="w-6 h-6 text-white" />
+                </div>
               </div>
-              <span className="text-sm font-medium text-gray-500">
-                {module.count} items
-              </span>
-            </div>
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">{module.name}</h3>
-            <div className="mt-2 flex items-center text-sm text-blue-600">
-              View details
-              <ArrowRight className="ml-1 w-4 h-4" />
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
-          <div className="mt-4 space-y-4">
-            <div className="flex items-center text-sm">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-gray-600">New tender submitted - IT Infrastructure Upgrade</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
-              <span className="text-gray-600">Bank statement updated - March 2024</span>
-            </div>
-            <div className="flex items-center text-sm">
-              <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
-              <span className="text-gray-600">CA document pending review - Annual Audit</span>
-            </div>
-          </div>
-        </div>
-
+              <div className="mt-4 flex items-center text-blue-600">
+                <span className="text-sm font-medium">View Details</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </div>
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );

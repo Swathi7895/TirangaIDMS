@@ -1,28 +1,44 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Filter, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField, FormValue } from '../components/DataForm';
+import { useState, useEffect } from 'react';
+import { Plus, Upload, Download, Search, Filter, Eye, ArrowLeft, Trash2 } from 'lucide-react';
+import DataForm, { FormField } from '../components/DataForm';
 import DataView, { ViewField } from '../components/DataView';
-import Link from 'next/link';
-
-type BankDocumentData = {
+import Link
+ from 'next/link';
+interface BankDocument {
+  id: number;
   documentType: string;
   bankName: string;
   accountNumber: string;
   date: string;
   status: 'Valid' | 'Expired' | 'Pending';
-};
-
-interface BankDocument extends BankDocumentData {
-  id: number;
 }
 
-const sampleData: BankDocument[] = [
-  { id: 1, documentType: 'Bank Statement', bankName: 'HDFC Bank', accountNumber: 'XXXX1234', date: '2024-01-15', status: 'Valid' },
-  { id: 2, documentType: 'Bank Guarantee', bankName: 'ICICI Bank', accountNumber: 'XXXX5678', date: '2024-02-20', status: 'Pending' },
-  { id: 3, documentType: 'Bank Certificate', bankName: 'SBI', accountNumber: 'XXXX9012', date: '2024-03-10', status: 'Expired' }
-];
+// Type-safe wrapper for DataView
+function BankDataView({ isOpen, onClose, data, fields, title }: {
+  isOpen: boolean;
+  onClose: () => void;
+  data: BankDocument;
+  fields: ViewField[];
+  title: string;
+}) {
+  const viewData = {
+    ...data,
+    id: data.id.toString(),
+    status: data.status
+  };
+
+  return (
+    <DataView
+      isOpen={isOpen}
+      onClose={onClose}
+      data={viewData}
+      fields={fields}
+      title={title}
+    />
+  );
+}
 
 const formFields: FormField[] = [
   { name: 'documentType', label: 'Document Type', type: 'select', options: ['Bank Statement', 'Bank Guarantee', 'Bank Certificate'], required: true },
@@ -45,35 +61,72 @@ export default function BankDocumentsPage() {
   const [showFilter, setShowFilter] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<BankDocument | null>(null);
-  const [data, setData] = useState<BankDocument[]>(sampleData);
+  const [selectedDocument, setSelectedDocument] = useState<BankDocument | null>(null);
+  const [data, setData] = useState<BankDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFormSubmit = (formData: Record<string, FormValue>) => {
-    const bankData = formData as BankDocumentData;
-    if (selectedItem) {
-      // Edit existing item
-      setData(prev => prev.map(item => 
-        item.id === selectedItem.id ? { ...item, ...bankData } : item
-      ));
-    } else {
-      // Add new item
-      const newItem: BankDocument = {
-        ...bankData,
-        id: Math.max(...data.map(item => item.id)) + 1
-      };
-      setData(prev => [...prev, newItem]);
+  const API_URL = 'http://localhost:8080/api/bankdocuments';
+
+  // --- Data Fetching (GET) ---
+  const fetchBankDocuments = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const result = await response.json();
+      setData(result);
+    } catch (e: any) {
+      setError(`Failed to fetch documents: ${e.message}`);
+    } finally {
+      setLoading(false);
     }
-    setIsFormOpen(false);
-    setSelectedItem(null);
+  };
+
+  useEffect(() => {
+    fetchBankDocuments();
+  }, []);
+
+ 
+
+  const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8,"
+      + "Document Type,Bank Name,Account Number,Date,Status\n"
+      + data.map(item => [
+        item.documentType,
+        item.bankName,
+        item.accountNumber,
+        item.date,
+        item.status
+      ].join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "bank_documents.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleView = (item: BankDocument) => {
-    setSelectedItem(item);
+    setSelectedDocument(item);
     setIsViewOpen(true);
   };
 
+  
+
+  const filteredData = data.filter(item =>
+    (item.documentType?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (item.bankName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+    (item.accountNumber?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto px-4 py-8">
        <div className="mb-6">
           <Link
             href="/admin/data-manager"
@@ -87,33 +140,42 @@ export default function BankDocumentsPage() {
         <h2 className="text-2xl font-bold text-gray-900">Bank Documents</h2>
         <div className="flex flex-wrap gap-2">
          
+          <button
+            onClick={handleExport}
+            className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search bank documents..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      <div className="flex flex-col sm:flex-row gap-4 mt-4">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
           </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by document type, bank name, or account number..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          />
         </div>
-        <button 
-          onClick={() => setShowFilter(!showFilter)}
-          className="flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filter
-        </button>
+        <div className="relative">
+          <button
+            onClick={() => setShowFilter(!showFilter)}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
+          </button>
+        </div>
       </div>
 
       {showFilter && (
-        <div className="bg-white p-4 rounded-lg shadow-md">
+        <div className="mt-4 bg-white p-4 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">Filter Options</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -142,57 +204,77 @@ export default function BankDocumentsPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bank Name</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account Number</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleView(item)}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.documentType}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bankName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.accountNumber}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.date}</td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    item.status === 'Valid' ? 'bg-green-100 text-green-800' :
-                    item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {item.status}
-                  </span>
-                </td>
-               
+      {loading ? (
+        <div className="text-center py-8 text-gray-600">Loading bank documents...</div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-600">{error}</div>
+      ) : (
+        <div className="mt-6 bg-white rounded-lg shadow-md overflow-hidden mb-4">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Document Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bank Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Account Number</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredData.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">No bank documents found.</td>
+                </tr>
+              ) : (
+                filteredData.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.documentType}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.bankName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.accountNumber}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{new Date(item.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        item.status === 'Valid' ? 'bg-green-100 text-green-800' :
+                        item.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleView(item)}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                     
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      <DataForm<BankDocument>
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSubmit={handleFormSubmit}
-        title={selectedItem ? 'Edit Bank Document' : 'Add New Bank Document'}
-        fields={formFields}
-        initialData={selectedItem}
-      />
+    
 
-      <DataView<BankDocument>
-        isOpen={isViewOpen}
-        onClose={() => setIsViewOpen(false)}
-        title="Bank Document Details"
-        fields={viewFields}
-        data={selectedItem || {} as BankDocument}
-      />
+      {isViewOpen && selectedDocument && (
+        <BankDataView
+          isOpen={isViewOpen}
+          onClose={() => {
+            setIsViewOpen(false);
+            setSelectedDocument(null);
+          }}
+          data={selectedDocument}
+          fields={viewFields}
+          title="Bank Document Details"
+        />
+      )}
     </div>
   );
-} 
+}
