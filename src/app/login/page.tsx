@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface FormData {
   email: string;
@@ -12,6 +13,7 @@ interface FormData {
 interface LoginResponse {
   token: string;
   message?: string;
+  roles: string[];
 }
 
 export default function LoginPage() {
@@ -37,20 +39,39 @@ export default function LoginPage() {
       })
       .then(response => {
         if (response.ok) {
-          router.replace('/admin');
+          const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+          redirectBasedOnRole(roles);
         } else {
           // If token is invalid, clear it
           sessionStorage.removeItem('token');
           sessionStorage.removeItem('userEmail');
+          sessionStorage.removeItem('roles');
         }
       })
       .catch(() => {
         // If there's an error, clear the token
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('userEmail');
+        sessionStorage.removeItem('roles');
       });
     }
   }, [router]);
+
+  const redirectBasedOnRole = (roles: string[]) => {
+    if (roles.includes('ROLE_ADMIN')) {
+      router.replace('/admin');
+    } else if (roles.includes('ROLE_STORE')) {
+      router.replace('/store');
+    } else if (roles.includes('ROLE_FINANCE')) {
+      router.replace('/finance');
+    } else if (roles.includes('ROLE_HR')) {
+      router.replace('/hr');
+    } else if (roles.includes('ROLE_DATA_MANAGER')) {
+      router.replace('/data-manager');
+    } else {
+      router.replace('/dashboard');
+    }
+  };
 
   const validateForm = (): boolean => {
     const errors: Partial<FormData> = {};
@@ -107,20 +128,23 @@ export default function LoginPage() {
         // Store authentication data
         sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('userEmail', formData.email);
+        sessionStorage.setItem('roles', JSON.stringify(data.roles));
         
-        // Redirect to admin page
-        router.replace('/admin');
+        // Redirect based on role
+        redirectBasedOnRole(data.roles);
       } else {
         setError(data.message || 'Login failed. Please check your credentials.');
         // Clear any existing tokens on failed login
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('userEmail');
+        sessionStorage.removeItem('roles');
       }
     } catch (err) {
       setError('Network error. Please check if the server is running.');
       // Clear any existing tokens on error
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('userEmail');
+      sessionStorage.removeItem('roles');
     } finally {
       setLoading(false);
     }
@@ -207,6 +231,12 @@ export default function LoginPage() {
               'Sign In'
             )}
           </button>
+          <p className="mt-6 text-center text-sm text-gray-600">
+            Don't have an account? {' '}
+            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+              Register
+            </Link>
+          </p>
         </div>
       </div>
     </div>

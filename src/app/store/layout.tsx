@@ -11,19 +11,10 @@ export default function StoreLayout({
 }) {
   const router = useRouter();
 
-  useEffect(() => {
-    // Check if user is authenticated and is an HR user
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    const userRole = localStorage.getItem('userRole');
-
-    if (!isAuthenticated || userRole !== 'store') {
-      router.push('/login');
-    }
-  }, [router]);
+ 
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
+   
     router.push('/login');
   };
 

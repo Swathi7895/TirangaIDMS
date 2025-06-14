@@ -1,13 +1,9 @@
 'use client';
 
-import { useState,useEffect, useCallback } from 'react';
-import AdminStore from '@/app/components/AdminStore';
-import { 
- 
-  ArrowLeft,
- 
-} from 'lucide-react';
-import Link from 'next/link';
+import { useState, useEffect, useCallback } from 'react';
+import ItemManagement from '@/app/components/ItemManagement';
+import BackButton from '@/app/components/BackButton';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 interface LabInstrument {
   id: string;
@@ -40,6 +36,7 @@ export default function LabInstrumentsPage() {
   const [items, setItems] = useState<LabInstrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedLoading = useDebounce(loading, 300);
 
   const categories = ['Optical', 'Separation', 'Measurement', 'Analysis', 'Electronics', 'Other'];
 
@@ -96,7 +93,9 @@ export default function LabInstrumentsPage() {
   // Fetch all items from API
   const fetchItems = useCallback(async () => {
     try {
-      setLoading(true);
+      if (items.length === 0) {
+        setLoading(true);
+      }
       setError(null);
       
       const response = await fetch(API_BASE_URL);
@@ -114,28 +113,154 @@ export default function LabInstrumentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [transformApiToInternal]);
+  }, [transformApiToInternal, items.length]);
 
   // Load items on component mount
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
- 
+  // Add new item via API
+  const handleAdd = async (newItem: Omit<LabInstrument, 'id' | 'lastUpdated'>) => {
+    try {
+      setError(null);
+      
+      const apiPayload = transformInternalToApi(newItem);
+      
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to add item: ${response.status} ${response.statusText}`);
+      }
+
+      const createdItem: ApiLabInstrument = await response.json();
+      const transformedItem = transformApiToInternal(createdItem);
+      
+      setItems(prevItems => [...prevItems, transformedItem]);
+    } catch (err) {
+      console.error('Error adding item:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add item');
+      // Removed the fallback to local state update here
+    }
+  };
+
+  // Edit item via API
+  const handleEdit = async (id: string, updatedItem: Partial<LabInstrument>) => {
+    try {
+      setError(null);
+      
+      const apiPayload = transformInternalToApi(updatedItem);
+      
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT', // or 'PATCH' depending on your API
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update item: ${response.status} ${response.statusText}`);
+      }
+
+      const updatedApiItem: ApiLabInstrument = await response.json();
+      const transformedItem = transformApiToInternal(updatedApiItem);
+      
+      setItems(prevItems =>
+        prevItems.map(item =>
+          item.id === id ? transformedItem : item
+        )
+      );
+    } catch (err) {
+      console.error('Error updating item:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update item');
+      // Removed the fallback to local state update here
+    }
+  };
+
+  // Delete item via API
+  const handleDelete = async (id: string) => {
+    try {
+      setError(null);
+      
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete item: ${response.status} ${response.statusText}`);
+      }
+
+      setItems(prevItems => prevItems.filter(item => item.id !== id));
+    } catch (err) {
+      console.error('Error deleting item:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete item');
+      // Removed the fallback to local state update here
+    }
+  };
+
+  // Retry function for error recovery
+  const handleRetry = () => {
+    fetchItems();
+  };
+
+  if (debouncedLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <BackButton />
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="ml-3 text-lg text-gray-600">Loading lab instruments...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div>
-     <Link href="/admin/store" className="flex items-center text-gray-600 hover:text-gray-900">
-              <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
-            </Link>
+      <BackButton />
+      
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
             </div>
-      <AdminStore
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">API Error</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={handleRetry}
+                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  Retry Connection
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ItemManagement
         title="Lab Instruments"
         items={items}
-       
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         categories={categories}
       />
     </div>
   );
-} 
+}

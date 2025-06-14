@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter,  } from 'next/navigation';
+
 import { 
   BuildingOfficeIcon, 
   TagIcon,
@@ -10,10 +11,18 @@ import {
  
 } from '@heroicons/react/24/outline';
 import QuickActions from '@/components/QuickActions';
+import { useEffect } from 'react';
 
 export default function FinanceManagerDashboard() {
   const router = useRouter();
-
+ useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    
+    if (!token || !roles.includes('ROLE_FINANCE')) {
+      router.replace('/login');
+    }
+  }, [router]);
   const financeSections = [
     {
       title: 'Fixed Expenses',

@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   Users, 
   FileText, 
@@ -19,6 +19,7 @@ import {
  UserCheck ,
  UserX
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface StatCardProps {
   icon: LucideIcon;
@@ -44,7 +45,18 @@ interface RecentActivityProps {
   status: 'completed' | 'pending' | 'rejected';
 }
 
-export default function HRDashboard() {
+export default function HRPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    
+    if (!token || !roles.includes('ROLE_HR')) {
+      router.replace('/login');
+    }
+  }, [router]);
+
   const StatCard = ({ icon: Icon, title, value, trend, color = 'blue', bgColor = 'bg-blue-50' }: StatCardProps) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300">
       <div className="flex items-center justify-between">
@@ -98,156 +110,12 @@ export default function HRDashboard() {
   );
 
   return (
-    <div className="space-y-8">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          icon={Users}
-          title="Total Workforce"
-          value="248"
-          trend="+12% this month"
-          color="blue"
-          bgColor="bg-blue-50"
-        />
-        <StatCard
-          icon={Building}
-          title="Departments"
-          value="12"
-          trend="+2 new"
-          color="purple"
-          bgColor="bg-purple-50"
-        />
-        <StatCard
-          icon={UserCheck }
-          title="Today Present"
-          value="15"
-         
-          color="green"
-          bgColor="bg-green-50"
-        />
-        <StatCard
-          icon={UserX}
-          title="Today Absent"
-          value="8"
-         
-          color="orange"
-          bgColor="bg-orange-50"
-        />
-      </div>
-
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">HR Management</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <QuickActionCard
-            icon={FileText}
-            title="Document Management"
-            description="Manage employee documents, contracts, and compliance records"
-            color="blue"
-            path="/hr/documents"
-          />
-          <QuickActionCard
-            icon={Smartphone}
-            title="Asset Management"
-            description="Track and manage company assets and equipment"
-            color="green"
-            path="/hr/assets"
-          />
-          <QuickActionCard
-            icon={Calendar}
-            title="Leave Management"
-            description="Manage employee leaves, holidays, and attendance"
-            color="purple"
-            path="/hr/leaves"
-          />
-          <QuickActionCard
-            icon={TrendingUp}
-            title="Performance Management"
-            description="Conduct reviews, track KPIs, and manage promotions"
-            color="orange"
-            path="/hr/performance"
-          />
-          <QuickActionCard
-            icon={UserPlus}
-            title="Recruitment"
-            description="Manage hiring, onboarding, and employee transitions"
-            color="red"
-            path="/hr/joining"
-          />
-          <QuickActionCard
-            icon={Clock}
-            title="HR Analytics"
-            description="Track HR metrics and workforce analytics"
-            color="indigo"
-            path="/hr/activities"
-          />
-        </div>
-      </div>
-
-      {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">HR Activities</h3>
-          <div className="space-y-2">
-            <RecentActivity
-              icon={UserPlus}
-              title="New hire onboarding scheduled"
-              time="2 hours ago"
-              status="pending"
-            />
-            <RecentActivity
-              icon={Calendar}
-              title="Department head meeting"
-              time="4 hours ago"
-              status="completed"
-            />
-            <RecentActivity
-              icon={Award}
-              title="Performance review cycle started"
-              time="1 day ago"
-              status="pending"
-            />
-            <RecentActivity
-              icon={FileText}
-              title="Compliance audit completed"
-              time="2 days ago"
-              status="completed"
-            />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recruitment Pipeline</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <UserPlus className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-900">New Applications</span>
-              </div>
-              <span className="text-sm text-gray-600">45 this week</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-                <span className="text-sm font-medium text-gray-900">Interviews Scheduled</span>
-              </div>
-              <span className="text-sm text-gray-600">12 pending</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Award className="w-5 h-5 text-purple-600" />
-                <span className="text-sm font-medium text-gray-900">Offers Made</span>
-              </div>
-              <span className="text-sm text-gray-600">5 this week</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-orange-600" />
-                <span className="text-sm font-medium text-gray-900">Joining Next Week</span>
-              </div>
-              <span className="text-sm text-gray-600">3 employees</span>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">HR Dashboard</h1>
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Welcome to HR Management</h2>
+          <p className="text-gray-600">This is the HR dashboard where you can manage employee information and HR operations.</p>
         </div>
       </div>
     </div>

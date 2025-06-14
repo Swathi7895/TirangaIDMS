@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ShoppingCartIcon,
@@ -26,7 +28,18 @@ import {
 
 type SectionColor = 'indigo' | 'teal' | 'rose';
 
-export default function StoreDashboard() {
+export default function StorePage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    
+    if (!token || !roles.includes('ROLE_STORE')) {
+      router.replace('/login');
+    }
+  }, [router]);
+
   const sections = [
     {
       title: "Stationary",

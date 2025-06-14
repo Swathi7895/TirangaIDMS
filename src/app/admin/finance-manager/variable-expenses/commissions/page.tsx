@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import BackButton from '@/components/BackButton';
+
 interface CommissionExpense {
   id: number;
   date: string;
@@ -11,19 +12,66 @@ interface CommissionExpense {
   description: string;
 }
 
-export default function CommissionsPage() {
-  const [expenses] = useState<CommissionExpense[]>([
-    { id: 1, date: '2023-12-31', amount: 1200.00, recipient: 'Salesperson A', description: 'Q4 Sales Commission' },
-    { id: 2, date: '2023-12-31', amount: 850.00, recipient: 'Salesperson B', description: 'Q4 Sales Commission' },
-  ]);
- 
+export function CommissionsPage() {
+  const [expenses, setExpenses] = useState<CommissionExpense[]>([]);
+  const [newExpense, setNewExpense] = useState({ date: '', amount: '', recipient: '', description: '' });
+  const [editingId, setEditingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('http://localhost:8080/api/commissions')
+      .then(res => res.json())
+      .then(data => setExpenses(data));
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewExpense({ ...newExpense, [name]: value });
+  };
 
  
 
   return (
     <div className="container mx-auto py-8">
-         <BackButton href="/admin/finance-manager/dashboard" label="Back to Dashboard" />
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Commissions Expenses</h1>
+
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">{editingId ? 'Edit Commission Entry' : 'Add New Commission Entry'}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <input
+            type="date"
+            name="date"
+            placeholder="Date"
+            value={newExpense.date}
+            onChange={handleInputChange}
+            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+          />
+           <input
+            type="text"
+            name="recipient"
+            placeholder="Recipient (Salesperson/Team)"
+            value={newExpense.recipient}
+            onChange={handleInputChange}
+            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+          />
+          <input
+            type="number"
+            name="amount"
+            placeholder="Amount"
+            value={newExpense.amount}
+            onChange={handleInputChange}
+            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+          />
+          <input
+            type="text"
+            name="description"
+            placeholder="Description / Reason"
+            value={newExpense.description}
+            onChange={handleInputChange}
+            className="p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+          />
+        </div>
+        
+      </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
         <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Commission List</h2>
@@ -45,7 +93,6 @@ export default function CommissionsPage() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{expense.recipient}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">${expense.amount.toFixed(2)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{expense.description}</td>
-                
                 </tr>
               ))}
             </tbody>

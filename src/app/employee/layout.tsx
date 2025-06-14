@@ -14,8 +14,7 @@ export default function EmployeeLayout({
   const router = useRouter();
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
+  
     router.push('/login');
   };
 
