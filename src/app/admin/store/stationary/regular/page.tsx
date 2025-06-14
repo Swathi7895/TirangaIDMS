@@ -34,7 +34,7 @@ interface ApiRequestBody {
   lastUpdated: string;
 }
 
-const API_BASE_URL = 'http://localhost:8080/api/store/stationary/regular';
+const API_BASE_URL = 'http://localhost:8080/store/stationary/regular';
 
 export default function RegularStationaryPage() {
   const [items, setItems] = useState<StationaryItem[]>([]);

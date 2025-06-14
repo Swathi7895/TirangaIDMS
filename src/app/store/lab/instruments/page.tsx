@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
 import BackButton from '@/app/components/BackButton';
+import { useDebounce } from '@/app/hooks/useDebounce';
 
 interface LabInstrument {
   id: string;
@@ -29,12 +30,13 @@ interface ApiLabInstrument {
   status?: string;
 }
 
-const API_BASE_URL = 'http://localhost:8080/api/store/lab/instruments';
+const API_BASE_URL = 'http://localhost:8080/store/lab/instruments';
 
 export default function LabInstrumentsPage() {
   const [items, setItems] = useState<LabInstrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const debouncedLoading = useDebounce(loading, 300);
 
   const categories = ['Optical', 'Separation', 'Measurement', 'Analysis', 'Electronics', 'Other'];
 
@@ -91,7 +93,9 @@ export default function LabInstrumentsPage() {
   // Fetch all items from API
   const fetchItems = useCallback(async () => {
     try {
-      setLoading(true);
+      if (items.length === 0) {
+        setLoading(true);
+      }
       setError(null);
       
       const response = await fetch(API_BASE_URL);
@@ -109,7 +113,7 @@ export default function LabInstrumentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [transformApiToInternal]);
+  }, [transformApiToInternal, items.length]);
 
   // Load items on component mount
   useEffect(() => {
@@ -206,7 +210,7 @@ export default function LabInstrumentsPage() {
     fetchItems();
   };
 
-  if (loading) {
+  if (debouncedLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton />
