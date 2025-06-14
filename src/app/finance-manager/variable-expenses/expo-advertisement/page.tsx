@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import BackButton from '@/components/BackButton';
 
@@ -11,49 +11,114 @@ interface ExpoAdvertisementExpense {
   description: string;
 }
 
+const API_BASE_URL = 'http://localhost:8080/api/expo-advertisements';
+
+const expoAPI = {
+  getAll: async (): Promise<ExpoAdvertisementExpense[]> => {
+    const res = await fetch(API_BASE_URL);
+    if (!res.ok) throw new Error('Failed to fetch expenses');
+    return res.json();
+  },
+
+  create: async (expense: Omit<ExpoAdvertisementExpense, 'id'>): Promise<ExpoAdvertisementExpense> => {
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(expense),
+    });
+    if (!res.ok) throw new Error('Failed to create expense');
+    return res.json();
+  },
+
+  update: async (id: number, expense: Omit<ExpoAdvertisementExpense, 'id'>): Promise<ExpoAdvertisementExpense> => {
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(expense),
+    });
+    if (!res.ok) throw new Error('Failed to update expense');
+    return res.json();
+  },
+
+  delete: async (id: number): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete expense');
+  },
+};
+
 export default function ExpoAdvertisementPage() {
-  const [expenses, setExpenses] = useState<ExpoAdvertisementExpense[]>([
-    { id: 1, date: '2023-11-05', amount: 5000.00, description: 'Booth Fee - Tech Expo 2023' },
-    { id: 2, date: '2023-11-10', amount: 1500.00, description: 'Marketing Materials - Tech Expo 2023' },
-  ]);
+  const [expenses, setExpenses] = useState<ExpoAdvertisementExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      try {
+        const data = await expoAPI.getAll();
+        setExpenses(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchExpenses();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewExpense({ ...newExpense, [name]: value });
   };
 
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     if (!newExpense.date || !newExpense.amount || !newExpense.description) return;
-    const expenseToAdd: ExpoAdvertisementExpense = {
-      id: Date.now(), // Simple unique ID
-      date: newExpense.date,
-      amount: parseFloat(newExpense.amount),
-      description: newExpense.description,
-    };
-    setExpenses([...expenses, expenseToAdd]);
-    setNewExpense({ date: '', amount: '', description: '' });
+    try {
+      const created = await expoAPI.create({
+        date: newExpense.date,
+        amount: parseFloat(newExpense.amount),
+        description: newExpense.description,
+      });
+      setExpenses([...expenses, created]);
+      setNewExpense({ date: '', amount: '', description: '' });
+    } catch (err) {
+      console.error('Add failed:', err);
+    }
   };
 
-  const handleDeleteExpense = (id: number) => {
-    setExpenses(expenses.filter(expense => expense.id !== id));
+  const handleDeleteExpense = async (id: number) => {
+    try {
+      await expoAPI.delete(id);
+      setExpenses(expenses.filter(expense => expense.id !== id));
+    } catch (err) {
+      console.error('Delete failed:', err);
+    }
   };
 
   const handleEditClick = (expense: ExpoAdvertisementExpense) => {
     setEditingId(expense.id);
-    setNewExpense({ date: expense.date, amount: expense.amount.toString(), description: expense.description });
+    setNewExpense({
+      date: expense.date,
+      amount: expense.amount.toString(),
+      description: expense.description,
+    });
   };
 
-  const handleUpdateExpense = () => {
+  const handleUpdateExpense = async () => {
     if (!newExpense.date || !newExpense.amount || !newExpense.description || editingId === null) return;
-    setExpenses(expenses.map(expense =>
-      expense.id === editingId
-        ? { ...expense, date: newExpense.date, amount: parseFloat(newExpense.amount), description: newExpense.description }
-        : expense
-    ));
-    setNewExpense({ date: '', amount: '', description: '' });
-    setEditingId(null);
+
+    try {
+      const updated = await expoAPI.update(editingId, {
+        date: newExpense.date,
+        amount: parseFloat(newExpense.amount),
+        description: newExpense.description,
+      });
+      setExpenses(expenses.map(e => (e.id === editingId ? updated : e)));
+      setNewExpense({ date: '', amount: '', description: '' });
+      setEditingId(null);
+    } catch (err) {
+      console.error('Update failed:', err);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -64,7 +129,7 @@ export default function ExpoAdvertisementPage() {
   return (
     <div className="container mx-auto py-8">
       <BackButton href="/finance-manager/dashboard" label="Back to Dashboard" />
-      
+
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Expo Advertisement Expenses</h1>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
@@ -73,7 +138,6 @@ export default function ExpoAdvertisementPage() {
           <input
             type="date"
             name="date"
-            placeholder="Date"
             value={newExpense.date}
             onChange={handleInputChange}
             className="p-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
@@ -128,21 +192,31 @@ export default function ExpoAdvertisementPage() {
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description / Event Details</th>
-                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description / Event Details</th>
+                <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {expenses.map((expense) => (
                 <tr key={expense.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{expense.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">${expense.amount.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">₹{expense.amount.toFixed(2)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-300">{expense.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => handleEditClick(expense)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-600 mr-4"><PencilSquareIcon className="h-5 w-5 inline" /> Edit</button>
-                    <button onClick={() => handleDeleteExpense(expense.id)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-600"><TrashIcon className="h-5 w-5 inline" /> Delete</button>
+                    <button
+                      onClick={() => handleEditClick(expense)}
+                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-600 mr-4"
+                    >
+                      <PencilSquareIcon className="h-5 w-5 inline" /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteExpense(expense.id)}
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-600"
+                    >
+                      <TrashIcon className="h-5 w-5 inline" /> Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -152,4 +226,4 @@ export default function ExpoAdvertisementPage() {
       </div>
     </div>
   );
-} 
+}

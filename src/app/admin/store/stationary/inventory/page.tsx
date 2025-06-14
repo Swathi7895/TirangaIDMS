@@ -19,7 +19,7 @@ interface InventoryTransaction {
   notes: string;
 }
 
-const API_BASE_URL = 'http://localhost:8080/api/store/stationary/inventory';
+const API_BASE_URL = 'http://localhost:8080/store/stationary/inventory';
 
 export default function StationaryInventoryPage() {
   const [transactions, setTransactions] = useState<InventoryTransaction[]>([]);
@@ -127,7 +127,11 @@ export default function StationaryInventoryPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.type === 'in' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'}`}>
                         {transaction.type === 'in' ? <ArrowUpIcon className="h-4 w-4 mr-1" /> : <ArrowDownIcon className="h-4 w-4 mr-1" />}
-                        {transaction.type.toUpperCase()}
+                      {(transaction?.type ?? '').toUpperCase()}
+
+                        
+
+                        
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{transaction.quantity}</td>
