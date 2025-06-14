@@ -12,18 +12,10 @@ export default function StoreLayout({
 }) {
   const router = useRouter();
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    const userRole = localStorage.getItem('userRole');
-
-    if (!isAuthenticated || userRole !== 'admin') {
-      router.push('/login');
-    }
-  }, [router]);
+ 
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userRole');
+  
     router.push('/login');
   };
 

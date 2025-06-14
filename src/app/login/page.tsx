@@ -1,90 +1,69 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { LockClosedIcon, EnvelopeIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
-
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+interface FormData {
+  email: string;
+  password: string;
+}
+
+interface LoginResponse {
+  token: string;
+  message?: string;
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<{
-    email?: string;
-    password?: string;
-  }>({});
+  const [formData, setFormData] = useState<FormData>({
+    email: '',
+    password: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [validationErrors, setValidationErrors] = useState<Partial<FormData>>({});
 
   // Check if user is already authenticated
   useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    const userRole = localStorage.getItem('userRole');
-    
-    if (isAuthenticated === 'true' && userRole) {
-      // Redirect to appropriate dashboard
-      router.push(
-        userRole === 'admin' ? '/admin' :
-        userRole === 'employee' ? '/employee' :
-        userRole === 'store' ? '/store' :
-        userRole === 'hr' ? '/hr' :
-        userRole === 'datamanager' ? '/data-manager' :
-        '/finance-manager/dashboard'
-      );
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      // Verify token with backend
+      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/verify`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          router.replace('/admin');
+        } else {
+          // If token is invalid, clear it
+          sessionStorage.removeItem('token');
+          sessionStorage.removeItem('userEmail');
+        }
+      })
+      .catch(() => {
+        // If there's an error, clear the token
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('userEmail');
+      });
     }
   }, [router]);
 
-  // Predefined credentials with email-to-role mapping
-  const USER_CREDENTIALS = {
-    'admin@company.com': {
-      password: 'Admin@123',
-      role: 'admin',
-      dashboardPath: '/admin'
-    },
-    'employee@company.com': {
-      password: 'Employee@123',
-      role: 'employee',
-      dashboardPath: '/employee'
-    },
-    'store@company.com': {
-      password: 'Store@123',
-      role: 'store',
-      dashboardPath: '/store'
-    },
-    'hr@company.com': {
-      password: 'HRmanage@123',
-      role: 'hr',
-      dashboardPath: '/hr'
-    },
-    'data@company.com': {
-      password: 'Data@123',
-      role: 'datamanager',
-      dashboardPath: '/data-manager'
-    },
-    'finance@company.com': {
-      password: 'Finance@123',
-      role: 'financemanager',
-      dashboardPath: '/finance-manager/dashboard'
-    },
-  };
-
-  const validateForm = (formData: FormData) => {
-    const errors: { email?: string; password?: string } = {};
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+  const validateForm = (): boolean => {
+    const errors: Partial<FormData> = {};
     
-    if (!email) {
+    if (!formData.email) {
       errors.email = 'Email is required';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) {
+    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(formData.email)) {
       errors.email = 'Invalid email address';
     }
 
-    if (!password) {
+    if (!formData.password) {
       errors.password = 'Password is required';
-    } else if (password.length < 8) {
+    } else if (formData.password.length < 8) {
       errors.password = 'Password must be at least 8 characters';
     }
 
@@ -92,191 +71,142 @@ export default function LoginPage() {
     return Object.keys(errors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError('');
-    const formData = new FormData(e.currentTarget);
-    
-    if (!validateForm(formData)) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: undefined
+    }));
+    if (error) setError('');
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) {
       return;
     }
 
-    setIsLoading(true);
-
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+    setLoading(true);
+    setError('');
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
 
-      // Check credentials based on email
-      const userCredentials = USER_CREDENTIALS[email as keyof typeof USER_CREDENTIALS];
-      
-      if (userCredentials && password === userCredentials.password) {
-        // Store authentication state
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userRole', userCredentials.role);
-        localStorage.setItem('userEmail', email);
+      const data: LoginResponse = await response.json();
 
-        // Redirect to user-specific dashboard
-        router.push(userCredentials.dashboardPath);
+      if (response.ok) {
+        // Store authentication data
+        sessionStorage.setItem('token', data.token);
+        sessionStorage.setItem('userEmail', formData.email);
+        
+        // Redirect to admin page
+        router.replace('/admin');
       } else {
-        throw new Error('Invalid email or password');
+        setError(data.message || 'Login failed. Please check your credentials.');
+        // Clear any existing tokens on failed login
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('userEmail');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during login');
-      // Clear authentication state on error
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('userRole');
-      localStorage.removeItem('userEmail');
+      setError('Network error. Please check if the server is running.');
+      // Clear any existing tokens on error
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('userEmail');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Or{' '}
-            <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-              create a new account
-            </Link>
-          </p>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <EnvelopeIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className={`appearance-none rounded-md relative block w-full pl-10 pr-3 py-2 border ${validationErrors.email ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700`}
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setValidationErrors(prev => ({ ...prev, email: undefined })); }}
-                />
-              </div>
-              {validationErrors.email && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.email}</p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <LockClosedIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  required
-                  className={`appearance-none rounded-md relative block w-full pl-10 pr-10 py-2 border ${validationErrors.password ? 'border-red-500 dark:border-red-400' : 'border-gray-300 dark:border-gray-600'} placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm dark:bg-gray-700`}
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setValidationErrors(prev => ({ ...prev, password: undefined })); }}
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 focus:outline-none"
-                  >
-                    {showPassword ? (
-                      <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
-                    ) : (
-                      <EyeIcon className="h-5 w-5" aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              {validationErrors.password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{validationErrors.password}</p>
-              )}
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
+        <div className="text-center mb-8">
+          <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Shield className="w-8 h-8 text-indigo-600" />
           </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
+          <p className="text-gray-600">Sign in to access admin dashboard</p>
+        </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-4 py-3 border ${validationErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                placeholder="Enter your email"
+                required
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
-                Remember me
-              </label>
             </div>
-
-            <div className="text-sm">
-              <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
-                Forgot your password?
-              </Link>
-            </div>
+            {validationErrors.email && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.email}</p>
+            )}
           </div>
 
           <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                'Sign in'
-              )}
-            </button>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className={`w-full pl-10 pr-12 py-3 border ${validationErrors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                placeholder="Enter your password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            {validationErrors.password && (
+              <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
+            )}
           </div>
-        </form>
 
-        {/* Demo credentials section */}
-        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <h3 className="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">Demo Credentials:</h3>
-          <div className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
-            <div>Admin: admin@company.com / Admin@123</div>
-            <div>Employee: employee@company.com / Employee@123</div>
-            <div>Store: store@company.com / Store@123</div>
-            <div>HR: hr@company.com / HRmanage@123</div>
-            <div>Data Manager: data@company.com / Data@123</div>
-            <div>Finance: finance@company.com / Finance@123</div>
-          </div>
+          <button
+            onClick={handleLogin}
+            disabled={loading}
+            className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                Signing in...
+              </div>
+            ) : (
+              'Sign In'
+            )}
+          </button>
         </div>
       </div>
     </div>
