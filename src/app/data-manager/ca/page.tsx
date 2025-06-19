@@ -80,21 +80,22 @@ export default function CAPage() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const fetchedRawData: any[] = await response.json();
+      const fetchedRawData: Record<string, unknown>[] = await response.json();
   
       const processedData: CADocument[] = fetchedRawData.map(rawItem => ({
-        id: rawItem.id,
-        documentNumber: rawItem.documentNumber || '',
-        client: rawItem.client || '',
-        amount: parseFloat(rawItem.amount) || 0,
-        date: rawItem.date || '',
-        description: rawItem.description || '',
-        status: rawItem.status || 'pending'
+        id: Number(rawItem.id) || 0,
+        documentNumber: String(rawItem.documentNumber || ''),
+        client: String(rawItem.client || ''),
+        amount: Number(rawItem.amount) || 0,
+        date: String(rawItem.date || ''),
+        description: String(rawItem.description || ''),
+        status: (rawItem.status as CADocument['status']) || 'pending'
       }));
   
       setData(processedData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -125,8 +126,9 @@ export default function CAPage() {
       }
 
       await fetchData();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 
@@ -155,8 +157,9 @@ export default function CAPage() {
       }
 
       await fetchData();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 
@@ -172,8 +175,9 @@ export default function CAPage() {
       }
 
       await fetchData();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 

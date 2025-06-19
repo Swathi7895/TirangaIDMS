@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+import { PlusCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
 import BackButton from '@/components/BackButton';
 
 interface ElectricBillExpense {

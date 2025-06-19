@@ -1,189 +1,136 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react'; // Import useState and useEffect
 
-import {
-  BuildingOfficeIcon,
+import { useState, useEffect } from 'react';
+
+import { 
+  BuildingOfficeIcon, 
   TagIcon,
   ChartBarIcon,
   ArrowTrendingUpIcon,
   BanknotesIcon,
+ 
 } from '@heroicons/react/24/outline';
 
-import {
-  ArrowLeft,
-} from 'lucide-react';
 
-// Add type definitions for better type safety
-interface ExpenseData {
+interface Expense {
+  id: number;
   amount: number;
-  date?: string;
-  description?: string;
+  date: string;
+  description: string;
 }
 
-interface ExpenseState {
-  [key: string]: ExpenseData[];
-}
-
-interface ApiResponse {
-  data: Array<{
-    amount: number;
-    date?: string;
-    description?: string;
-  }>;
-}
-
-interface ExpenseResult {
-  name: string;
-  data: ExpenseData[];
-  error: boolean;
-}
 
 export default function FinanceManagerDashboard() {
-  // State to hold dynamic expense data for each feature
-  const [fixedExpensesData, setFixedExpensesData] = useState<ExpenseState>({
-    'Rent': [],
-    'Electric Bills': [],
-    'Internet Bills': [],
-    'SIM Bills': [],
-    'Water Bills': [],
-    'Salaries': [],
-  });
-
-  const [variableExpensesData, setVariableExpensesData] = useState<ExpenseState>({
-    'Travel': [],
-    'Expo Advertisement': [],
-    'Incentives': [],
-    'Commissions': [],
-  });
-
-  // State to hold dynamic stats
-  const [dynamicStats, setDynamicStats] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Base URL for your Spring Boot backend
-  const API_BASE_URL = 'http://localhost:8080/api';
-
-  // Improved error handling and data validation
-  const fetchExpenseData = async (endpoint: string, expenseName: string): Promise<ExpenseResult> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/${endpoint}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const result = await response.json() as ApiResponse;
-      
-      // Validate the data structure
-      if (!result.data || !Array.isArray(result.data)) {
-        console.warn(`Invalid data structure for ${expenseName}`);
-        return { name: expenseName, data: [], error: false };
-      }
-
-      // Ensure each expense has the required fields
-      const validatedData = result.data.map((item) => ({
-        amount: Number(item.amount) || 0,
-        date: item.date || new Date().toISOString(),
-        description: item.description || '',
-      }));
-
-      return { name: expenseName, data: validatedData, error: false };
-    } catch (err) {
-      console.error(`Failed to fetch ${expenseName} data:`, err);
-      return { name: expenseName, data: [], error: true };
-    }
-  };
+ 
+  const [stats, setStats] = useState([
+    { name: 'Monthly Budget', value: 'Loading...', change: '', icon: BanknotesIcon },
+    { name: 'Fixed Costs', value: 'Loading...', change: '', icon: BuildingOfficeIcon },
+    { name: 'Variable Costs', value: 'Loading...', change: '', icon: ChartBarIcon },
+    { name: 'Savings', value: 'Loading...', change: '', icon: ArrowTrendingUpIcon },
+  ]);
 
   useEffect(() => {
-    const loadAllData = async () => {
+   
+
+    // Fetch all expense data
+    const fetchExpenseData = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const fixedExpenseEndpoints = [
-          { name: 'Rent', endpoint: 'rent' },
-          { name: 'Electric Bills', endpoint: 'electric-bills' },
-          { name: 'Internet Bills', endpoint: 'internet-bills' },
-          { name: 'SIM Bills', endpoint: 'sim-bills' },
-          { name: 'Water Bills', endpoint: 'water-bills' },
-          { name: 'Salaries', endpoint: 'salaries' },
-        ];
-
-        const variableExpenseEndpoints = [
-          { name: 'Travel', endpoint: 'travel' },
-          { name: 'Expo Advertisement', endpoint: 'expo-advertisement' },
-          { name: 'Incentives', endpoint: 'incentives' },
-          { name: 'Commissions', endpoint: 'commission' },
-        ];
-
-        // Fetch Fixed Expenses with error handling
-        const fetchedFixed = await Promise.all(
-          fixedExpenseEndpoints.map(item => fetchExpenseData(item.endpoint, item.name))
-        );
-        
-        const newFixedData: ExpenseState = {};
-        let hasFixedErrors = false;
-        
-        fetchedFixed.forEach(item => {
-          newFixedData[item.name] = item.data;
-          if (item.error) hasFixedErrors = true;
-        });
-        
-        setFixedExpensesData(newFixedData);
-
-        // Fetch Variable Expenses with error handling
-        const fetchedVariable = await Promise.all(
-          variableExpenseEndpoints.map(item => fetchExpenseData(item.endpoint, item.name))
-        );
-        
-        const newVariableData: ExpenseState = {};
-        let hasVariableErrors = false;
-        
-        fetchedVariable.forEach(item => {
-          newVariableData[item.name] = item.data;
-          if (item.error) hasVariableErrors = true;
-        });
-        
-        setVariableExpensesData(newVariableData);
-
-        // Calculate totals with null checks
-        const totalFixedCosts = Object.values(newFixedData).reduce((sum, expenses) => {
-          return sum + expenses.reduce((expenseSum, expense) => expenseSum + (expense.amount || 0), 0);
-        }, 0);
-
-        const totalVariableCosts = Object.values(newVariableData).reduce((sum, expenses) => {
-          return sum + expenses.reduce((expenseSum, expense) => expenseSum + (expense.amount || 0), 0);
-        }, 0);
-
-        const monthlyBudget = 245000;
-        const savings = monthlyBudget - (totalFixedCosts + totalVariableCosts);
-
-        const calculateChange = () => {
-          const randomChange = Number((Math.random() * 20 - 10).toFixed(0));
-          return `${randomChange > 0 ? '+' : ''}${randomChange}%`;
-        };
-
-        setDynamicStats([
-          { name: 'Monthly Budget', value: `₹${monthlyBudget.toLocaleString('en-IN')}`, change: '+12%', icon: BanknotesIcon },
-          { name: 'Fixed Costs', value: `₹${totalFixedCosts.toLocaleString('en-IN')}`, change: calculateChange(), icon: BuildingOfficeIcon },
-          { name: 'Variable Costs', value: `₹${totalVariableCosts.toLocaleString('en-IN')}`, change: calculateChange(), icon: ChartBarIcon },
-          { name: 'Savings', value: `₹${savings.toLocaleString('en-IN')}`, change: calculateChange(), icon: ArrowTrendingUpIcon },
+        // Fetch fixed expenses
+        const fixedExpensesResponses = await Promise.all([
+          fetch('http://localhost:8080/api/rent').then(res => res.json()),
+          fetch('http://localhost:8080/api/electric-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/internet-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/sim-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/water-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/salaries').then(res => res.json()),
         ]);
 
-        // Set error message if any endpoints failed
-        if (hasFixedErrors || hasVariableErrors) {
-          setError('Some expense data could not be loaded. Please try refreshing the page.');
-        }
-      } catch (err) {
-        console.error('Error loading data:', err);
-        setError('Failed to load finance data. Please check your connection and try again.');
-      } finally {
-        setLoading(false);
+        // Fetch variable expenses
+        const variableExpensesResponses = await Promise.all([
+          fetch('http://localhost:8080/api/travel').then(res => res.json()),
+          fetch('http://localhost:8080/api/expo-advertisement').then(res => res.json()),
+          fetch('http://localhost:8080/api/incentives').then(res => res.json()),
+          fetch('http://localhost:8080/api/commission').then(res => res.json()),
+        ]);
+
+        // Extract data arrays from responses and ensure they are arrays
+        const fixedExpenses = fixedExpensesResponses.map(response => {
+          const data = response.data || response;
+          return Array.isArray(data) ? data : [];
+        });
+
+        const variableExpenses = variableExpensesResponses.map(response => {
+          const data = response.data || response;
+          return Array.isArray(data) ? data : [];
+        });
+
+        // Calculate totals
+        const totalFixedCosts = fixedExpenses.reduce((sum: number, expenses: Expense[]) => {
+          return sum + expenses.reduce((expenseSum: number, expense: Expense) => {
+            const amount = typeof expense.amount === 'number' ? expense.amount : 0;
+            return expenseSum + amount;
+          }, 0);
+        }, 0);
+
+        const totalVariableCosts = variableExpenses.reduce((sum: number, expenses: Expense[]) => {
+          return sum + expenses.reduce((expenseSum: number, expense: Expense) => {
+            const amount = typeof expense.amount === 'number' ? expense.amount : 0;
+            return expenseSum + amount;
+          }, 0);
+        }, 0);
+
+        const monthlyBudget = 25000; // This could also be fetched from an API
+        const savings = monthlyBudget - (totalFixedCosts + totalVariableCosts);
+
+        // Calculate percentage changes (you might want to fetch historical data for accurate changes)
+        const calculateChange = (current: number, previous: number) => {
+          if (previous === 0) return '+0%';
+          const change = ((current - previous) / previous) * 100;
+          return `${change > 0 ? '+' : ''}${change.toFixed(0)}%`;
+        };
+
+        // Update stats with calculated values
+        setStats([
+          { 
+            name: 'Monthly Budget', 
+            value: `₹${monthlyBudget.toLocaleString('en-IN')}`, 
+            change: '+0%', 
+            icon: BanknotesIcon 
+          },
+          { 
+            name: 'Fixed Costs', 
+            value: `₹${totalFixedCosts.toLocaleString('en-IN')}`, 
+            change: calculateChange(totalFixedCosts, totalFixedCosts * 0.9), // Example previous value
+            icon: BuildingOfficeIcon 
+          },
+          { 
+            name: 'Variable Costs', 
+            value: `₹${totalVariableCosts.toLocaleString('en-IN')}`, 
+            change: calculateChange(totalVariableCosts, totalVariableCosts * 0.95), // Example previous value
+            icon: ChartBarIcon 
+          },
+          { 
+            name: 'Savings', 
+            value: `₹${savings.toLocaleString('en-IN')}`, 
+            change: calculateChange(savings, savings * 1.1), // Example previous value
+            icon: ArrowTrendingUpIcon 
+          },
+        ]);
+      } catch (error) {
+        console.error('Error fetching expense data:', error);
+        // Set error state in stats
+        setStats([
+          { name: 'Monthly Budget', value: 'Error', change: '', icon: BanknotesIcon },
+          { name: 'Fixed Costs', value: 'Error', change: '', icon: BuildingOfficeIcon },
+          { name: 'Variable Costs', value: 'Error', change: '', icon: ChartBarIcon },
+          { name: 'Savings', value: 'Error', change: '', icon: ArrowTrendingUpIcon },
+        ]);
       }
     };
 
-    loadAllData();
-  }, []); // Empty dependency array means this effect runs once after the initial render
+    fetchExpenseData();
+  }, []);
 
   const financeSections = [
     {
@@ -194,12 +141,12 @@ export default function FinanceManagerDashboard() {
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
       iconColor: 'text-blue-600 dark:text-blue-400',
       features: [
-        { name: 'Rent', link: '/admin/finance-manager/fixed-expenses/rent', icon: '🏠', data: fixedExpensesData['Rent'] },
-        { name: 'Electric Bills', link: '/admin/finance-manager/fixed-expenses/electric-bills', icon: '⚡', data: fixedExpensesData['Electric Bills'] },
-        { name: 'Internet Bills', link: '/admin/finance-manager/fixed-expenses/internet-bills', icon: '🌐', data: fixedExpensesData['Internet Bills'] },
-        { name: 'SIM Bills', link: '/admin/finance-manager/fixed-expenses/sim-bills', icon: '📱', data: fixedExpensesData['SIM Bills'] },
-        { name: 'Water Bills', link: '/admin/finance-manager/fixed-expenses/water-bills', icon: '💧', data: fixedExpensesData['Water Bills'] },
-        { name: 'Salaries', link: '/admin/finance-manager/fixed-expenses/salaries', icon: '👥', data: fixedExpensesData['Salaries'] },
+        { name: 'Rent', link: '/finance-manager/fixed-expenses/rent', icon: '🏠' },
+        { name: 'Electric Bills', link: '/finance-manager/fixed-expenses/electric-bills', icon: '⚡' },
+        { name: 'Internet Bills', link: '/finance-manager/fixed-expenses/internet-bills', icon: '🌐' },
+        { name: 'SIM Bills', link: '/finance-manager/fixed-expenses/sim-bills', icon: '📱' },
+        { name: 'Water Bills', link: '/finance-manager/fixed-expenses/water-bills', icon: '💧' },
+        { name: 'Salaries', link: '/finance-manager/fixed-expenses/salaries', icon: '👥' },
       ],
     },
     {
@@ -210,48 +157,54 @@ export default function FinanceManagerDashboard() {
       bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
       iconColor: 'text-emerald-600 dark:text-emerald-400',
       features: [
-        { name: 'Travel', link: '/admin/finance-manager/variable-expenses/travel', icon: '✈️', data: variableExpensesData['Travel'] },
-        { name: 'Expo Advertisement', link: '/admin/finance-manager/variable-expenses/expo-advertisement', icon: '📢', data: variableExpensesData['Expo Advertisement'] },
-        { name: 'Incentives', link: '/admin/finance-manager/variable-expenses/incentives', icon: '🎯', data: variableExpensesData['Incentives'] },
-        { name: 'Commissions', link: '/admin/finance-manager/variable-expenses/commissions', icon: '💰', data: variableExpensesData['Commissions'] },
+        { name: 'Travel', link: '/finance-manager/variable-expenses/travel', icon: '✈️' },
+        { name: 'Expo Advertisement', link: '/finance-manager/variable-expenses/expo-advertisement', icon: '📢' },
+        { name: 'Incentives', link: '/finance-manager/variable-expenses/incentives', icon: '🎯' },
+        { name: 'Commissions', link: '/finance-manager/variable-expenses/commissions', icon: '💰' },
       ],
     },
   ];
 
-  // Use dynamicStats for rendering
-  const statsToDisplay = dynamicStats.length > 0 ? dynamicStats : [
-    { name: 'Monthly Budget', value: 'Loading...', change: '', icon: BanknotesIcon },
-    { name: 'Fixed Costs', value: 'Loading...', change: '', icon: BuildingOfficeIcon },
-    { name: 'Variable Costs', value: 'Loading...', change: '', icon: ChartBarIcon },
-    { name: 'Savings', value: 'Loading...', change: '', icon: ArrowTrendingUpIcon },
-  ];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <p className="text-xl text-gray-700 dark:text-gray-300">Loading finance data...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-        <p className="text-xl text-red-600 dark:text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
+  // const quickActions = [
+  //   {
+  //     name: 'Add Expense',
+  //     icon: '➕',
+  //     color: 'text-blue-600',
+  //     action: () => router.push('/finance-manager/fixed-expenses/rent'),
+  //   },
+  //   {
+  //     name: 'Generate Report',
+  //     icon: '📊',
+  //     color: 'text-green-600',
+  //     action: () => {
+  //       // TODO: Implement report generation
+  //       alert('Report generation feature coming soon!');
+  //     },
+  //   },
+  //   {
+  //     name: 'Set Budget',
+  //     icon: '🎯',
+  //     color: 'text-purple-600',
+  //     action: () => {
+  //       // TODO: Implement budget setting
+  //       alert('Budget setting feature coming soon!');
+  //     },
+  //   },
+  //   {
+  //     name: 'Export Data',
+  //     icon: '📤',
+  //     color: 'text-orange-600',
+  //     action: () => {
+  //       // TODO: Implement data export
+  //       alert('Data export feature coming soon!');
+  //     },
+  //   },
+  // ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-8">
-        <div>
-          <Link href="/admin" className="flex items-center text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </Link>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 mt-5 rounded-lg">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -275,7 +228,7 @@ export default function FinanceManagerDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statsToDisplay.map((stat) => (
+          {stats.map((stat) => (
             <div key={stat.name} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-6 border border-gray-200 dark:border-gray-700">
               <div className="flex items-center justify-between">
                 <div>
@@ -289,6 +242,12 @@ export default function FinanceManagerDashboard() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          {/* <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3> */}
+          {/* <QuickActions actions={quickActions} /> */}
         </div>
 
         {/* Main Sections */}
@@ -324,15 +283,6 @@ export default function FinanceManagerDashboard() {
                               <p className="font-medium text-gray-900 dark:text-white group-hover/item:text-blue-600 dark:group-hover/item:text-blue-400 transition-colors">
                                 {feature.name}
                               </p>
-                              {/* Display a snippet of data or total if available */}
-                              {feature.data && feature.data.length > 0 && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  Last: ₹{feature.data[0].amount.toLocaleString('en-IN')} on {feature.data[0].date}
-                                </p>
-                              )}
-                              {feature.data && feature.data.length === 0 && (
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">No data available</p>
-                              )}
                             </div>
                             <svg className="w-4 h-4 text-gray-400 group-hover/item:text-blue-500 group-hover/item:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -345,16 +295,14 @@ export default function FinanceManagerDashboard() {
                 </div>
 
                 {/* Section Footer */}
-                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 rounded-b-2xl">
+                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500 dark:text-gray-400">
                       {section.features.length} categories
                     </span>
                     <button className={`text-sm font-medium ${section.iconColor} hover:underline flex items-center space-x-1`}>
-                      <span>View all</span>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
+                    
+                    
                     </button>
                   </div>
                 </div>

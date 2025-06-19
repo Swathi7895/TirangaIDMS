@@ -1,21 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+
+
 
 
 export default function FinanceManagerLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    const userRole = localStorage.getItem('userRole');
 
-    if (!isAuthenticated || userRole !== 'admin') {
-      // Redirect to login if not authenticated as a finance manager
-      router.push('/login');
-    }
-  }, [router]);
 
  
 

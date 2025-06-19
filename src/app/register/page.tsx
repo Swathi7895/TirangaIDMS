@@ -29,7 +29,8 @@ export default function RegisterPage() {
     'ROLE_STORE',
     'ROLE_FINANCE',
     'ROLE_HR',
-    'ROLE_DATA_MANAGER'
+    'ROLE_DATA_MANAGER',
+    'ROLE_EMPLOYEE'
   ];
 
   const handleRoleChange = (role: string) => {
@@ -130,7 +131,7 @@ export default function RegisterPage() {
             />
 
             <fieldset>
-              <legend className="text-sm font-medium text-gray-700 mb-2">Select Roles (You can select multiple)</legend>
+              <legend className="text-sm font-medium text-gray-700 mb-2">Select Roles</legend>
               <div className="grid grid-cols-2 gap-3 mt-2">
                 {availableRoles.map((role) => (
                   <label key={role} className="flex items-center p-2 border rounded-lg hover:bg-gray-50 cursor-pointer">

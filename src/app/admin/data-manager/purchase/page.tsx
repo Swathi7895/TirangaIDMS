@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import {  Download, Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 
@@ -16,14 +16,6 @@ interface Purchase {
   paymentMethod: 'Bank Transfer' | 'Credit Card' | 'Cash' | 'Check' | 'Wire Transfer';
 }
 
-const formFields: FormField[] = [
-  { name: 'vendor', label: 'Vendor', type: 'text', required: true },
-  { name: 'amount', label: 'Amount', type: 'number', required: true },
-  { name: 'date', label: 'Purchase Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Pending', 'Completed', 'Cancelled', 'In Progress'], required: true },
-  { name: 'paymentStatus', label: 'Payment Status', type: 'select', options: ['Paid', 'Pending', 'Overdue', 'Partially Paid'], required: true },
-  { name: 'paymentMethod', label: 'Payment Method', type: 'select', options: ['Bank Transfer', 'Credit Card', 'Cash', 'Check', 'Wire Transfer'], required: true }
-];
 
 const viewFields: ViewField[] = [
   { name: 'vendor', label: 'Vendor', type: 'text' },
@@ -37,7 +29,7 @@ const viewFields: ViewField[] = [
 export default function PurchasePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null);
   const [data, setData] = useState<Purchase[]>([]);
@@ -57,10 +49,13 @@ export default function PurchasePage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch purchases: ${e.message}`);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    
     }
   };
 

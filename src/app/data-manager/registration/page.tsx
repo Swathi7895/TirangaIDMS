@@ -53,8 +53,9 @@ export default function CompanyRegistrationPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch registrations: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Failed to fetch registrations: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -125,8 +126,9 @@ export default function CompanyRegistrationPage() {
         }
         setData(prev => prev.filter(i => i.id !== item.id));
         alert('Registration deleted successfully!');
-      } catch (e: any) {
-        alert(`Failed to delete registration: ${e.message}`);
+      } catch (e: Error | unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        alert(`Failed to delete registration: ${errorMessage}`);
       }
     }
   };
@@ -169,8 +171,9 @@ export default function CompanyRegistrationPage() {
       }
       setIsFormOpen(false);
       setSelectedRegistration(null);
-    } catch (e: any) {
-      alert(`Failed to save registration: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      alert(`Failed to save registration: ${errorMessage}`);
     }
   };
 

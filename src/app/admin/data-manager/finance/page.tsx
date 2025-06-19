@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import {  Download, Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 interface FinanceReport {
@@ -16,15 +16,7 @@ interface FinanceReport {
   preparedBy: string;
 }
 
-const formFields: FormField[] = [
-  { name: 'reportType', label: 'Report Type', type: 'select', options: ['Income Statement', 'Balance Sheet', 'Cash Flow', 'Profit & Loss'], required: true },
-  { name: 'period', label: 'Period', type: 'text', required: true },
-  { name: 'date', label: 'Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Draft', 'Final', 'Under Review', 'Approved'], required: true },
-  { name: 'amount', label: 'Amount', type: 'number', required: true },
-  { name: 'department', label: 'Department', type: 'text', required: true },
-  { name: 'preparedBy', label: 'Prepared By', type: 'text', required: true }
-];
+
 
 const viewFields: ViewField[] = [
   { name: 'reportType', label: 'Report Type', type: 'text' },
@@ -39,7 +31,7 @@ const viewFields: ViewField[] = [
 export default function FinancePage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<FinanceReport | null>(null);
   const [data, setData] = useState<FinanceReport[]>([]);
@@ -59,11 +51,13 @@ export default function FinancePage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch reports: ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    }    
   };
 
   useEffect(() => {

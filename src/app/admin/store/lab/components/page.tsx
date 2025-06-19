@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+
 import { 
  
   ArrowLeft,
@@ -25,18 +25,8 @@ export default function LabComponentsPage() {
   const [components, setComponents] = useState<LabComponent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingComponent, setEditingComponent] = useState<LabComponent | null>(null);
-
-  // State for new component form
-  const [newComponent, setNewComponent] = useState<Omit<LabComponent, 'id' | 'lastUpdated'>>({
-    name: '',
-    category: '',
-    quantity: 0,
-    location: '',
-    itemCondition: 'New',
-  });
+ 
+ 
 
   // Fetch components from API on component mount
   useEffect(() => {

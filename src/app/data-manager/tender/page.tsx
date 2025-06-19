@@ -17,11 +17,7 @@ interface Tender {
   status: 'Open' | 'Closed' | 'Cancelled' | 'Awarded';
 }
 
-const sampleData: Tender[] = [
-  { id: 1, tenderNumber: 'TND-2024-001', title: 'IT Infrastructure Upgrade', organization: 'Ministry of Technology', submissionDate: '2024-04-15', openingDate: '2024-04-20', estimatedValue: 500000, status: 'Open', category: 'Government' },
-  { id: 2, tenderNumber: 'TND-2024-002', title: 'Office Supplies Procurement', organization: 'Global Corp Ltd', submissionDate: '2024-03-20', openingDate: '2024-03-25', estimatedValue: 100000, status: 'Awarded', category: 'Private' },
-  { id: 3, tenderNumber: 'TND-2024-003', title: 'International Trade Project', organization: 'World Trade Organization', submissionDate: '2024-05-01', openingDate: '2024-05-10', estimatedValue: 1000000, status: 'Open', category: 'International' }
-];
+
 
 const formFields: FormField[] = [
   { name: 'tenderNumber', label: 'Tender Number', type: 'text', required: true },
@@ -68,8 +64,9 @@ export default function TenderManagementPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch tenders: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Failed to fetch tenders: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -143,8 +140,9 @@ export default function TenderManagementPage() {
         }
         setData(prev => prev.filter(i => i.id !== item.id));
         alert('Tender deleted successfully!');
-      } catch (e: any) {
-        alert(`Failed to delete tender: ${e.message}`);
+      } catch (e: Error | unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        alert(`Failed to delete tender: ${errorMessage}`);
       }
     }
   };
@@ -187,8 +185,9 @@ export default function TenderManagementPage() {
       }
       setIsFormOpen(false);
       setSelectedTender(null);
-    } catch (e: any) {
-      alert(`Failed to save tender: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      alert(`Failed to save tender: ${errorMessage}`);
     }
   };
 

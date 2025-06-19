@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {  Search, Filter, ArrowLeft,Download, Edit,Eye, Trash2, } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import {  Search, Filter, ArrowLeft,Download,Eye,  } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
-import Link
- from 'next/link';
+import Link from 'next/link';
+
 interface BillingItem {
   id: number;
   invoiceNumber: string;
@@ -14,6 +14,17 @@ interface BillingItem {
   date: string;
   status: 'paid' | 'pending' | 'overdue';
   description: string;
+}
+
+// Raw API response interface
+interface RawBillingItem {
+  id: number;
+  invoiceNumber?: string;
+  client?: string;
+  amount?: string | number;
+  dueDate?: string;
+  status?: 'paid' | 'pending' | 'overdue';
+  type?: string;
 }
 
 // Type-safe wrapper for DataView
@@ -42,15 +53,6 @@ function BillingDataView({ isOpen, onClose, data, fields, title }: {
   );
 }
 
-const formFields: FormField[] = [
-  { name: 'invoiceNumber', label: 'Invoice Number', type: 'text', required: true },
-  { name: 'clientName', label: 'Client', type: 'text', required: true },
-  { name: 'amount', label: 'Amount', type: 'number', required: true },
-  { name: 'date', label: 'Due Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['paid', 'pending', 'overdue'], required: true },
-  { name: 'description', label: 'Type', type: 'text', required: true }
-];
-
 const viewFields: ViewField[] = [
   { name: 'invoiceNumber', label: 'Invoice Number', type: 'text' },
   { name: 'clientName', label: 'Client', type: 'text' },
@@ -66,7 +68,7 @@ export default function BillingPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
-  const [isFormOpen, setIsFormOpen] = useState(false);
+ 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<BillingItem | null>(null);
   const [data, setData] = useState<BillingItem[]>([]);
@@ -83,43 +85,36 @@ export default function BillingPage() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const fetchedRawData: any[] = await response.json();
+      const fetchedRawData: RawBillingItem[] = await response.json();
   
       const processedData: BillingItem[] = fetchedRawData.map(rawItem => ({
         id: rawItem.id,
         invoiceNumber: rawItem.invoiceNumber || '',
         clientName: rawItem.client || '',
-        amount: parseFloat(rawItem.amount) || 0,
+        amount: parseFloat(String(rawItem.amount)) || 0,
         date: rawItem.dueDate || '',
         status: rawItem.status || 'pending',
         description: rawItem.type || ''
       }));
   
       setData(processedData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setIsLoading(false);
     }
   };
-
-
-
 
   // --- useEffect to fetch data on component mount ---
   useEffect(() => {
     fetchData();
   }, []);
 
-  const handleAddNew = () => {
-    setSelectedItem(null);
-    setIsFormOpen(true);
-  };
-
   const handleView = (item: BillingItem) => {
     setSelectedItem(item);
     setIsViewOpen(true);
   };
+  
   const filteredData = data.filter(item => {
     const matchesSearch =
       item.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,6 +159,7 @@ export default function BillingPage() {
         return 'bg-gray-100 text-gray-800';
     }
   };
+  
   return (
     <div className="space-y-6">
        <div className="mb-6">
@@ -338,8 +334,6 @@ export default function BillingPage() {
           )}
         </div>
       )}
-
-   
 
       {isViewOpen && selectedItem && (
         <BillingDataView

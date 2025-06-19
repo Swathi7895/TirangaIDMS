@@ -181,10 +181,13 @@ export default function AdminDashboard() {
       } else {
         setError(data.message || 'Failed to create user');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    
     }
   };
 

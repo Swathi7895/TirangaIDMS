@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import BackButton from '@/components/BackButton';
 
 interface SalaryExpense {
@@ -15,7 +15,7 @@ interface SalaryExpense {
 export default function SalariesPage() {
   const [expenses, setExpenses] = useState<SalaryExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ employeeName: '', date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, ] = useState<number | null>(null);
   const API_URL = 'http://localhost:8080/api/salaries';
 
   useEffect(() => {

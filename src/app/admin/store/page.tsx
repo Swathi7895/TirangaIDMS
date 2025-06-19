@@ -3,9 +3,7 @@
 import Link from 'next/link';
 import {
   ShoppingCartIcon,
-  ClipboardDocumentCheckIcon,
-  ExclamationTriangleIcon,
-  ClipboardIcon,
+
   ArchiveBoxIcon,
   BookOpenIcon,
   DocumentArrowUpIcon,
@@ -138,62 +136,6 @@ export default function StoreDashboard() {
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light"> {/* Lighter font-weight */}
             Comprehensive inventory management system for all your business needs.
           </p>
-        </div>
-
-        {/* Quick Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16"> {/* Increased gap and margin */}
-          {[
-            {
-              label: "Total Items",
-              value: "2,847",
-              change: "+12%",
-              color: "blue",
-              icon: ClipboardDocumentCheckIcon
-            },
-            {
-              label: "Active Assets",
-              value: "156",
-              change: "+5%",
-              color: "emerald",
-              icon: BuildingOfficeIcon
-            },
-            {
-              label: "Low Stock Alerts",
-              value: "23",
-              change: "-8%",
-              color: "amber",
-              icon: ExclamationTriangleIcon
-            },
-            {
-              label: "Monthly Requests",
-              value: "89",
-              change: "+18%",
-              color: "purple",
-              icon: ClipboardIcon
-            }
-          ].map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <div key={index} className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1"> {/* rounded-xl, shadow-sm, subtle border */}
-                <div className="flex items-start justify-between"> {/* Align to start for better icon positioning */}
-                  <div>
-                    <div className="flex items-center gap-2 mb-2"> {/* Added mb-2 for space */}
-                      <Icon className={`w-5 h-5 text-${stat.color}-500`} /> {/* Icon color kept for distinction */}
-                      <p className="text-sm text-slate-500 dark:text-slate-400 font-medium tracking-wide">{stat.label}</p> {/* Slightly muted text, tracking wide */}
-                    </div>
-                    <p className="text-3xl font-bold text-slate-800 dark:text-white">{stat.value}</p> {/* Larger value */}
-                  </div>
-                  <div className={`text-xs font-semibold px-2 py-1 rounded-full ${ // Smaller font, pill shape
-                    stat.change.startsWith('+')
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                    {stat.change}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
         </div>
 
         {/* Dashboard Grid */}

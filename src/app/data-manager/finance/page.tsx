@@ -59,8 +59,9 @@ export default function FinancePage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch reports: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Failed to fetch reports: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -133,8 +134,9 @@ export default function FinancePage() {
         }
         setData(prev => prev.filter(i => i.id !== item.id));
         alert('Report deleted successfully!');
-      } catch (e: any) {
-        alert(`Failed to delete report: ${e.message}`);
+      } catch (e: Error | unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        alert(`Failed to delete report: ${errorMessage}`);
       }
     }
   };
@@ -177,8 +179,9 @@ export default function FinancePage() {
       }
       setIsFormOpen(false);
       setSelectedReport(null);
-    } catch (e: any) {
-      alert(`Failed to save report: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      alert(`Failed to save report: ${errorMessage}`);
     }
   };
 

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import { Download, Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 
@@ -16,14 +16,7 @@ interface Sale {
   paymentMethod: 'Bank Transfer' | 'Credit Card' | 'Cash' | 'Check' | 'Wire Transfer';
 }
 
-const formFields: FormField[] = [
-  { name: 'customer', label: 'Customer', type: 'text', required: true },
-  { name: 'amount', label: 'Amount', type: 'number', required: true },
-  { name: 'date', label: 'Sale Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Pending', 'Completed', 'Cancelled', 'In Progress'], required: true },
-  { name: 'paymentStatus', label: 'Payment Status', type: 'select', options: ['Paid', 'Pending', 'Overdue', 'Partially Paid'], required: true },
-  { name: 'paymentMethod', label: 'Payment Method', type: 'select', options: ['Bank Transfer', 'Credit Card', 'Cash', 'Check', 'Wire Transfer'], required: true }
-];
+
 
 const viewFields: ViewField[] = [
   { name: 'customer', label: 'Customer', type: 'text' },
@@ -37,7 +30,7 @@ const viewFields: ViewField[] = [
 export default function SalesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [data, setData] = useState<Sale[]>([]);
@@ -57,10 +50,13 @@ export default function SalesPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch sales: ${e.message}`);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    
     }
   };
 
@@ -68,10 +64,6 @@ export default function SalesPage() {
     fetchSales();
   }, []);
 
-  const handleAddNew = () => {
-    setSelectedSale(null);
-    setIsFormOpen(true);
-  };
 
  
 

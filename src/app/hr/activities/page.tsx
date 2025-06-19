@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
  
@@ -27,47 +27,108 @@ interface Activity {
   notes?: string;
 }
 
+// Define the API response interface
+interface ApiActivityResponse {
+  id: string;
+  title: string;
+  description: string;
+  activityDate: string;
+  activityTime: string;
+  status: string; // "Pending", "In Progress", "Completed"
+  assignedTo: string;
+  priority: string; // "Low Priority", "Medium Priority", "High Priority"
+  category: string;
+  notes?: string;
+}
+
+// Define the API request interface
+interface ApiActivityRequest {
+  title: string;
+  description: string;
+  activityDate: string;
+  activityTime: string;
+  status: string; // "Pending", "In Progress", "Completed"
+  assignedTo: string;
+  priority: string; // "Low Priority", "Medium Priority", "High Priority"
+  category: string;
+  notes?: string;
+}
+
+// Transformation from client-side Activity (without id) to API request format
+const transformActivityToApiRequest = (activity: Omit<Activity, 'id'>): ApiActivityRequest => ({
+  title: activity.title,
+  description: activity.description,
+  activityDate: activity.date,
+  activityTime: activity.time,
+  status: activity.status.charAt(0).toUpperCase() + activity.status.slice(1),
+  assignedTo: activity.assignedTo,
+  priority: activity.priority.charAt(0).toUpperCase() + activity.priority.slice(1) + ' Priority',
+  category: activity.category,
+  notes: activity.notes,
+});
+
+// Transformation from API response to client-side Activity format
+const transformActivityFromApiResponse = (apiActivity: ApiActivityResponse): Activity => ({
+  id: apiActivity.id,
+  title: apiActivity.title,
+  description: apiActivity.description,
+  date: apiActivity.activityDate,
+  time: apiActivity.activityTime,
+  status: apiActivity.status.toLowerCase() as Activity['status'],
+  assignedTo: apiActivity.assignedTo,
+  priority: apiActivity.priority.replace(' Priority', '').toLowerCase() as Activity['priority'],
+  category: apiActivity.category,
+  notes: apiActivity.notes,
+});
+
 type ModalType = 'add' | 'edit' | 'view';
 
+const API_BASE_URL = 'http://localhost:8080/api/activities';
+
+const activitiesAPI = {
+  getAll: async (): Promise<Activity[]> => {
+    const res = await fetch(API_BASE_URL);
+    if (!res.ok) throw new Error('Failed to fetch activities');
+    const data: ApiActivityResponse[] = await res.json();
+    return data.map(transformActivityFromApiResponse);
+  },
+
+  create: async (activity: Omit<Activity, 'id'>): Promise<Activity> => {
+    const apiRequest = transformActivityToApiRequest(activity);
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiRequest),
+    });
+    if (!res.ok) throw new Error('Failed to create activity');
+    const data: ApiActivityResponse = await res.json();
+    return transformActivityFromApiResponse(data);
+  },
+
+  update: async (id: string, activity: Omit<Activity, 'id'>): Promise<Activity> => {
+    const apiRequest = transformActivityToApiRequest(activity);
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiRequest),
+    });
+    if (!res.ok) throw new Error('Failed to update activity');
+    const data: ApiActivityResponse = await res.json();
+    return transformActivityFromApiResponse(data);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete activity');
+  },
+};
+
 export default function ActivitiesPage() {
-  const [activities, setActivities] = useState<Activity[]>([
-    {
-      id: '1',
-      title: 'Team Building Workshop',
-      description: 'Quarterly team building activity for the engineering team',
-      date: '2024-03-20',
-      time: '10:00',
-      status: 'pending',
-      assignedTo: 'HR Team',
-      priority: 'high',
-      category: 'Team Event',
-      notes: 'Venue to be confirmed'
-    },
-    {
-      id: '2',
-      title: 'Performance Review Meeting',
-      description: 'Monthly performance review with department heads',
-      date: '2024-03-15',
-      time: '14:00',
-      status: 'in-progress',
-      assignedTo: 'HR Manager',
-      priority: 'high',
-      category: 'Meeting',
-      notes: 'Prepare review templates'
-    },
-    {
-      id: '3',
-      title: 'New Employee Orientation',
-      description: 'Orientation program for new joiners',
-      date: '2024-03-25',
-      time: '09:00',
-      status: 'pending',
-      assignedTo: 'HR Team',
-      priority: 'medium',
-      category: 'Training',
-      notes: 'Send welcome emails'
-    }
-  ]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -79,6 +140,26 @@ export default function ActivitiesPage() {
 
   const isEditMode = modalType === 'edit';
   const isViewMode = modalType === 'view';
+
+  // Fetch activities on component mount
+  useEffect(() => {
+    const fetchActivities = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await activitiesAPI.getAll();
+        setActivities(data);
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch activities');
+        setActivities([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, []);
 
   const openModal = (type: ModalType, activity?: Activity) => {
     setModalType(type);
@@ -107,41 +188,58 @@ export default function ActivitiesPage() {
     setFormData({});
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.title || !formData.description || !formData.date || !formData.time || !formData.assignedTo || !formData.category) {
       alert('Please fill in all required fields');
       return;
     }
 
-    if (modalType === 'add') {
-      const newActivity: Activity = {
-        ...formData as Activity,
-        id: Date.now().toString()
-      };
-      setActivities([...activities, newActivity]);
-    } else if (modalType === 'edit' && selectedActivity) {
-      setActivities(activities.map(activity => 
-        activity.id === selectedActivity.id 
-          ? { ...formData as Activity, id: selectedActivity.id }
-          : activity
-      ));
+    try {
+      if (modalType === 'add') {
+        const newActivity = await activitiesAPI.create(formData as Omit<Activity, 'id'>);
+        setActivities([...activities, newActivity]);
+      } else if (modalType === 'edit' && selectedActivity) {
+        const updatedActivity = await activitiesAPI.update(selectedActivity.id, formData as Omit<Activity, 'id'>);
+        setActivities(activities.map(activity => 
+          activity.id === selectedActivity.id ? updatedActivity : activity
+        ));
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      alert(error instanceof Error ? error.message : 'Failed to save activity');
     }
-    
-    closeModal();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this activity?')) {
-      setActivities(activities.filter(activity => activity.id !== id));
+      try {
+        await activitiesAPI.delete(id);
+        setActivities(activities.filter(activity => activity.id !== id));
+      } catch (error) {
+        console.error('Error deleting activity:', error);
+        alert(error instanceof Error ? error.message : 'Failed to delete activity');
+      }
     }
   };
 
-  const handleStatusChange = (id: string, newStatus: Activity['status']) => {
-    setActivities(activities.map(activity => 
-      activity.id === id 
-        ? { ...activity, status: newStatus }
-        : activity
-    ));
+  const handleStatusChange = async (id: string, newStatus: Activity['status']) => {
+    try {
+      const activity = activities.find(a => a.id === id);
+      if (!activity) return;
+
+      const updatedActivity = await activitiesAPI.update(id, {
+        ...activity,
+        status: newStatus
+      });
+      
+      setActivities(activities.map(activity => 
+        activity.id === id ? updatedActivity : activity
+      ));
+    } catch (error) {
+      console.error('Error updating activity status:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update activity status');
+    }
   };
 
   const filteredActivities = activities.filter(activity => {
@@ -158,6 +256,22 @@ export default function ActivitiesPage() {
 
   const categories = ['all', ...new Set(activities.map(a => a.category))];
   const statuses = ['all', 'pending', 'in-progress', 'completed'];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-gray-600">Loading activities...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">

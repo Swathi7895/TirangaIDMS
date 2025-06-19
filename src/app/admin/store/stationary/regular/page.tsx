@@ -25,21 +25,14 @@ interface ApiStationaryItem {
   lastUpdated: [number, number, number]; // [year, month, day]
 }
 
-interface ApiRequestBody {
-  name: string;
-  category: string;
-  quantity: number;
-  location: string;
-  Condition: string;
-  lastUpdated: string;
-}
+
 
 const API_BASE_URL = 'http://localhost:8080/store/stationary/regular';
 
 export default function RegularStationaryPage() {
   const [items, setItems] = useState<StationaryItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
 
   const categories = ['Paper', 'Writing', 'Desk Accessories', 'Binders', 'Seating', 'Other'];
 

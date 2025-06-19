@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import BackButton from '@/components/BackButton';
 
 interface SimBillExpense {
@@ -14,7 +14,7 @@ interface SimBillExpense {
 export default function SimBillsPage() {
   const [expenses, setExpenses] = useState<SimBillExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, ] = useState<number | null>(null);
 
   const API_URL = 'http://localhost:8080/api/sim-bills';
 

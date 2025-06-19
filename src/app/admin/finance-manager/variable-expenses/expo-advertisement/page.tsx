@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import BackButton from '@/components/BackButton';
 
 interface ExpoAdvertisementExpense {
@@ -24,7 +24,7 @@ const expoAPI = {
 export default function ExpoAdvertisementPage() {
   const [expenses, setExpenses] = useState<ExpoAdvertisementExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, ] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchExpenses = async () => {

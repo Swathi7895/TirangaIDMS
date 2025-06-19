@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import ItemManagement from '@/app/components/ItemManagement';
 import BackButton from '@/app/components/BackButton';
-import { useDebounce } from '@/app/hooks/useDebounce';
+
 
 interface LabInstrument {
   id: string;
@@ -36,13 +36,14 @@ export default function LabInstrumentsPage() {
   const [items, setItems] = useState<LabInstrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const debouncedLoading = useDebounce(loading, 300);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
 
   const categories = ['Optical', 'Separation', 'Measurement', 'Analysis', 'Electronics', 'Other'];
 
   // Transform API response to internal format
   const transformApiToInternal = (apiItem: ApiLabInstrument): LabInstrument => ({
-    id: apiItem.id,
+    id: apiItem.id || `instrument-${Math.random().toString(36).substr(2, 9)}`,
     name: apiItem.name,
     quantity: apiItem.quantity,
     category: apiItem.category,
@@ -93,7 +94,7 @@ export default function LabInstrumentsPage() {
   // Fetch all items from API
   const fetchItems = useCallback(async () => {
     try {
-      if (items.length === 0) {
+      if (isInitialLoad) {
         setLoading(true);
       }
       setError(null);
@@ -106,14 +107,16 @@ export default function LabInstrumentsPage() {
       const data: ApiLabInstrument[] = await response.json();
       const transformedItems = data.map(transformApiToInternal);
       setItems(transformedItems);
-    } catch (err) {
-      console.error('Error fetching items:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch items');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Error fetching items:', errorMessage);
+      setError(errorMessage);
       setItems([]); // Ensure items are cleared on error
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
-  }, [transformApiToInternal, items.length]);
+  }, [transformApiToInternal, isInitialLoad]);
 
   // Load items on component mount
   useEffect(() => {
@@ -143,10 +146,10 @@ export default function LabInstrumentsPage() {
       const transformedItem = transformApiToInternal(createdItem);
       
       setItems(prevItems => [...prevItems, transformedItem]);
-    } catch (err) {
-      console.error('Error adding item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to add item');
-      // Removed the fallback to local state update here
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Error adding item:', errorMessage);
+      setError(errorMessage);
     }
   };
 
@@ -177,9 +180,10 @@ export default function LabInstrumentsPage() {
           item.id === id ? transformedItem : item
         )
       );
-    } catch (err) {
-      console.error('Error updating item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update item');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Error updating item:', errorMessage);
+      setError(errorMessage);
       // Removed the fallback to local state update here
     }
   };
@@ -198,19 +202,20 @@ export default function LabInstrumentsPage() {
       }
 
       setItems(prevItems => prevItems.filter(item => item.id !== id));
-    } catch (err) {
-      console.error('Error deleting item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete item');
-      // Removed the fallback to local state update here
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      console.error('Error deleting item:', errorMessage);
+      setError(errorMessage);
     }
   };
 
   // Retry function for error recovery
   const handleRetry = () => {
+    setIsInitialLoad(true);
     fetchItems();
   };
 
-  if (debouncedLoading) {
+  if (isInitialLoad && loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton />

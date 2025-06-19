@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useRouter,  } from 'next/navigation';
+
+import { useState, useEffect } from 'react';
 
 import { 
   BuildingOfficeIcon, 
@@ -10,19 +11,127 @@ import {
   BanknotesIcon,
  
 } from '@heroicons/react/24/outline';
-import QuickActions from '@/components/QuickActions';
-import { useEffect } from 'react';
+
+
+interface Expense {
+  id: number;
+  amount: number;
+  date: string;
+  description: string;
+}
+
 
 export default function FinanceManagerDashboard() {
-  const router = useRouter();
- useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-    
-    if (!token || !roles.includes('ROLE_FINANCE')) {
-      router.replace('/login');
-    }
-  }, [router]);
+ 
+  const [stats, setStats] = useState([
+    { name: 'Monthly Budget', value: 'Loading...', change: '', icon: BanknotesIcon },
+    { name: 'Fixed Costs', value: 'Loading...', change: '', icon: BuildingOfficeIcon },
+    { name: 'Variable Costs', value: 'Loading...', change: '', icon: ChartBarIcon },
+    { name: 'Savings', value: 'Loading...', change: '', icon: ArrowTrendingUpIcon },
+  ]);
+
+  useEffect(() => {
+   
+
+    // Fetch all expense data
+    const fetchExpenseData = async () => {
+      try {
+        // Fetch fixed expenses
+        const fixedExpensesResponses = await Promise.all([
+          fetch('http://localhost:8080/api/rent').then(res => res.json()),
+          fetch('http://localhost:8080/api/electric-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/internet-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/sim-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/water-bills').then(res => res.json()),
+          fetch('http://localhost:8080/api/salaries').then(res => res.json()),
+        ]);
+
+        // Fetch variable expenses
+        const variableExpensesResponses = await Promise.all([
+          fetch('http://localhost:8080/api/travel').then(res => res.json()),
+          fetch('http://localhost:8080/api/expo-advertisement').then(res => res.json()),
+          fetch('http://localhost:8080/api/incentives').then(res => res.json()),
+          fetch('http://localhost:8080/api/commission').then(res => res.json()),
+        ]);
+
+        // Extract data arrays from responses and ensure they are arrays
+        const fixedExpenses = fixedExpensesResponses.map(response => {
+          const data = response.data || response;
+          return Array.isArray(data) ? data : [];
+        });
+
+        const variableExpenses = variableExpensesResponses.map(response => {
+          const data = response.data || response;
+          return Array.isArray(data) ? data : [];
+        });
+
+        // Calculate totals
+        const totalFixedCosts = fixedExpenses.reduce((sum: number, expenses: Expense[]) => {
+          return sum + expenses.reduce((expenseSum: number, expense: Expense) => {
+            const amount = typeof expense.amount === 'number' ? expense.amount : 0;
+            return expenseSum + amount;
+          }, 0);
+        }, 0);
+
+        const totalVariableCosts = variableExpenses.reduce((sum: number, expenses: Expense[]) => {
+          return sum + expenses.reduce((expenseSum: number, expense: Expense) => {
+            const amount = typeof expense.amount === 'number' ? expense.amount : 0;
+            return expenseSum + amount;
+          }, 0);
+        }, 0);
+
+        const monthlyBudget = 25000; // This could also be fetched from an API
+        const savings = monthlyBudget - (totalFixedCosts + totalVariableCosts);
+
+        // Calculate percentage changes (you might want to fetch historical data for accurate changes)
+        const calculateChange = (current: number, previous: number) => {
+          if (previous === 0) return '+0%';
+          const change = ((current - previous) / previous) * 100;
+          return `${change > 0 ? '+' : ''}${change.toFixed(0)}%`;
+        };
+
+        // Update stats with calculated values
+        setStats([
+          { 
+            name: 'Monthly Budget', 
+            value: `₹${monthlyBudget.toLocaleString('en-IN')}`, 
+            change: '+0%', 
+            icon: BanknotesIcon 
+          },
+          { 
+            name: 'Fixed Costs', 
+            value: `₹${totalFixedCosts.toLocaleString('en-IN')}`, 
+            change: calculateChange(totalFixedCosts, totalFixedCosts * 0.9), // Example previous value
+            icon: BuildingOfficeIcon 
+          },
+          { 
+            name: 'Variable Costs', 
+            value: `₹${totalVariableCosts.toLocaleString('en-IN')}`, 
+            change: calculateChange(totalVariableCosts, totalVariableCosts * 0.95), // Example previous value
+            icon: ChartBarIcon 
+          },
+          { 
+            name: 'Savings', 
+            value: `₹${savings.toLocaleString('en-IN')}`, 
+            change: calculateChange(savings, savings * 1.1), // Example previous value
+            icon: ArrowTrendingUpIcon 
+          },
+        ]);
+      } catch (error) {
+        console.error('Error fetching expense data:', error);
+        // Set error state in stats
+        setStats([
+          { name: 'Monthly Budget', value: 'Error', change: '', icon: BanknotesIcon },
+          { name: 'Fixed Costs', value: 'Error', change: '', icon: BuildingOfficeIcon },
+          { name: 'Variable Costs', value: 'Error', change: '', icon: ChartBarIcon },
+          { name: 'Savings', value: 'Error', change: '', icon: ArrowTrendingUpIcon },
+        ]);
+      }
+    };
+
+    fetchExpenseData();
+  }, []);
+
   const financeSections = [
     {
       title: 'Fixed Expenses',
@@ -56,48 +165,41 @@ export default function FinanceManagerDashboard() {
     },
   ];
 
-  const stats = [
-    { name: 'Monthly Budget', value: '₹2,45,000', change: '+12%', icon: BanknotesIcon },
-    { name: 'Fixed Costs', value: '₹1,85,000', change: '+2%', icon: BuildingOfficeIcon },
-    { name: 'Variable Costs', value: '₹60,000', change: '-8%', icon: ChartBarIcon },
-    { name: 'Savings', value: '₹45,000', change: '+15%', icon: ArrowTrendingUpIcon },
-  ];
-
-  const quickActions = [
-    {
-      name: 'Add Expense',
-      icon: '➕',
-      color: 'text-blue-600',
-      action: () => router.push('/finance-manager/fixed-expenses/rent'),
-    },
-    {
-      name: 'Generate Report',
-      icon: '📊',
-      color: 'text-green-600',
-      action: () => {
-        // TODO: Implement report generation
-        alert('Report generation feature coming soon!');
-      },
-    },
-    {
-      name: 'Set Budget',
-      icon: '🎯',
-      color: 'text-purple-600',
-      action: () => {
-        // TODO: Implement budget setting
-        alert('Budget setting feature coming soon!');
-      },
-    },
-    {
-      name: 'Export Data',
-      icon: '📤',
-      color: 'text-orange-600',
-      action: () => {
-        // TODO: Implement data export
-        alert('Data export feature coming soon!');
-      },
-    },
-  ];
+  // const quickActions = [
+  //   {
+  //     name: 'Add Expense',
+  //     icon: '➕',
+  //     color: 'text-blue-600',
+  //     action: () => router.push('/finance-manager/fixed-expenses/rent'),
+  //   },
+  //   {
+  //     name: 'Generate Report',
+  //     icon: '📊',
+  //     color: 'text-green-600',
+  //     action: () => {
+  //       // TODO: Implement report generation
+  //       alert('Report generation feature coming soon!');
+  //     },
+  //   },
+  //   {
+  //     name: 'Set Budget',
+  //     icon: '🎯',
+  //     color: 'text-purple-600',
+  //     action: () => {
+  //       // TODO: Implement budget setting
+  //       alert('Budget setting feature coming soon!');
+  //     },
+  //   },
+  //   {
+  //     name: 'Export Data',
+  //     icon: '📤',
+  //     color: 'text-orange-600',
+  //     action: () => {
+  //       // TODO: Implement data export
+  //       alert('Data export feature coming soon!');
+  //     },
+  //   },
+  // ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -144,8 +246,8 @@ export default function FinanceManagerDashboard() {
 
         {/* Quick Actions */}
         <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-          <QuickActions actions={quickActions} />
+          {/* <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3> */}
+          {/* <QuickActions actions={quickActions} /> */}
         </div>
 
         {/* Main Sections */}
@@ -199,10 +301,8 @@ export default function FinanceManagerDashboard() {
                       {section.features.length} categories
                     </span>
                     <button className={`text-sm font-medium ${section.iconColor} hover:underline flex items-center space-x-1`}>
-                      <span>View all</span>
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
+                    
+                    
                     </button>
                   </div>
                 </div>

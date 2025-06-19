@@ -61,6 +61,28 @@ interface ChartData {
   }[];
 }
 
+// Type definitions for API data
+interface SalesRecord {
+  date: string;
+  amount: number;
+  paymentStatus: 'Paid' | 'Pending' | 'Overdue' | 'Partially Paid';
+  [key: string]: unknown; // For additional properties
+}
+
+interface PurchaseRecord {
+  date: string;
+  amount: number;
+  [key: string]: unknown; // For additional properties
+}
+
+interface DataRecord {
+  date: string;
+  amount: number;
+  [key: string]: unknown;
+}
+
+type PaymentStatus = 'Paid' | 'Pending' | 'Overdue' | 'Partially Paid';
+
 const modules: Module[] = [
   {
     id: 'sales',
@@ -196,7 +218,7 @@ export default function DataManagerDashboard() {
               if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
               }
-              const data = await response.json();
+              const data: unknown[] = await response.json();
               counts[module.id] = Array.isArray(data) ? data.length : 0;
             } catch (e) {
               console.error(`Error fetching count for ${module.name}:`, e);
@@ -208,7 +230,7 @@ export default function DataManagerDashboard() {
         // Fetch sales data for charts
         const salesResponse = await fetch('http://localhost:8080/api/sales');
         if (salesResponse.ok) {
-          const sales = await salesResponse.json();
+          const sales: SalesRecord[] = await salesResponse.json();
           const monthlySales = processMonthlyData(sales, 'date', 'amount');
           setSalesData({
             labels: monthlySales.labels,
@@ -224,7 +246,7 @@ export default function DataManagerDashboard() {
         // Fetch purchase data for charts
         const purchasesResponse = await fetch('http://localhost:8080/api/purchases');
         if (purchasesResponse.ok) {
-          const purchases = await purchasesResponse.json();
+          const purchases: PurchaseRecord[] = await purchasesResponse.json();
           const monthlyPurchases = processMonthlyData(purchases, 'date', 'amount');
           setPurchaseData({
             labels: monthlyPurchases.labels,
@@ -238,17 +260,19 @@ export default function DataManagerDashboard() {
         }
 
         // Fetch payment status data
-        const salesForPaymentStatus = await fetch('http://localhost:8080/api/sales').then(res => res.ok ? res.json() : []);
-        const paymentStatusCounts = {
+        const salesForPaymentStatus: SalesRecord[] = await fetch('http://localhost:8080/api/sales')
+          .then(res => res.ok ? res.json() : []);
+        
+        const paymentStatusCounts: Record<PaymentStatus, number> = {
           'Paid': 0,
           'Pending': 0,
           'Overdue': 0,
           'Partially Paid': 0
         };
 
-        salesForPaymentStatus.forEach((sale: any) => {
+        salesForPaymentStatus.forEach((sale: SalesRecord) => {
           if (sale.paymentStatus in paymentStatusCounts) {
-            paymentStatusCounts[sale.paymentStatus as keyof typeof paymentStatusCounts]++;
+            paymentStatusCounts[sale.paymentStatus]++;
           }
         });
 
@@ -267,8 +291,9 @@ export default function DataManagerDashboard() {
         });
 
         setModuleCounts(counts);
-      } catch (e: any) {
-        setError(`Failed to fetch data: ${e.message}`);
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error occurred';
+        setError(`Failed to fetch data: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
@@ -278,13 +303,13 @@ export default function DataManagerDashboard() {
   }, []);
 
   // Helper function to process monthly data
-  const processMonthlyData = (data: any[], dateField: string, amountField: string) => {
+  const processMonthlyData = (data: DataRecord[], dateField: string, amountField: string) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyTotals = new Array(12).fill(0);
     const currentYear = new Date().getFullYear();
 
-    data.forEach((item: any) => {
-      const date = new Date(item[dateField]);
+    data.forEach((item: DataRecord) => {
+      const date = new Date(item[dateField] as string);
       if (date.getFullYear() === currentYear) {
         const month = date.getMonth();
         monthlyTotals[month] += Number(item[amountField]) || 0;
@@ -454,4 +479,4 @@ export default function DataManagerDashboard() {
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 
 interface IncentiveExpense {
   id: number;
@@ -14,7 +14,7 @@ interface IncentiveExpense {
 export default function IncentivesPage() {
   const [expenses, setExpenses] = useState<IncentiveExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', recipient: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, ] = useState<number | null>(null);
 
   const BASE_URL = 'http://localhost:8080/api/incentives';
 

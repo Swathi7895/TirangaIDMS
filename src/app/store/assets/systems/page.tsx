@@ -19,6 +19,21 @@ interface System {
   itemCondition?: string; // For API compatibility
 }
 
+interface ApiSystem {
+  id: string;
+  name: string;
+  quantity: number;
+  category: string;
+  location: string;
+  lastUpdated: string;
+  itemCondition?: string;
+  condition?: string;
+  purchaseDate?: string;
+  manufacturer?: string;
+  model?: string;
+  serialNumber?: string;
+}
+
 // API service functions
 const API_BASE_URL = 'http://localhost:8080/store/assets/printers';
 
@@ -31,14 +46,15 @@ const systemsAPI = {
       const data = await response.json();
       
       // Transform API response to match our interface
-      return data.map((item: any) => ({
+      return data.map((item: ApiSystem) => ({
         ...item,
-        condition: item.itemCondition || item.condition,
+        condition: item.itemCondition || item.condition || 'good',
         lastUpdated: item.lastUpdated ? new Date(item.lastUpdated) : new Date(),
         purchaseDate: item.purchaseDate ? new Date(item.purchaseDate) : undefined,
       }));
-    } catch (error) {
-      console.error('Error fetching systems:', error);
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Error fetching systems:', errorMessage);
       return [];
     }
   },
@@ -72,12 +88,13 @@ const systemsAPI = {
       
       return {
         ...data,
-        condition: data.itemCondition || data.condition,
+        condition: data.itemCondition || data.condition || 'good',
         lastUpdated: new Date(),
         purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : item.purchaseDate,
       };
-    } catch (error) {
-      console.error('Error creating system:', error);
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Error creating system:', errorMessage);
       return null;
     }
   },
@@ -111,12 +128,13 @@ const systemsAPI = {
       
       return {
         ...data,
-        condition: data.itemCondition || data.condition,
+        condition: data.itemCondition || data.condition || 'good',
         lastUpdated: new Date(),
         purchaseDate: data.purchaseDate ? new Date(data.purchaseDate) : undefined,
       };
-    } catch (error) {
-      console.error('Error updating system:', error);
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Error updating system:', errorMessage);
       return null;
     }
   },
@@ -129,8 +147,9 @@ const systemsAPI = {
       });
 
       return response.ok;
-    } catch (error) {
-      console.error('Error deleting system:', error);
+    } catch (error: Error | unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      console.error('Error deleting system:', errorMessage);
       return false;
     }
   },
@@ -154,8 +173,9 @@ export default function SystemsPage() {
     try {
       const systemItems = await systemsAPI.getAll();
       setItems(systemItems);
-    } catch (err) {
-      setError('Failed to load system items');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to load system items: ${errorMessage}`);
       console.error(err);
     } finally {
       setLoading(false);
@@ -170,8 +190,9 @@ export default function SystemsPage() {
       } else {
         setError('Failed to create system item');
       }
-    } catch (err) {
-      setError('Failed to create system item');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to create system item: ${errorMessage}`);
       console.error(err);
     }
   };
@@ -188,8 +209,9 @@ export default function SystemsPage() {
       } else {
         setError('Failed to update system item');
       }
-    } catch (err) {
-      setError('Failed to update system item');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to update system item: ${errorMessage}`);
       console.error(err);
     }
   };
@@ -202,8 +224,9 @@ export default function SystemsPage() {
       } else {
         setError('Failed to delete system item');
       }
-    } catch (err) {
-      setError('Failed to delete system item');
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to delete system item: ${errorMessage}`);
       console.error(err);
     }
   };

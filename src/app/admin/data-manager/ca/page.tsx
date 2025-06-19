@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Download, Search, Filter, Eye, Edit, Trash2, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import {  Download, Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
+
 interface CADocument {
   id: number;
   documentNumber: string;
@@ -13,6 +14,17 @@ interface CADocument {
   date: string;
   description: string;
   status: 'active' | 'inactive' | 'pending';
+}
+
+// Raw API response interface
+interface RawCADocument {
+  id: number;
+  documentNumber?: string;
+  client?: string;
+  amount?: string | number;
+  date?: string;
+  description?: string;
+  status?: 'active' | 'inactive' | 'pending';
 }
 
 // Type-safe wrapper for DataView
@@ -41,15 +53,6 @@ function CADataView({ isOpen, onClose, data, fields, title }: {
   );
 }
 
-const formFields: FormField[] = [
-  { name: 'documentNumber', label: 'Document Number', type: 'text', required: true },
-  { name: 'client', label: 'Client', type: 'text', required: true },
-  { name: 'amount', label: 'Amount', type: 'number', required: true },
-  { name: 'date', label: 'Date', type: 'date', required: true },
-  { name: 'description', label: 'Description', type: 'text', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['active', 'inactive', 'pending'], required: true }
-];
-
 const viewFields: ViewField[] = [
   { name: 'documentNumber', label: 'Document Number', type: 'text' },
   { name: 'client', label: 'Client', type: 'text' },
@@ -65,7 +68,7 @@ export default function CAPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive' | 'pending'>('all');
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CADocument | null>(null);
   const [data, setData] = useState<CADocument[]>([]);
@@ -80,41 +83,34 @@ export default function CAPage() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const fetchedRawData: any[] = await response.json();
+      const fetchedRawData: RawCADocument[] = await response.json();
   
       const processedData: CADocument[] = fetchedRawData.map(rawItem => ({
         id: rawItem.id,
         documentNumber: rawItem.documentNumber || '',
         client: rawItem.client || '',
-        amount: parseFloat(rawItem.amount) || 0,
+        amount: parseFloat(String(rawItem.amount)) || 0,
         date: rawItem.date || '',
         description: rawItem.description || '',
         status: rawItem.status || 'pending'
       }));
   
       setData(processedData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setIsLoading(false);
     }
   };
 
-
   useEffect(() => {
     fetchData();
   }, []);
-
-
 
   const handleView = (item: CADocument) => {
     setSelectedItem(item);
     setIsViewOpen(true);
   };
-
- 
-
- 
 
   const filteredData = data.filter(item => {
     const matchesSearch =
@@ -336,8 +332,6 @@ export default function CAPage() {
         </div>
       )}
 
-     
-
       {isViewOpen && selectedItem && (
         <CADataView
           isOpen={isViewOpen}
@@ -349,4 +343,4 @@ export default function CAPage() {
       )}
     </div>
   );
-} 
+}

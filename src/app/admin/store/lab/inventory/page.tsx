@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import {  ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
 import { 
  
   ArrowLeft,

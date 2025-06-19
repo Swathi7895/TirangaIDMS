@@ -56,8 +56,9 @@ export default function PurchasePage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch purchases: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Failed to fetch purchases: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -129,8 +130,9 @@ export default function PurchasePage() {
         }
         setData(prev => prev.filter(i => i.id !== item.id));
         alert('Purchase deleted successfully!');
-      } catch (e: any) {
-        alert(`Failed to delete purchase: ${e.message}`);
+      } catch (e: Error | unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        alert(`Failed to delete purchase: ${errorMessage}`);
       }
     }
   };
@@ -173,8 +175,9 @@ export default function PurchasePage() {
       }
       setIsFormOpen(false);
       setSelectedPurchase(null);
-    } catch (e: any) {
-      alert(`Failed to save purchase: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      alert(`Failed to save purchase: ${errorMessage}`);
     }
   };
 

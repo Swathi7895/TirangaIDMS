@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import BackButton from '@/components/BackButton';
 
 interface ElectricBillExpense {
@@ -14,7 +14,7 @@ interface ElectricBillExpense {
 export default function ElectricBillsPage() {
   const [expenses, setExpenses] = useState<ElectricBillExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, ] = useState<number | null>(null);
 
   // ✅ Fetch electric bills from backend
   useEffect(() => {

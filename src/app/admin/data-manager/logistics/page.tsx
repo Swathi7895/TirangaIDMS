@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import {  Download, Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 interface LogisticsDocument {
@@ -16,15 +16,7 @@ interface LogisticsDocument {
   carrier: string;
 }
 
-const formFields: FormField[] = [
-  { name: 'documentType', label: 'Document Type', type: 'select', options: ['Bill of Lading', 'Airway Bill', 'Packing List', 'Commercial Invoice', 'Certificate of Origin'], required: true },
-  { name: 'reference', label: 'Reference Number', type: 'text', required: true },
-  { name: 'date', label: 'Document Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Active', 'Inactive', 'Pending', 'Completed'], required: true },
-  { name: 'origin', label: 'Origin', type: 'text', required: true },
-  { name: 'destination', label: 'Destination', type: 'text', required: true },
-  { name: 'carrier', label: 'Carrier', type: 'text', required: true }
-];
+
 
 const viewFields: ViewField[] = [
   { name: 'documentType', label: 'Document Type', type: 'text' },
@@ -39,7 +31,7 @@ const viewFields: ViewField[] = [
 export default function LogisticsDocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<LogisticsDocument | null>(null);
   const [data, setData] = useState<LogisticsDocument[]>([]);
@@ -59,11 +51,13 @@ export default function LogisticsDocumentsPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch logistics documents: ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    }    
   };
 
   useEffect(() => {

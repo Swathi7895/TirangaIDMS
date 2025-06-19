@@ -106,11 +106,13 @@ export default function AssetsPage() {
         purchaseDate: asset.purchaseDate ? new Date(asset.purchaseDate).toISOString().split('T')[0] : ''
       }));
       setAssets(formattedData);
-    } catch (err: any) {
-      console.error('Failed to fetch assets:', err);
-      setError('Failed to load assets. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    
     }
   }, [selectedCategory, searchTerm]);
 

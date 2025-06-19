@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+
 import { 
   FileText, 
   Building2, 
@@ -10,11 +10,11 @@ import {
   Calculator, 
   Gavel, 
   LineChart,
-  ArrowRight,
+ 
   TrendingUp,
   ShoppingCart
 } from 'lucide-react';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -60,6 +60,20 @@ interface ChartData {
     borderColor?: string;
     backgroundColor?: string | string[];
   }[];
+}
+
+interface MonthlyData {
+  labels: string[];
+  data: number[];
+}
+
+interface DataItem {
+  [key: string]: string | number | boolean | null;
+}
+
+interface Sale {
+  paymentStatus: 'Paid' | 'Pending' | 'Overdue' | 'Partially Paid';
+  [key: string]: string | number | boolean | null;
 }
 
 const modules: Module[] = [
@@ -148,10 +162,10 @@ const modules: Module[] = [
 
 export default function DataManagerPage() {
   const router = useRouter();
-  const [moduleCounts, setModuleCounts] = useState<{ [key: string]: number }>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [salesData, setSalesData] = useState<ChartData>({
+  const [, setModuleCounts] = useState<{ [key: string]: number }>({});
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
+  const [, setSalesData] = useState<ChartData>({
     labels: [],
     datasets: [{
       label: 'Sales',
@@ -160,7 +174,7 @@ export default function DataManagerPage() {
       backgroundColor: 'rgba(34, 197, 94, 0.5)',
     }]
   });
-  const [purchaseData, setPurchaseData] = useState<ChartData>({
+  const [, setPurchaseData] = useState<ChartData>({
     labels: [],
     datasets: [{
       label: 'Purchases',
@@ -169,7 +183,7 @@ export default function DataManagerPage() {
       backgroundColor: 'rgba(249, 115, 22, 0.5)',
     }]
   });
-  const [paymentStatusData, setPaymentStatusData] = useState<ChartData>({
+  const [, setPaymentStatusData] = useState<ChartData>({
     labels: ['Paid', 'Pending', 'Overdue', 'Partially Paid'],
     datasets: [{
       label: 'Payment Status',
@@ -257,7 +271,7 @@ export default function DataManagerPage() {
           'Partially Paid': 0
         };
 
-        salesForPaymentStatus.forEach((sale: any) => {
+        salesForPaymentStatus.forEach((sale: Sale) => {
           if (sale.paymentStatus in paymentStatusCounts) {
             paymentStatusCounts[sale.paymentStatus as keyof typeof paymentStatusCounts]++;
           }
@@ -278,8 +292,9 @@ export default function DataManagerPage() {
         });
 
         setModuleCounts(counts);
-      } catch (e: any) {
-        setError(`Failed to fetch data: ${e.message}`);
+      } catch (e: Error | unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        setError(`Failed to fetch data: ${errorMessage}`);
       } finally {
         setLoading(false);
       }
@@ -288,23 +303,28 @@ export default function DataManagerPage() {
     fetchData();
   }, []);
 
-  // Helper function to process monthly data
-  const processMonthlyData = (data: any[], dateField: string, amountField: string) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const monthlyTotals = new Array(12).fill(0);
-    const currentYear = new Date().getFullYear();
+  const processMonthlyData = (data: DataItem[], dateField: string, amountField: string): MonthlyData => {
+    const monthlyTotals: { [key: string]: number } = {};
 
-    data.forEach((item: any) => {
-      const date = new Date(item[dateField]);
-      if (date.getFullYear() === currentYear) {
-        const month = date.getMonth();
-        monthlyTotals[month] += Number(item[amountField]) || 0;
-      }
+    data.forEach(item => {
+      const date = new Date(String(item[dateField]));
+      const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+      const amount = Number(item[amountField]) || 0;
+
+      monthlyTotals[monthYear] = (monthlyTotals[monthYear] || 0) + amount;
+    });
+
+    const sortedMonths = Object.keys(monthlyTotals).sort((a, b) => {
+      const [monthA, yearA] = a.split(' ');
+      const [monthB, yearB] = b.split(' ');
+      const dateA = new Date(`${monthA} 1, ${yearA}`);
+      const dateB = new Date(`${monthB} 1, ${yearB}`);
+      return dateA.getTime() - dateB.getTime();
     });
 
     return {
-      labels: months,
-      data: monthlyTotals
+      labels: sortedMonths,
+      data: sortedMonths.map(month => monthlyTotals[month])
     };
   };
 

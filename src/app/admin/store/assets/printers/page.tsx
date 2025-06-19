@@ -164,8 +164,8 @@ const printersAPI = {
 
 export default function PrintersPage() {
   const [items, setItems] = useState<Printer[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
 
   const categories = ['Printers', 'Scanners', 'Copiers', 'Fax Machines', 'Other'];
 
@@ -188,51 +188,7 @@ export default function PrintersPage() {
     }
   };
 
-  const handleAdd = async (newItem: Omit<Printer, 'id' | 'lastUpdated'>) => {
-    try {
-      const createdItem = await printersAPI.create(newItem);
-      if (createdItem) {
-        setItems(prevItems => [...prevItems, createdItem]);
-      } else {
-        setError('Failed to create printer item');
-      }
-    } catch (err) {
-      setError('Failed to create printer item');
-      console.error(err);
-    }
-  };
 
-  const handleEdit = async (id: string, updatedItem: Partial<Printer>) => {
-    try {
-      const updated = await printersAPI.update(id, updatedItem);
-      if (updated) {
-        setItems(prevItems =>
-          prevItems.map(item =>
-            item.id === id ? { ...item, ...updated } : item
-          )
-        );
-      } else {
-        setError('Failed to update printer item');
-      }
-    } catch (err) {
-      setError('Failed to update printer item');
-      console.error(err);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const success = await printersAPI.delete(id);
-      if (success) {
-        setItems(prevItems => prevItems.filter(item => item.id !== id));
-      } else {
-        setError('Failed to delete printer item');
-      }
-    } catch (err) {
-      setError('Failed to delete printer item');
-      console.error(err);
-    }
-  };
  
 
   return (

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import ItemManagement from '@/app/components/ItemManagement';
+import AdminStore from '@/app/components/AdminStore';
 import BackButton from '@/app/components/BackButton';
-import { useDebounce } from '@/app/hooks/useDebounce';
+
 
 interface LabInstrument {
   id: string;
@@ -36,34 +36,10 @@ export default function LabInstrumentsPage() {
   const [items, setItems] = useState<LabInstrument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const debouncedLoading = useDebounce(loading, 300);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
 
   const categories = ['Optical', 'Separation', 'Measurement', 'Analysis', 'Electronics', 'Other'];
-
-  // Transform API response to internal format
-  const transformApiToInternal = (apiItem: ApiLabInstrument): LabInstrument => ({
-    id: apiItem.id,
-    name: apiItem.name,
-    quantity: apiItem.quantity,
-    category: apiItem.category,
-    location: apiItem.location,
-    lastUpdated: new Date(apiItem.lastUpdated),
-    condition: mapCondition(apiItem.itemCondition),
-    calibrationDate: apiItem.calibrationDate ? new Date(apiItem.calibrationDate) : undefined,
-    status: apiItem.status as LabInstrument['status'] || 'operational',
-  });
-
-  // Transform internal format to API format
-  const transformInternalToApi = (item: Partial<LabInstrument>) => ({
-    name: item.name,
-    quantity: item.quantity,
-    category: item.category,
-    location: item.location,
-    itemCondition: mapConditionToApi(item.condition),
-    lastUpdated: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-    calibrationDate: item.calibrationDate?.toISOString().split('T')[0],
-    status: item.status,
-  });
 
   // Map condition values between API and internal formats
   const mapCondition = (apiCondition: string): LabInstrument['condition'] => {
@@ -80,20 +56,23 @@ export default function LabInstrumentsPage() {
     return conditionMap[apiCondition] || 'good';
   };
 
-  const mapConditionToApi = (condition?: LabInstrument['condition']): string => {
-    const conditionMap: Record<LabInstrument['condition'], string> = {
-      'new': 'New',
-      'good': 'Good',
-      'fair': 'Fair',
-      'poor': 'Poor',
-    };
-    return condition ? conditionMap[condition] : 'Good';
-  };
-
   // Fetch all items from API
   const fetchItems = useCallback(async () => {
+    // Transform API response to internal format
+    const transformApiToInternal = (apiItem: ApiLabInstrument): LabInstrument => ({
+      id: apiItem.id || `instrument-${Math.random().toString(36).substr(2, 9)}`,
+      name: apiItem.name,
+      quantity: apiItem.quantity,
+      category: apiItem.category,
+      location: apiItem.location,
+      lastUpdated: new Date(apiItem.lastUpdated),
+      condition: mapCondition(apiItem.itemCondition),
+      calibrationDate: apiItem.calibrationDate ? new Date(apiItem.calibrationDate) : undefined,
+      status: apiItem.status as LabInstrument['status'] || 'operational',
+    });
+
     try {
-      if (items.length === 0) {
+      if (isInitialLoad) {
         setLoading(true);
       }
       setError(null);
@@ -112,105 +91,24 @@ export default function LabInstrumentsPage() {
       setItems([]); // Ensure items are cleared on error
     } finally {
       setLoading(false);
+      setIsInitialLoad(false);
     }
-  }, [transformApiToInternal, items.length]);
+  }, [isInitialLoad]);
 
   // Load items on component mount
   useEffect(() => {
     fetchItems();
   }, [fetchItems]);
 
-  // Add new item via API
-  const handleAdd = async (newItem: Omit<LabInstrument, 'id' | 'lastUpdated'>) => {
-    try {
-      setError(null);
-      
-      const apiPayload = transformInternalToApi(newItem);
-      
-      const response = await fetch(API_BASE_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiPayload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to add item: ${response.status} ${response.statusText}`);
-      }
-
-      const createdItem: ApiLabInstrument = await response.json();
-      const transformedItem = transformApiToInternal(createdItem);
-      
-      setItems(prevItems => [...prevItems, transformedItem]);
-    } catch (err) {
-      console.error('Error adding item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to add item');
-      // Removed the fallback to local state update here
-    }
-  };
-
-  // Edit item via API
-  const handleEdit = async (id: string, updatedItem: Partial<LabInstrument>) => {
-    try {
-      setError(null);
-      
-      const apiPayload = transformInternalToApi(updatedItem);
-      
-      const response = await fetch(`${API_BASE_URL}/${id}`, {
-        method: 'PUT', // or 'PATCH' depending on your API
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(apiPayload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update item: ${response.status} ${response.statusText}`);
-      }
-
-      const updatedApiItem: ApiLabInstrument = await response.json();
-      const transformedItem = transformApiToInternal(updatedApiItem);
-      
-      setItems(prevItems =>
-        prevItems.map(item =>
-          item.id === id ? transformedItem : item
-        )
-      );
-    } catch (err) {
-      console.error('Error updating item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update item');
-      // Removed the fallback to local state update here
-    }
-  };
-
-  // Delete item via API
-  const handleDelete = async (id: string) => {
-    try {
-      setError(null);
-      
-      const response = await fetch(`${API_BASE_URL}/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete item: ${response.status} ${response.statusText}`);
-      }
-
-      setItems(prevItems => prevItems.filter(item => item.id !== id));
-    } catch (err) {
-      console.error('Error deleting item:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete item');
-      // Removed the fallback to local state update here
-    }
-  };
+ 
 
   // Retry function for error recovery
   const handleRetry = () => {
+    setIsInitialLoad(true);
     fetchItems();
   };
 
-  if (debouncedLoading) {
+  if (isInitialLoad && loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BackButton />
@@ -253,12 +151,10 @@ export default function LabInstrumentsPage() {
         </div>
       )}
 
-      <ItemManagement
+      <AdminStore
         title="Lab Instruments"
         items={items}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
+       
         categories={categories}
       />
     </div>

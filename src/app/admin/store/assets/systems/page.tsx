@@ -155,8 +155,8 @@ const systemsAPI = {
 
 export default function SystemsPage() {
   const [items, setItems] = useState<System[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
 
   const categories = ['Computers', 'Portable', 'Servers', 'Networking', 'Other'];
 

@@ -1,56 +1,95 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Award,  Star, Search, Filter, Plus, Eye, Edit, Trash2, X, User, Building } from 'lucide-react';
 
+interface Employee {
+  id?: number;
+  employeeId?: string;
+  employeeName?: string;
+  position?: string;
+  department?: string;
+  email?: string;
+  phoneNumber?: string;
+  bloodGroup?: string;
+  profilePhotoUrl?: string | null;
+  currentAddress?: string;
+  permanentAddress?: string;
+  joiningDate?: string;
+  relievingDate?: string | null;
+  status?: string;
+}
+
 interface PerformanceReview {
-  id: string;
-  employeeName: string;
-  position: string;
-  department: string;
+  id?: number;
+  employee: Employee;
+  reviewStatus: 'PENDING' | 'COMPLETED' | 'pending' | 'completed';
   rating: number;
-  status: 'pending' | 'completed';
-  lastReview: string;
-  nextReview: string;
+  lastReviewDate: string;
+  nextReviewDate: string;
   goals?: string;
   feedback?: string;
   achievements?: string;
+  reviewer: string;
 }
 
-export default function PerformanceManagement() {
-  const [reviews, setReviews] = useState<PerformanceReview[]>([
-    {
-      id: '1',
-      employeeName: 'John Doe',
-      position: 'Senior Developer',
-      department: 'Engineering',
-      rating: 4.5,
-      status: 'completed',
-      lastReview: '2024-01-15',
-      nextReview: '2024-07-15',
-      goals: 'Improve code review process and mentor junior developers',
-      feedback: 'Excellent technical skills and leadership qualities',
-      achievements: 'Led successful migration to microservices architecture'
-    },
-    {
-      id: '2',
-      employeeName: 'Jane Smith',
-      position: 'Product Manager',
-      department: 'Product',
-      rating: 4.8,
-      status: 'pending',
-      lastReview: '2024-02-01',
-      nextReview: '2024-08-01',
-      goals: 'Launch new product feature and increase user engagement',
-      feedback: 'Outstanding strategic thinking and cross-team collaboration',
-      achievements: 'Increased product adoption by 35% in Q1'
-    }
-  ]);
+const API_BASE_URL = 'http://localhost:8080/api';
 
+export default function PerformanceManagement() {
+  const [reviews, setReviews] = useState<PerformanceReview[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<'add' | 'edit' | 'view'>('add');
   const [selectedReview, setSelectedReview] = useState<PerformanceReview | null>(null);
-  const [formData, setFormData] = useState<Partial<PerformanceReview>>({});
+  const [formData, setFormData] = useState<Partial<PerformanceReview>>({
+    employee: {
+      id: 0,
+      employeeId: '',
+      employeeName: '',
+      position: '',
+      department: '',
+      email: '',
+      phoneNumber: '',
+      bloodGroup: '',
+      profilePhotoUrl: null,
+      currentAddress: '',
+      permanentAddress: '',
+      joiningDate: '',
+      relievingDate: null,
+      status: 'Active'
+    } as Employee,
+    reviewStatus: 'pending',
+    rating: 0,
+    lastReviewDate: '',
+    nextReviewDate: '',
+    goals: '',
+    feedback: '',
+    achievements: '',
+    reviewer: ''
+  });
+
+  // Fetch all performance reviews
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/performance-reviews`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews');
+      }
+      const data = await response.json();
+      setReviews(data);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
 
   const getRatingColor = (rating: number) => {
     if (rating >= 4.5) return 'text-green-600';
@@ -59,21 +98,45 @@ export default function PerformanceManagement() {
     return 'text-red-600';
   };
 
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return 'bg-gray-100 text-gray-800';
+    return status.toLowerCase() === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+  };
+
+  const getStatusText = (status: string | undefined) => {
+    if (!status) return 'unknown';
+    return status.toLowerCase();
+  };
+
   const openModal = (type: 'add' | 'edit' | 'view', review?: PerformanceReview) => {
     setModalType(type);
     setSelectedReview(review || null);
     if (type === 'add') {
       setFormData({
-        employeeName: '',
-        position: '',
-        department: '',
+        employee: {
+          id: 0,
+          employeeId: '',
+          employeeName: '',
+          position: '',
+          department: '',
+          email: '',
+          phoneNumber: '',
+          bloodGroup: '',
+          profilePhotoUrl: null,
+          currentAddress: '',
+          permanentAddress: '',
+          joiningDate: '',
+          relievingDate: null,
+          status: 'Active'
+        } as Employee,
+        reviewStatus: 'pending',
         rating: 0,
-        status: 'pending',
-        lastReview: '',
-        nextReview: '',
+        lastReviewDate: '',
+        nextReviewDate: '',
         goals: '',
         feedback: '',
-        achievements: ''
+        achievements: '',
+        reviewer: ''
       });
     } else if (review) {
       setFormData({ ...review });
@@ -87,41 +150,121 @@ export default function PerformanceManagement() {
     setFormData({});
   };
 
-  const handleSubmit = () => {
-    // Basic validation
-    if (!formData.employeeName || !formData.position || !formData.department || !formData.rating || !formData.status) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    
-    if (modalType === 'add') {
-      const newReview: PerformanceReview = {
-        ...formData as PerformanceReview,
-        id: Date.now().toString()
-      };
-      setReviews([...reviews, newReview]);
-    } else if (modalType === 'edit' && selectedReview) {
-      setReviews(reviews.map(review => 
-        review.id === selectedReview.id 
-          ? { ...formData as PerformanceReview, id: selectedReview.id }
-          : review
-      ));
-    }
-    
-    closeModal();
+  const updateEmployeeField = (field: keyof Employee, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      employee: {
+        ...prev.employee,
+        [field]: value
+      }
+    }));
   };
 
-  const handleDelete = (id: string) => {
+  const handleSubmit = async () => {
+    try {
+      // Basic validation
+      if (!formData.employee?.employeeId || !formData.employee?.employeeName || 
+          !formData.employee?.position || !formData.employee?.department || 
+          !formData.rating || !formData.reviewStatus) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      const reviewData = {
+        ...formData,
+        employee: {
+          ...formData.employee,
+          id: formData.employee.id || 0,
+          status: formData.employee.status || 'Active'
+        },
+        reviewStatus: formData.reviewStatus?.toUpperCase(),
+      };
+
+      if (modalType === 'add') {
+        const response = await fetch(`${API_BASE_URL}/performance-reviews`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(reviewData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to add review');
+        }
+
+        const newReview = await response.json();
+        setReviews([...reviews, newReview]);
+      } else if (modalType === 'edit' && selectedReview) {
+        const response = await fetch(`${API_BASE_URL}/performance-reviews/${selectedReview.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(reviewData),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to update review');
+        }
+
+        const updatedReview = await response.json();
+        setReviews(reviews.map(review => 
+          review.id === selectedReview.id ? updatedReview : review
+        ));
+      }
+      
+      closeModal();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      alert('Failed to save review. Please try again.');
+    }
+  };
+
+  const handleDelete = async (id: number | undefined) => {
+    if (!id) return;
+    
     if (window.confirm('Are you sure you want to delete this performance review?')) {
-      setReviews(reviews.filter(review => review.id !== id));
+      try {
+        const response = await fetch(`${API_BASE_URL}/performance-reviews/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete review');
+        }
+
+        setReviews(reviews.filter(review => review.id !== id));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        alert('Failed to delete review. Please try again.');
+      }
     }
   };
 
   const filteredReviews = reviews.filter(review =>
-    review.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    review.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    review.department.toLowerCase().includes(searchQuery.toLowerCase())
+    (review.employee?.employeeName?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (review.employee?.position?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+    (review.employee?.department?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-lg text-gray-600">Loading performance reviews...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg">
+          Error: {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -163,19 +306,20 @@ export default function PerformanceManagement() {
               <div className="p-3 rounded-lg bg-blue-50">
                 <Award className="w-5 h-5 text-blue-600" />
               </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                review.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {review.status}
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(review.reviewStatus)}`}>
+                {getStatusText(review.reviewStatus)}
               </span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{review.employeeName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{review.employee.employeeName}</h3>
             <div className="space-y-2">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Position:</span> {review.position}
+                <span className="font-medium">Employee ID:</span> {review.employee.employeeId}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Department:</span> {review.department}
+                <span className="font-medium">Position:</span> {review.employee.position}
+              </p>
+              <p className="text-sm text-gray-600">
+                <span className="font-medium">Department:</span> {review.employee.department}
               </p>
               <div className="flex items-center space-x-1">
                 <span className="text-sm font-medium text-gray-600">Rating:</span>
@@ -197,10 +341,10 @@ export default function PerformanceManagement() {
                 </div>
               </div>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Last Review:</span> {review.lastReview}
+                <span className="font-medium">Last Review:</span> {review.lastReviewDate}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Next Review:</span> {review.nextReview}
+                <span className="font-medium">Next Review:</span> {review.nextReviewDate}
               </p>
             </div>
             <div className="mt-4 flex space-x-2">
@@ -256,27 +400,32 @@ export default function PerformanceManagement() {
                     <div className="flex items-center space-x-3">
                       <User className="w-5 h-5 text-gray-400" />
                       <div>
+                        <p className="text-sm text-gray-600">Employee ID</p>
+                        <p className="font-medium">{selectedReview?.employee.employeeId}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <User className="w-5 h-5 text-gray-400" />
+                      <div>
                         <p className="text-sm text-gray-600">Employee Name</p>
-                        <p className="font-medium">{selectedReview?.employeeName}</p>
+                        <p className="font-medium">{selectedReview?.employee.employeeName}</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Building className="w-5 h-5 text-gray-400" />
                       <div>
                         <p className="text-sm text-gray-600">Department</p>
-                        <p className="font-medium">{selectedReview?.department}</p>
+                        <p className="font-medium">{selectedReview?.employee.department}</p>
                       </div>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Position</p>
-                      <p className="font-medium">{selectedReview?.position}</p>
+                      <p className="font-medium">{selectedReview?.employee.position}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Status</p>
-                      <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
-                        selectedReview?.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {selectedReview?.status}
+                      <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedReview?.reviewStatus)}`}>
+                        {getStatusText(selectedReview?.reviewStatus)}
                       </span>
                     </div>
                     <div>
@@ -303,11 +452,11 @@ export default function PerformanceManagement() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Last Review</p>
-                      <p className="font-medium">{selectedReview?.lastReview}</p>
+                      <p className="font-medium">{selectedReview?.lastReviewDate}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Next Review</p>
-                      <p className="font-medium">{selectedReview?.nextReview}</p>
+                      <p className="font-medium">{selectedReview?.nextReviewDate}</p>
                     </div>
                   </div>
 
@@ -330,13 +479,23 @@ export default function PerformanceManagement() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.employee?.employeeId || ''}
+                        onChange={(e) => updateEmployeeField('employeeId', e.target.value)}
+                      />
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Employee Name</label>
                       <input
                         type="text"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.employeeName || ''}
-                        onChange={(e) => setFormData({...formData, employeeName: e.target.value})}
+                        value={formData.employee?.employeeName || ''}
+                        onChange={(e) => updateEmployeeField('employeeName', e.target.value)}
                       />
                     </div>
                     <div>
@@ -345,8 +504,8 @@ export default function PerformanceManagement() {
                         type="text"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.position || ''}
-                        onChange={(e) => setFormData({...formData, position: e.target.value})}
+                        value={formData.employee?.position || ''}
+                        onChange={(e) => updateEmployeeField('position', e.target.value)}
                       />
                     </div>
                     <div>
@@ -355,8 +514,8 @@ export default function PerformanceManagement() {
                         type="text"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.department || ''}
-                        onChange={(e) => setFormData({...formData, department: e.target.value})}
+                        value={formData.employee?.department || ''}
+                        onChange={(e) => updateEmployeeField('department', e.target.value)}
                       />
                     </div>
                     <div>
@@ -384,12 +543,12 @@ export default function PerformanceManagement() {
                       <select
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.status || ''}
-                        onChange={(e) => setFormData({...formData, status: e.target.value as 'pending' | 'completed'})}
+                        value={formData.employee?.status || ''}
+                        onChange={(e) => setFormData({...formData, employee: {...formData.employee, status: e.target.value}})}
                       >
                         <option value="">Select Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
                       </select>
                     </div>
                     <div>
@@ -398,8 +557,8 @@ export default function PerformanceManagement() {
                         type="date"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.lastReview || ''}
-                        onChange={(e) => setFormData({...formData, lastReview: e.target.value})}
+                        value={formData.lastReviewDate || ''}
+                        onChange={(e) => setFormData({...formData, lastReviewDate: e.target.value})}
                       />
                     </div>
                     <div>
@@ -408,8 +567,18 @@ export default function PerformanceManagement() {
                         type="date"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.nextReview || ''}
-                        onChange={(e) => setFormData({...formData, nextReview: e.target.value})}
+                        value={formData.nextReviewDate || ''}
+                        onChange={(e) => setFormData({...formData, nextReviewDate: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Reviewer</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.reviewer || ''}
+                        onChange={(e) => setFormData({...formData, reviewer: e.target.value})}
                       />
                     </div>
                   </div>

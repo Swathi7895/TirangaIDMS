@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ShoppingCartIcon,
-  ClipboardDocumentCheckIcon,
-  ExclamationTriangleIcon,
-  ClipboardIcon,
+ 
   ArchiveBoxIcon,
   BookOpenIcon,
   DocumentArrowUpIcon,
@@ -21,53 +19,67 @@ import {
   CpuChipIcon,
   PrinterIcon,
   PencilSquareIcon,
-  ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
+ 
 
 } from '@heroicons/react/24/outline';
 
 type SectionColor = 'indigo' | 'teal' | 'rose';
 
+interface ItemData {
+  title: string;
+  description: string;
+  href: string;
+  icon: any;
+  count: number;
+  apiUrl: string;
+}
+
+interface SectionData {
+  title: string;
+  description: string;
+  icon: any;
+  color: SectionColor;
+  count: string;
+  items: ItemData[];
+}
+
 export default function StorePage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [sections, setSections] = useState<SectionData[]>([]);
+ 
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-    
-    if (!token || !roles.includes('ROLE_STORE')) {
-      router.replace('/login');
-    }
-  }, [router]);
-
-  const sections = [
+  const initialSections: SectionData[] = [
     {
       title: "Stationary",
       description: "Office supplies and daily consumables management",
       icon: PencilSquareIcon,
       color: "indigo" as SectionColor,
-      count: "1,247",
+      count: "0",
       items: [
         {
           title: "Regular Usage",
           description: "Daily office supplies and consumables",
           href: "/store/stationary/regular",
           icon: BookOpenIcon,
-          count: "956"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/stationary/regular',
         },
         {
           title: "Fixed Items",
           description: "Permanent stationary items",
           href: "/store/stationary/fixed",
           icon: ArchiveBoxIcon,
-          count: "186"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/stationary/fixed',
         },
         {
           title: "In/Out Details",
           description: "Track stationary movement",
           href: "/store/stationary/inventory",
           icon: DocumentArrowUpIcon,
-          count: "105"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/stationary/inventory',
         }
       ]
     },
@@ -76,35 +88,39 @@ export default function StorePage() {
       description: "Laboratory equipment and supplies management",
       icon: BeakerIcon,
       color: "teal" as SectionColor,
-      count: "892",
+      count: "0",
       items: [
         {
           title: "Instruments",
           description: "Lab equipment and tools",
           href: "/store/lab/instruments",
           icon: PaintBrushIcon,
-          count: "324"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/lab/instruments',
         },
         {
           title: "Components",
           description: "Lab parts and components",
           href: "/store/lab/components",
           icon: WrenchScrewdriverIcon,
-          count: "248"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/lab/components',
         },
         {
           title: "Materials",
           description: "Lab consumables and materials",
           href: "/store/lab/materials",
           icon: CubeTransparentIcon,
-          count: "186"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/lab/materials',
         },
         {
           title: "In/Out Details",
           description: "Track lab items movement",
           href: "/store/lab/inventory",
           icon: ChartBarIcon,
-          count: "134"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/lab/inventory',
         }
       ]
     },
@@ -113,67 +129,139 @@ export default function StorePage() {
       description: "Permanent office equipment and furniture",
       icon: BuildingOfficeIcon,
       color: "rose" as SectionColor,
-      count: "708",
+      count: "0",
       items: [
         {
           title: "Furniture",
           description: "Office furniture and fixtures",
           href: "/store/assets/furniture",
           icon: TableCellsIcon,
-          count: "423"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/assets/furniture',
         },
         {
           title: "Systems",
           description: "Computers and electronic systems",
           href: "/store/assets/systems",
           icon: CpuChipIcon,
-          count: "156"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/assets/systems',
         },
         {
           title: "Printers & Equipment",
           description: "Printers and other office equipment",
           href: "/store/assets/printers",
           icon: PrinterIcon,
-          count: "129"
+          count: 0,
+          apiUrl: 'http://localhost:8080/store/assets/printers',
         }
       ]
     }
   ];
 
-  const stats = [
-    { 
-      label: "Total Inventory", 
-      value: "2,847", 
-      change: "+12.3%", 
-      isPositive: true,
-      icon: ClipboardDocumentCheckIcon,
-      color: "blue"
-    },
-    { 
-      label: "Active Assets", 
-      value: "156", 
-      change: "+5.2%", 
-      isPositive: true,
-      icon: BuildingOfficeIcon,
-      color: "emerald"
-    },
-    { 
-      label: "Low Stock Items", 
-      value: "23", 
-      change: "-8.1%", 
-      isPositive: false,
-      icon: ExclamationTriangleIcon,
-      color: "amber"
-    },
-    { 
-      label: "Monthly Orders", 
-      value: "89", 
-      change: "+18.7%", 
-      isPositive: true,
-      icon: ClipboardIcon,
-      color: "violet"
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    
+    if (!token || !roles.includes('ROLE_STORE')) {
+      router.replace('/login');
+      return;
     }
-  ];
+
+    fetchAllCounts();
+  }, [router]);
+
+  const fetchAllCounts = async () => {
+    try {
+      setLoading(true);
+      const token = sessionStorage.getItem('token');
+      
+      if (!token) {
+        router.replace('/login');
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      // Create a copy of initial sections to update
+      const updatedSections = [...initialSections];
+      
+      // Fetch counts for each item in each section
+      for (let sectionIndex = 0; sectionIndex < updatedSections.length; sectionIndex++) {
+        const section = updatedSections[sectionIndex];
+        let sectionTotal = 0;
+
+        for (let itemIndex = 0; itemIndex < section.items.length; itemIndex++) {
+          const item = section.items[itemIndex];
+          
+          try {
+            const response = await fetch(item.apiUrl, {
+              method: 'GET',
+              headers,
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              // Assuming the API returns an array or object with count/length property
+              let count = 0;
+              
+              if (Array.isArray(data)) {
+                count = data.length;
+              } else if (data && typeof data.count === 'number') {
+                count = data.count;
+              } else if (data && typeof data.total === 'number') {
+                count = data.total;
+              } else if (data && typeof data.length === 'number') {
+                count = data.length;
+              }
+
+              updatedSections[sectionIndex].items[itemIndex].count = count;
+              sectionTotal += count;
+            
+
+              // Count active assets (from Capital Office Assets section)
+              if (section.title === "Capital Office Assets") {
+                
+              }
+            } else {
+              console.error(`Failed to fetch count for ${item.title}:`, response.statusText);
+            }
+          } catch (error) {
+            console.error(`Error fetching count for ${item.title}:`, error);
+          }
+        }
+
+        // Update section total count
+        updatedSections[sectionIndex].count = sectionTotal.toString();
+      }
+
+      // Update sections state
+      setSections(updatedSections);
+
+    
+
+    } catch (error) {
+      console.error('Error fetching counts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+ 
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading store data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -194,47 +282,12 @@ export default function StorePage() {
                 </p>
               </div>
             </div>
-          
           </div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Stats Grid */}
-        <div className="py-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              const TrendIcon = stat.isPositive ? ArrowTrendingUpIcon : ArrowTrendingDownIcon;
-              
-              return (
-                <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all duration-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Icon className={`w-5 h-5 text-${stat.color}-500`} />
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                          {stat.label}
-                        </p>
-                      </div>
-                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {stat.value}
-                      </p>
-                    </div>
-                    <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium ${
-                      stat.isPositive 
-                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                      <TrendIcon className="w-3 h-3" />
-                      <span>{stat.change}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+       
 
         {/* Main Content */}
         <div className="pb-12">

@@ -59,8 +59,9 @@ export default function LogisticsDocumentsPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch logistics documents: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Failed to fetch logistics documents: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -133,8 +134,9 @@ export default function LogisticsDocumentsPage() {
         }
         setData(prev => prev.filter(i => i.id !== item.id));
         alert('Document deleted successfully!');
-      } catch (e: any) {
-        alert(`Failed to delete document: ${e.message}`);
+      } catch (e: Error | unknown) {
+        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+        alert(`Failed to delete document: ${errorMessage}`);
       }
     }
   };
@@ -177,8 +179,9 @@ export default function LogisticsDocumentsPage() {
       }
       setIsFormOpen(false);
       setSelectedDocument(null);
-    } catch (e: any) {
-      alert(`Failed to save document: ${e.message}`);
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      alert(`Failed to save document: ${errorMessage}`);
     }
   };
 

@@ -82,21 +82,22 @@ export default function BillingPage() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const fetchedRawData: any[] = await response.json();
+      const fetchedRawData: Record<string, unknown>[] = await response.json();
   
       const processedData: BillingItem[] = fetchedRawData.map(rawItem => ({
-        id: rawItem.id,
-        invoiceNumber: rawItem.invoiceNumber || '',
-        clientName: rawItem.client || '',
-        amount: parseFloat(rawItem.amount) || 0,
-        date: rawItem.dueDate || '',
-        status: rawItem.status || 'pending',
-        description: rawItem.type || ''
+        id: Number(rawItem.id) || 0,
+        invoiceNumber: String(rawItem.invoiceNumber || ''),
+        clientName: String(rawItem.client || ''),
+        amount: Number(rawItem.amount) || 0,
+        date: String(rawItem.dueDate || ''),
+        status: (rawItem.status as BillingItem['status']) || 'pending',
+        description: String(rawItem.type || '')
       }));
   
       setData(processedData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -127,8 +128,9 @@ export default function BillingPage() {
       }
 
       await fetchData(); // Refresh the data after creating
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 
@@ -157,8 +159,9 @@ export default function BillingPage() {
       }
 
       await fetchData(); // Refresh the data after updating
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 
@@ -174,8 +177,9 @@ export default function BillingPage() {
       }
 
       await fetchData(); // Refresh the data after deleting
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: Error | unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(errorMessage);
     }
   };
 

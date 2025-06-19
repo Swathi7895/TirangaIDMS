@@ -146,8 +146,8 @@ const furnitureAPI = {
 
 export default function FurniturePage() {
   const [items, setItems] = useState<Furniture[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
 
   const categories = ['Desks', 'Chairs', 'Cabinets', 'Tables', 'Other'];
 

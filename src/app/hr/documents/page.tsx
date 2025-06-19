@@ -1,17 +1,16 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { File, Upload, Search, Filter, Eye, Download,  X, Calendar, User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon } from 'lucide-react';
 
 interface Document {
   id: number;
-  name: string;
-  type: string;
-  size: string;
-  uploadDate: string;
-  employee: string;
+  employeeId: string;
+  documentType: string;
+  fileName: string;
+  fileDownloadUri: string;
+  fileType: string;
+  size: number;
   status: 'approved' | 'pending' | 'rejected';
-  fileUrl: string;
-  file?: File;
 }
 
 interface DocumentType {
@@ -26,17 +25,50 @@ export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedDocType, setSelectedDocType] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
-  const [documents, setDocuments] = useState<Document[]>([
-    { id: 1, name: 'John Doe Resume', type: 'resume', size: '2.4 MB', uploadDate: '2024-06-03', employee: 'John Doe', status: 'approved', fileUrl: 'https://example.com/resume1.pdf' },
-    { id: 2, name: 'Jane Smith Marks Card', type: 'marks', size: '1.8 MB', uploadDate: '2024-06-02', employee: 'Jane Smith', status: 'pending', fileUrl: 'https://example.com/marks1.pdf' },
-    { id: 3, name: 'Mike Johnson ID Proof', type: 'id', size: '3.1 MB', uploadDate: '2024-06-01', employee: 'Mike Johnson', status: 'approved', fileUrl: 'https://example.com/id1.pdf' },
-    { id: 4, name: 'Sarah Wilson Offer Letter', type: 'offer', size: '1.2 MB', uploadDate: '2024-05-30', employee: 'Sarah Wilson', status: 'approved', fileUrl: 'https://example.com/offer1.pdf' },
-    { id: 5, name: 'David Brown Resume', type: 'resume', size: '2.7 MB', uploadDate: '2024-05-28', employee: 'David Brown', status: 'rejected', fileUrl: 'https://example.com/resume2.pdf' },
-  ]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch('http://localhost:8080/api/hr/documents');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+
+      const data = await response.json();
+      
+      // Transform API response to match our Document interface
+      const transformedDocuments: Document[] = data.map((doc: any) => ({
+        id: doc.id,
+        employeeId: doc.employeeId,
+        documentType: doc.documentType ? doc.documentType.toLowerCase() : '',
+        fileName: doc.fileName || '',
+        fileDownloadUri: doc.fileDownloadUri || '',
+        fileType: doc.fileType || '',
+        size: doc.size || 0,
+        status: 'approved', // Default status since it's not provided by API
+      }));
+
+      setDocuments(transformedDocuments);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to fetch documents');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const documentTypes: DocumentType[] = [
     { id: 'resume', name: 'Resume', icon: FileText, color: 'blue' },
@@ -46,12 +78,14 @@ export default function DocumentsPage() {
   ];
 
   const getDocumentIcon = (type: string): LucideIcon => {
-    const docType = documentTypes.find(dt => dt.id === type);
+    if (!type) return File;
+    const docType = documentTypes.find(dt => dt.id === type.toLowerCase());
     return docType ? docType.icon : File;
   };
 
   const getDocumentColorClasses = (type: string) => {
-    const docType = documentTypes.find(dt => dt.id === type);
+    if (!type) return { bg: 'bg-gray-100', text: 'text-gray-600' };
+    const docType = documentTypes.find(dt => dt.id === type.toLowerCase());
     if (!docType) return { bg: 'bg-gray-100', text: 'text-gray-600' };
     
     const colorMap: Record<DocumentType['color'], { bg: string; text: string }> = {
@@ -74,57 +108,85 @@ export default function DocumentsPage() {
   };
 
   const filteredDocuments = documents.filter(doc => {
-    const matchesCategory = selectedCategory === 'all' || doc.type === selectedCategory;
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         doc.employee.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!doc) return false;
+    const matchesCategory = selectedCategory === 'all' || 
+      (doc.documentType && doc.documentType.toLowerCase() === selectedCategory);
+    const matchesSearch = 
+      (doc.fileName && doc.fileName.toLowerCase().includes(searchTerm.toLowerCase())) || 
+      (doc.employeeId && doc.employeeId.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && selectedDocType) {
-      // Create a URL for the uploaded file (in a real app, this would be uploaded to a server)
-      const fileUrl = URL.createObjectURL(file);
+    if (!file || !selectedDocType || !employeeId) return;
+
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`http://localhost:8080/api/hr/upload/${selectedDocType.toUpperCase()}/${employeeId}`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload document');
+      }
+
+      // Refresh documents after successful upload
+      await fetchDocuments();
       
-      const newDocument: Document = {
-        id: documents.length + 1,
-        name: file.name,
-        type: selectedDocType,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        uploadDate: new Date().toISOString().split('T')[0],
-        employee: 'Current User',
-        status: 'pending',
-        fileUrl: fileUrl,
-        file: file // Store the actual file for demo purposes
-      };
-      setDocuments([...documents, newDocument]);
       setShowUploadModal(false);
       setSelectedDocType('');
+      setEmployeeId('');
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Failed to upload document');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleViewDocument = (document: Document) => {
-    setViewingDocument(document);
-    setShowViewModal(true);
-  };
+  const handleDownloadDocument = async (document: Document) => {
+    try {
+      // Construct the download URL using the correct format
+      const downloadUrl = `http://localhost:8080/api/hr/download/${document.employeeId}/${document.documentType.toUpperCase()}`;
+      
+      // Fetch the file from the backend
+      const response = await fetch(downloadUrl);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download document');
+      }
 
-  const handleDownloadDocument = (document: Document) => {
-    // Create a temporary anchor element to trigger download
-    const link = window.document.createElement('a');
-    link.href = document.fileUrl;
-    link.download = document.name;
-    link.target = '_blank';
-    
-    // For demo purposes with example URLs, we'll show an alert
-    if (document.fileUrl.includes('example.com')) {
-      alert(`Downloading: ${document.name}\nIn a real application, this would download the actual file.`);
-      return;
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = document.fileName;
+      
+      // Append to body, click and remove
+      window.document.body.appendChild(link);
+      link.click();
+      window.document.body.removeChild(link);
+      
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading document:', error);
+      alert('Failed to download document. Please try again.');
     }
-    
-    // For actual uploaded files
-    window.document.body.appendChild(link);
-    link.click();
-    window.document.body.removeChild(link);
   };
 
   const handleDeleteDocument = (document: Document) => {
@@ -132,11 +194,23 @@ export default function DocumentsPage() {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (documentToDelete) {
-      setDocuments(documents.filter(doc => doc.id !== documentToDelete.id));
-      setShowDeleteModal(false);
-      setDocumentToDelete(null);
+      try {
+        const response = await fetch(`http://localhost:8080/api/hr/documents/${documentToDelete.id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete document');
+        }
+
+        await fetchDocuments(); // Refresh the documents list
+        setShowDeleteModal(false);
+        setDocumentToDelete(null);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'Failed to delete document');
+      }
     }
   };
 
@@ -152,6 +226,12 @@ export default function DocumentsPage() {
           <span>Upload Document</span>
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
+          {error}
+        </div>
+      )}
 
       {/* Document Type Filters */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -169,7 +249,7 @@ export default function DocumentsPage() {
           </button>
           {documentTypes.map((type) => {
             const Icon = type.icon;
-            const count = documents.filter(doc => doc.type === type.id).length;
+            const count = documents.filter(doc => doc.documentType === type.id).length;
             const colorClasses = getDocumentColorClasses(type.id);
             return (
               <button
@@ -221,8 +301,9 @@ export default function DocumentsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredDocuments.map((doc) => {
-                const IconComponent = getDocumentIcon(doc.type);
-                const colorClasses = getDocumentColorClasses(doc.type);
+                if (!doc) return null;
+                const IconComponent = getDocumentIcon(doc.documentType || '');
+                const colorClasses = getDocumentColorClasses(doc.documentType || '');
                 
                 return (
                   <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
@@ -236,29 +317,19 @@ export default function DocumentsPage() {
                     </div>
                     
                     <div className="space-y-2">
-                      <h3 className="font-medium text-gray-900 truncate">{doc.name}</h3>
+                      <h3 className="font-medium text-gray-900 truncate">{doc.fileName || 'Unnamed Document'}</h3>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <User className="w-4 h-4" />
-                        <span>{doc.employee}</span>
+                        <span>{doc.employeeId || 'Unknown Employee'}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <File className="w-4 h-4" />
-                        <span>PDF • {doc.size}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(doc.uploadDate).toLocaleDateString()}</span>
+                        <span>{doc.fileType || 'Unknown Type'} • {(doc.size / 1024).toFixed(1)} KB</span>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-2 mt-4">
-                      <button 
-                        onClick={() => handleViewDocument(doc)}
-                        className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View</span>
-                      </button>
+                   
                       <button 
                         onClick={() => handleDownloadDocument(doc)}
                         className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 text-sm bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
@@ -299,12 +370,27 @@ export default function DocumentsPage() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Employee ID
+                </label>
+                <input
+                  type="text"
+                  value={employeeId}
+                  onChange={(e) => setEmployeeId(e.target.value)}
+                  placeholder="Enter employee ID"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isUploading}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Document Type
                 </label>
                 <select
                   value={selectedDocType}
                   onChange={(e) => setSelectedDocType(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isUploading}
                 >
                   <option value="">Select document type</option>
                   {documentTypes.map((type) => (
@@ -321,19 +407,36 @@ export default function DocumentsPage() {
                   type="file"
                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                   onChange={handleFileUpload}
-                  disabled={!selectedDocType}
+                  disabled={!selectedDocType || !employeeId || isUploading}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
                 </p>
               </div>
+
+              {uploadError && (
+                <div className="text-red-600 text-sm mt-2">
+                  {uploadError}
+                </div>
+              )}
+
+              {isUploading && (
+                <div className="text-blue-600 text-sm mt-2">
+                  Uploading document...
+                </div>
+              )}
             </div>
             
             <div className="flex space-x-3 mt-6">
               <button
-                onClick={() => setShowUploadModal(false)}
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setSelectedDocType('');
+                  setEmployeeId('');
+                }}
                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isUploading}
               >
                 Cancel
               </button>
@@ -362,19 +465,19 @@ export default function DocumentsPage() {
             
             <div className="mt-4 space-y-2">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Name:</span> {viewingDocument.name}
+                <span className="font-medium">Name:</span> {viewingDocument.fileName}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Type:</span> {documentTypes.find(t => t.id === viewingDocument.type)?.name}
+                <span className="font-medium">Type:</span> {documentTypes.find(t => t.id === viewingDocument.documentType)?.name}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Size:</span> {viewingDocument.size}
+                <span className="font-medium">Size:</span> {(viewingDocument.size / 1024).toFixed(1)} KB
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Uploaded by:</span> {viewingDocument.employee}
+                <span className="font-medium">Uploaded by:</span> {viewingDocument.employeeId}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Date:</span> {new Date(viewingDocument.uploadDate).toLocaleDateString()}
+                <span className="font-medium">Date:</span> {new Date(viewingDocument.fileDownloadUri.split('/')[4]).toLocaleDateString()}
               </p>
             </div>
             
@@ -401,8 +504,8 @@ export default function DocumentsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Document</h3>
-          <p className="text-gray-600 mb-6">
-  Are you sure you want to delete &quot;{documentToDelete.name}&quot;? This action cannot be undone.
+            <p className="text-gray-600 mb-6">
+  Are you sure you want to delete &quot;{documentToDelete.fileName}&quot;? This action cannot be undone.
 </p>
 
             <div className="flex justify-end space-x-3">

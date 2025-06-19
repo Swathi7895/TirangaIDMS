@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
+
 import BackButton from '@/components/BackButton';
 
 interface RentExpense {
@@ -14,7 +14,7 @@ interface RentExpense {
 export default function RentPage() {
   const [expenses, setExpenses] = useState<RentExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', description: '' });
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, ] = useState<number | null>(null);
 
   useEffect(() => {
     fetchExpenses();

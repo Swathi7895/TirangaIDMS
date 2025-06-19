@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { PlusCircleIcon, TrashIcon, PencilSquareIcon } from '@heroicons/react/24/outline';
-
+import BackButton from '@/components/BackButton';
 interface IncentiveExpense {
   id: number;
   date: string;
@@ -114,6 +114,7 @@ export default function IncentivesPage() {
 
   return (
     <div className="container mx-auto py-8">
+      <BackButton href="/finance-manager/dashboard" label="Back to Dashboard" />
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Incentives Expenses</h1>
 
       {/* Form */}

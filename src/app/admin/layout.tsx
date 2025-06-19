@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+
 import { useRouter } from 'next/navigation';
 // You might import an icon library or define your own SVG here
 // import { AdminIcon } from './icons'; // Example: if you have an AdminIcon component

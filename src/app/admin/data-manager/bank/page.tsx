@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, ArrowLeft, Trash2 } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import {  Download, Search, Filter, Eye, ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link
  from 'next/link';
@@ -40,13 +40,7 @@ function BankDataView({ isOpen, onClose, data, fields, title }: {
   );
 }
 
-const formFields: FormField[] = [
-  { name: 'documentType', label: 'Document Type', type: 'select', options: ['Bank Statement', 'Bank Guarantee', 'Bank Certificate'], required: true },
-  { name: 'bankName', label: 'Bank Name', type: 'text', required: true },
-  { name: 'accountNumber', label: 'Account Number', type: 'text', required: true },
-  { name: 'date', label: 'Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Valid', 'Expired', 'Pending'], required: true }
-];
+
 
 const viewFields: ViewField[] = [
   { name: 'documentType', label: 'Document Type', type: 'text' },
@@ -59,7 +53,7 @@ const viewFields: ViewField[] = [
 export default function BankDocumentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+ 
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<BankDocument | null>(null);
   const [data, setData] = useState<BankDocument[]>([]);
@@ -79,13 +73,14 @@ export default function BankDocumentsPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch documents: ${e.message}`);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
   };
-
+  }
   useEffect(() => {
     fetchBankDocuments();
   }, []);

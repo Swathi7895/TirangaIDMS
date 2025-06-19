@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState,  } from 'react';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -27,35 +27,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Partial<FormData>>({});
 
-  // Check if user is already authenticated
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    if (token) {
-      // Verify token with backend
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/verify`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      .then(response => {
-        if (response.ok) {
-          const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-          redirectBasedOnRole(roles);
-        } else {
-          // If token is invalid, clear it
-          sessionStorage.removeItem('token');
-          sessionStorage.removeItem('userEmail');
-          sessionStorage.removeItem('roles');
-        }
-      })
-      .catch(() => {
-        // If there's an error, clear the token
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('userEmail');
-        sessionStorage.removeItem('roles');
-      });
-    }
-  }, [router]);
+ 
 
   const redirectBasedOnRole = (roles: string[]) => {
     if (roles.includes('ROLE_ADMIN')) {
@@ -63,9 +35,11 @@ export default function LoginPage() {
     } else if (roles.includes('ROLE_STORE')) {
       router.replace('/store');
     } else if (roles.includes('ROLE_FINANCE')) {
-      router.replace('/finance');
+      router.replace('/finance-manager/dashboard');
     } else if (roles.includes('ROLE_HR')) {
       router.replace('/hr');
+    } else if (roles.includes('ROLE_EMPLOYEE')) {
+      router.replace('/employee');
     } else if (roles.includes('ROLE_DATA_MANAGER')) {
       router.replace('/data-manager');
     } else {
@@ -139,8 +113,9 @@ export default function LoginPage() {
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('roles');
       }
-    } catch (err) {
-      setError('Network error. Please check if the server is running.');
+    } catch (e: Error | unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
+      setError(`Network error: ${errorMessage}`);
       // Clear any existing tokens on error
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('userEmail');
@@ -232,7 +207,7 @@ export default function LoginPage() {
             )}
           </button>
           <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account? {' '}
+            Don't have an account? {``}
             <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
               Register
             </Link>

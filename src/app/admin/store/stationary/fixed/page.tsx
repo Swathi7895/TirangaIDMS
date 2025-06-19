@@ -28,21 +28,14 @@ interface ApiFixedItem {
   lastUpdated: [number, number, number]; // [year, month, day]
 }
 
-interface ApiRequestBody {
-  name: string;
-  category: string;
-  quantity: number;
-  location: string;
-  Condition: string;
-  lastUpdated: string;
-}
+
 
 const API_BASE_URL = 'http://localhost:8080/store/stationary/fixed';
 
 export default function FixedStationaryPage() {
   const [items, setItems] = useState<FixedItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setLoading] = useState(true);
+  const [, setError] = useState<string | null>(null);
 
   const categories = ['Furniture', 'Equipment', 'Storage', 'Other'];
 
@@ -71,18 +64,7 @@ export default function FixedStationaryPage() {
     };
   };
 
-  // Helper function to convert local format to API request
-  const convertLocalToApi = (localItem: Omit<FixedItem, 'id' | 'lastUpdated'>): ApiRequestBody => {
-    const today = new Date();
-    return {
-      name: localItem.name,
-      category: localItem.category,
-      quantity: localItem.quantity,
-      location: localItem.location,
-      Condition: localItem.condition.charAt(0).toUpperCase() + localItem.condition.slice(1),
-      lastUpdated: today.toISOString().split('T')[0], // YYYY-MM-DD format
-    };
-  };
+
 
   // Fetch all items
   const fetchItems = useCallback(async () => {

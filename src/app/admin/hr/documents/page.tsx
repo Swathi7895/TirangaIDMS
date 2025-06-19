@@ -1,17 +1,18 @@
 'use client';
-import React, { useState } from 'react';
-import { File, Search, Filter, Eye,  X, Calendar, User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { File, Search, Filter, Eye,  X, Calendar, User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon, Upload } from 'lucide-react';
 
 interface Document {
-  id: number;
-  name: string;
-  type: string;
-  size: string;
-  uploadDate: string;
-  employee: string;
-  status: 'approved' | 'pending' | 'rejected';
-  fileUrl: string;
-  file?: File;
+  id?: number;
+  employeeId: string;
+  documentType: string;
+  fileName: string;
+  fileDownloadUri: string;
+  fileType: string;
+  size: number;
+  status?: 'approved' | 'pending' | 'rejected';
+  uploadDate?: string;
+  employee?: string;
 }
 
 interface DocumentType {
@@ -24,17 +25,15 @@ interface DocumentType {
 export default function DocumentsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   
-  const [documents] = useState<Document[]>([
-    { id: 1, name: 'John Doe Resume', type: 'resume', size: '2.4 MB', uploadDate: '2024-06-03', employee: 'John Doe', status: 'approved', fileUrl: 'https://example.com/resume1.pdf' },
-    { id: 2, name: 'Jane Smith Marks Card', type: 'marks', size: '1.8 MB', uploadDate: '2024-06-02', employee: 'Jane Smith', status: 'pending', fileUrl: 'https://example.com/marks1.pdf' },
-    { id: 3, name: 'Mike Johnson ID Proof', type: 'id', size: '3.1 MB', uploadDate: '2024-06-01', employee: 'Mike Johnson', status: 'approved', fileUrl: 'https://example.com/id1.pdf' },
-    { id: 4, name: 'Sarah Wilson Offer Letter', type: 'offer', size: '1.2 MB', uploadDate: '2024-05-30', employee: 'Sarah Wilson', status: 'approved', fileUrl: 'https://example.com/offer1.pdf' },
-    { id: 5, name: 'David Brown Resume', type: 'resume', size: '2.7 MB', uploadDate: '2024-05-28', employee: 'David Brown', status: 'rejected', fileUrl: 'https://example.com/resume2.pdf' },
-  ]);
+  const [documents, setDocuments] = useState<Document[]>([]);
 
   const documentTypes: DocumentType[] = [
     { id: 'resume', name: 'Resume', icon: FileText, color: 'blue' },
@@ -42,6 +41,48 @@ export default function DocumentsPage() {
     { id: 'id', name: 'ID Proof', icon: CreditCard, color: 'purple' },
     { id: 'offer', name: 'Offer Letter', icon: Briefcase, color: 'orange' }
   ];
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
+
+  const fetchDocuments = async () => {
+    try {
+      setIsLoading(true);
+      setFetchError(null);
+      const response = await fetch('http://localhost:8080/api/hr/documents');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch documents');
+      }
+
+      const data = await response.json();
+      setDocuments(data);
+    } catch (error) {
+      setFetchError(error instanceof Error ? error.message : 'Failed to fetch documents');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const getDocumentType = (type: string): string => {
+    return type.toLowerCase();
+  };
+
+  const filteredDocuments = documents.filter(doc => {
+    const matchesCategory = selectedCategory === 'all' || getDocumentType(doc.documentType) === selectedCategory;
+    const matchesSearch = doc.fileName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         doc.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const getDocumentIcon = (type: string): LucideIcon => {
     const docType = documentTypes.find(dt => dt.id === type);
@@ -71,15 +112,6 @@ export default function DocumentsPage() {
     }
   };
 
-  const filteredDocuments = documents.filter(doc => {
-    const matchesCategory = selectedCategory === 'all' || doc.type === selectedCategory;
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         doc.employee.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
-
- 
-
   const handleViewDocument = (document: Document) => {
     setViewingDocument(document);
     setShowViewModal(true);
@@ -88,13 +120,13 @@ export default function DocumentsPage() {
   const handleDownloadDocument = (document: Document) => {
     // Create a temporary anchor element to trigger download
     const link = window.document.createElement('a');
-    link.href = document.fileUrl;
-    link.download = document.name;
+    link.href = document.fileDownloadUri;
+    link.download = document.fileName;
     link.target = '_blank';
     
     // For demo purposes with example URLs, we'll show an alert
-    if (document.fileUrl.includes('example.com')) {
-      alert(`Downloading: ${document.name}\nIn a real application, this would download the actual file.`);
+    if (document.fileDownloadUri.includes('example.com')) {
+      alert(`Downloading: ${document.fileName}\nIn a real application, this would download the actual file.`);
       return;
     }
     
@@ -104,14 +136,99 @@ export default function DocumentsPage() {
     window.document.body.removeChild(link);
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('http://localhost:8080/api/hr/upload/RESUME/EMP001', {
+        method: 'POST',
+        body: JSON.stringify({
+          employeeId: "EMP001",
+          documentType: "RESUME",
+          fileName: file.name,
+          fileDownloadUri: "/api/hr/download/EMP001/RESUME",
+          fileType: file.type,
+          size: file.size
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      
+      // Add the new document to the documents list
+      const newDocument: Document = {
+        id: documents.length + 1,
+        employeeId: "EMP001",
+        documentType: "RESUME",
+        fileName: file.name,
+        fileDownloadUri: data.fileDownloadUri || '#',
+        fileType: file.type,
+        size: file.size,
+        status: 'pending',
+        uploadDate: new Date().toISOString().split('T')[0],
+      };
+
+      // Update the documents state
+      setDocuments([...documents, newDocument]);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">HR Document Management</h1>
-       
+        <div className="flex items-center space-x-4">
+          <label className="relative">
+            <input
+              type="file"
+              className="hidden"
+              onChange={handleFileUpload}
+              accept=".pdf,.doc,.docx"
+              disabled={isUploading}
+            />
+            <button
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                isUploading
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+              disabled={isUploading}
+            >
+              <Upload className="w-4 h-4" />
+              <span>{isUploading ? 'Uploading...' : 'Upload Document'}</span>
+            </button>
+          </label>
+        </div>
       </div>
+
+      {uploadError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{uploadError}</span>
+        </div>
+      )}
+
+      {fetchError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <span className="block sm:inline">{fetchError}</span>
+        </div>
+      )}
 
       {/* Document Type Filters */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -129,7 +246,7 @@ export default function DocumentsPage() {
           </button>
           {documentTypes.map((type) => {
             const Icon = type.icon;
-            const count = documents.filter(doc => doc.type === type.id).length;
+            const count = documents.filter(doc => getDocumentType(doc.documentType) === type.id).length;
             const colorClasses = getDocumentColorClasses(type.id);
             return (
               <button
@@ -172,7 +289,12 @@ export default function DocumentsPage() {
 
         {/* Documents Grid */}
         <div className="p-4">
-          {filteredDocuments.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading documents...</p>
+            </div>
+          ) : filteredDocuments.length === 0 ? (
             <div className="text-center py-12">
               <File className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No documents found</h3>
@@ -181,33 +303,29 @@ export default function DocumentsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredDocuments.map((doc) => {
-                const IconComponent = getDocumentIcon(doc.type);
-                const colorClasses = getDocumentColorClasses(doc.type);
+                const IconComponent = getDocumentIcon(getDocumentType(doc.documentType));
+                const colorClasses = getDocumentColorClasses(getDocumentType(doc.documentType));
                 
                 return (
-                  <div key={doc.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={doc.fileDownloadUri} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-start justify-between mb-3">
                       <div className={`w-12 h-12 ${colorClasses.bg} rounded-lg flex items-center justify-center`}>
                         <IconComponent className={`w-6 h-6 ${colorClasses.text}`} />
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(doc.status)}`}>
-                        {doc.status}
+                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(doc.status || 'pending')}`}>
+                        {doc.status || 'pending'}
                       </span>
                     </div>
                     
                     <div className="space-y-2">
-                      <h3 className="font-medium text-gray-900 truncate">{doc.name}</h3>
+                      <h3 className="font-medium text-gray-900 truncate">{doc.fileName}</h3>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <User className="w-4 h-4" />
-                        <span>{doc.employee}</span>
+                        <span>{doc.employeeId}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
                         <File className="w-4 h-4" />
-                        <span>PDF • {doc.size}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
-                        <span>{new Date(doc.uploadDate).toLocaleDateString()}</span>
+                        <span>{doc.fileType} • {formatFileSize(doc.size)}</span>
                       </div>
                     </div>
                     
@@ -219,7 +337,6 @@ export default function DocumentsPage() {
                         <Eye className="w-4 h-4" />
                         <span>View</span>
                       </button>
-                     
                     </div>
                   </div>
                 );
@@ -228,8 +345,6 @@ export default function DocumentsPage() {
           )}
         </div>
       </div>
-
-   
 
       {/* View Document Modal */}
       {showViewModal && viewingDocument && (
@@ -251,19 +366,19 @@ export default function DocumentsPage() {
             
             <div className="mt-4 space-y-2">
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Name:</span> {viewingDocument.name}
+                <span className="font-medium">Name:</span> {viewingDocument.fileName}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Type:</span> {documentTypes.find(t => t.id === viewingDocument.type)?.name}
+                <span className="font-medium">Type:</span> {documentTypes.find(t => t.id === getDocumentType(viewingDocument.documentType))?.name}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Size:</span> {viewingDocument.size}
+                <span className="font-medium">Size:</span> {formatFileSize(viewingDocument.size)}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Uploaded by:</span> {viewingDocument.employee}
+                <span className="font-medium">Uploaded by:</span> {viewingDocument.employeeId}
               </p>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">Date:</span> {new Date(viewingDocument.uploadDate).toLocaleDateString()}
+                <span className="font-medium">Date:</span> {new Date(viewingDocument.uploadDate || '').toLocaleDateString()}
               </p>
             </div>
             
@@ -284,7 +399,6 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

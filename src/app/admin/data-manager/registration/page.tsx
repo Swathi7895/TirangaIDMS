@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Upload, Download, Search, Filter, Eye, Edit, Trash2, ArrowLeft } from 'lucide-react';
-import DataForm, { FormField } from '../components/DataForm';
+import { Download, Search, Filter, Eye,  ArrowLeft } from 'lucide-react';
+
 import DataView, { ViewField } from '../components/DataView';
 import Link from 'next/link';
 
@@ -15,13 +15,7 @@ interface CompanyRegistration {
   status: 'Active' | 'Inactive' | 'Pending' | 'Suspended';
 }
 
-const formFields: FormField[] = [
-  { name: 'companyName', label: 'Company Name', type: 'text', required: true },
-  { name: 'registrationNumber', label: 'Registration Number', type: 'text', required: true },
-  { name: 'type', label: 'Company Type', type: 'select', options: ['Private Limited', 'Public Limited', 'LLP', 'Partnership', 'Sole Proprietorship'], required: true },
-  { name: 'date', label: 'Registration Date', type: 'date', required: true },
-  { name: 'status', label: 'Status', type: 'select', options: ['Active', 'Inactive', 'Pending', 'Suspended'], required: true }
-];
+
 
 const viewFields: ViewField[] = [
   { name: 'companyName', label: 'Company Name', type: 'text' },
@@ -34,7 +28,7 @@ const viewFields: ViewField[] = [
 export default function CompanyRegistrationPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
+
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [selectedRegistration, setSelectedRegistration] = useState<CompanyRegistration | null>(null);
   const [data, setData] = useState<CompanyRegistration[]>([]);
@@ -54,10 +48,13 @@ export default function CompanyRegistrationPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: any) {
-      setError(`Failed to fetch registrations: ${e.message}`);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(`Failed to fetch documents: ${e.message}`);
+      } else {
+        setError('Failed to fetch documents: Unknown error occurred.');
+      }
+    
     }
   };
 
@@ -65,10 +62,7 @@ export default function CompanyRegistrationPage() {
     fetchRegistrations();
   }, []);
 
-  const handleAddNew = () => {
-    setSelectedRegistration(null);
-    setIsFormOpen(true);
-  };
+ 
 
 
   

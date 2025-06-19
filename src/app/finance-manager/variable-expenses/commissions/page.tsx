@@ -12,7 +12,7 @@ interface CommissionExpense {
   description: string;
 }
 
-export function CommissionsPage() {
+export default function CommissionsPage() {
   const [expenses, setExpenses] = useState<CommissionExpense[]>([]);
   const [newExpense, setNewExpense] = useState({ date: '', amount: '', recipient: '', description: '' });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -77,6 +77,7 @@ export function CommissionsPage() {
 
   return (
     <div className="container mx-auto py-8">
+      <BackButton href="/finance-manager/dashboard" label="Back to Dashboard" />
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Commissions Expenses</h1>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
