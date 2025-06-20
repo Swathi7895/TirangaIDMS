@@ -30,17 +30,17 @@ export default function LoginPage() {
  
 
   const redirectBasedOnRole = (roles: string[]) => {
-    if (roles.includes('ROLE_ADMIN')) {
+    if (roles.includes('ADMIN')) {
       router.replace('/admin');
-    } else if (roles.includes('ROLE_STORE')) {
+    } else if (roles.includes('STORE')) {
       router.replace('/store');
-    } else if (roles.includes('ROLE_FINANCE')) {
+    } else if (roles.includes('FINANCE')) {
       router.replace('/finance-manager/dashboard');
-    } else if (roles.includes('ROLE_HR')) {
+    } else if (roles.includes('HR')) {
       router.replace('/hr');
-    } else if (roles.includes('ROLE_EMPLOYEE')) {
+    } else if (roles.includes('EMPLOYEE')) {
       router.replace('/employee');
-    } else if (roles.includes('ROLE_DATA_MANAGER')) {
+    } else if (roles.includes('DATA_MANAGER')) {
       router.replace('/data-manager');
     } else {
       router.replace('/dashboard');

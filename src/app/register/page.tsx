@@ -25,12 +25,12 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   const availableRoles = [
-    'ROLE_ADMIN',
-    'ROLE_STORE',
-    'ROLE_FINANCE',
-    'ROLE_HR',
-    'ROLE_DATA_MANAGER',
-    'ROLE_EMPLOYEE'
+    'ADMIN',
+    'STORE',
+    'FINANCE',
+    'HR',
+    'DATA_MANAGER',
+    'EMPLOYEE'
   ];
 
   const handleRoleChange = (role: string) => {

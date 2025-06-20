@@ -157,16 +157,25 @@ export default function StorePage() {
     }
   ];
 
+  // Role and token check before fetching data
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+
+    if (!token || !roles.includes('STORE')) {
+      router.replace('/login');
+    } else {
+      setLoading(true);
+      fetchAllCounts();
+    }
+    // eslint-disable-next-line
+  }, [router]);
+
   const fetchAllCounts = async () => {
     try {
-      setLoading(true);
+      // setLoading(true); // Already set in useEffect
       const token = sessionStorage.getItem('token');
-      
-      if (!token) {
-        router.replace('/login');
-        return;
-      }
-
+      // Token is already checked in useEffect, so this is just for headers
       const headers = {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -235,18 +244,6 @@ export default function StorePage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-    
-    if (!token || !roles.includes('ROLE_STORE')) {
-      router.replace('/login');
-      return;
-    }
-
-    fetchAllCounts();
-  }, [router, fetchAllCounts]);
 
   if (loading) {
     return (
