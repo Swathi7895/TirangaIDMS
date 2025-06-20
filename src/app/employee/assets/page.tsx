@@ -60,12 +60,22 @@ export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!id) {
+      // handle error or redirect
+      return;
+    }
+    setEmployeeId(id);
+  }, []);
 
   useEffect(() => {
     const fetchAssets = async () => {
       try {
         setLoading(true);
-        const response = await fetch('http://localhost:8080/api/assets/employee/1');
+        const response = await fetch(`http://localhost:8080/api/assets/employee/${employeeId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch assets');
         }
@@ -81,7 +91,7 @@ export default function AssetsPage() {
       }
     };
     fetchAssets();
-  }, []);
+  }, [employeeId]);
 
   const getAssetIcon = (type: Asset['type']) => {
     switch (type) {

@@ -26,8 +26,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Partial<FormData>>({});
-
- 
+  const [loginAsEmployee, setLoginAsEmployee] = useState(false);
 
   const redirectBasedOnRole = (roles: string[]) => {
     if (roles.includes('ADMIN')) {
@@ -38,9 +37,7 @@ export default function LoginPage() {
       router.replace('/finance-manager/dashboard');
     } else if (roles.includes('HR')) {
       router.replace('/hr');
-    } else if (roles.includes('EMPLOYEE')) {
-      router.replace('/employee');
-    } else if (roles.includes('DATA_MANAGER')) {
+    }  else if (roles.includes('DATA_MANAGER')) {
       router.replace('/data-manager');
     } else {
       router.replace('/dashboard');
@@ -88,7 +85,10 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`, {
+      const apiUrl = loginAsEmployee
+        ? 'http://localhost:8080/api/employees/login'
+        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/auth/login`;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -96,14 +96,22 @@ export default function LoginPage() {
         body: JSON.stringify(formData)
       });
 
-      const data: LoginResponse = await response.json();
+      const data: any = await response.json();
 
       if (response.ok) {
         // Store authentication data
         sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('userEmail', formData.email);
         sessionStorage.setItem('roles', JSON.stringify(data.roles));
-        
+        // If employee login, store employeeId and employeeProfile from response
+        if (loginAsEmployee && data.employeeId) {
+          sessionStorage.setItem('employeeId', data.employeeId);
+          sessionStorage.setItem('employeeProfile', JSON.stringify(data));
+          console.log('Logged in employeeId:', data.employeeId);
+          // Redirect to employee profile page
+          router.replace('/employee');
+          return;
+        }
         // Redirect based on role
         redirectBasedOnRole(data.roles);
       } else {
@@ -112,6 +120,7 @@ export default function LoginPage() {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('userEmail');
         sessionStorage.removeItem('roles');
+        sessionStorage.removeItem('employeeId');
       }
     } catch (e: Error | unknown) {
       const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
@@ -120,6 +129,7 @@ export default function LoginPage() {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('userEmail');
       sessionStorage.removeItem('roles');
+      sessionStorage.removeItem('employeeId');
     } finally {
       setLoading(false);
     }
@@ -132,8 +142,8 @@ export default function LoginPage() {
           <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-indigo-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Login</h1>
-          <p className="text-gray-600">Sign in to access admin dashboard</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
+          <p className="text-gray-600">Sign in to access your dashboard</p>
         </div>
 
         {error && (
@@ -192,26 +202,42 @@ export default function LoginPage() {
             )}
           </div>
 
+          {/* Login as Employee Checkbox */}
+          <div className="flex items-center">
+            <input
+              id="loginAsEmployee"
+              type="checkbox"
+              checked={loginAsEmployee}
+              onChange={() => setLoginAsEmployee(v => !v)}
+              className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+            />
+            <label htmlFor="loginAsEmployee" className="ml-2 block text-sm text-gray-700">
+              Login as Employee
+            </label>
+          </div>
+
           <button
             onClick={handleLogin}
             disabled={loading}
             className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Signing in...
-              </div>
+              <span>Signing in...</span>
             ) : (
-              'Sign In'
+              <span>Sign In</span>
             )}
           </button>
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Don&apos;t have an account? {``}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Register
-            </Link>
-          </p>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link href="/forgot-password" className="text-indigo-600 hover:underline text-sm">
+            Forgot password?
+          </Link>
+        </div>
+
+        <div className="mt-6 text-center">
+          <span className="text-gray-600">Don't have an account? </span>
+          <Link href="/register" className="text-indigo-600 hover:underline font-medium">Create one</Link>
         </div>
       </div>
     </div>

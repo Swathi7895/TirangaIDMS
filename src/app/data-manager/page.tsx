@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
+import Link from 'next/link';
 import { 
   FileText, 
   Building2, 
@@ -10,11 +10,11 @@ import {
   Calculator, 
   Gavel, 
   LineChart,
- 
+  ArrowRight,
   TrendingUp,
   ShoppingCart
 } from 'lucide-react';
-
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,7 +27,6 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useRouter } from 'next/navigation';
 
 // Register ChartJS components
 ChartJS.register(
@@ -60,20 +59,6 @@ interface ChartData {
     borderColor?: string;
     backgroundColor?: string | string[];
   }[];
-}
-
-interface MonthlyData {
-  labels: string[];
-  data: number[];
-}
-
-interface DataItem {
-  [key: string]: string | number | boolean | null;
-}
-
-interface Sale {
-  paymentStatus: 'Paid' | 'Pending' | 'Overdue' | 'Partially Paid';
-  [key: string]: string | number | boolean | null;
 }
 
 const modules: Module[] = [
@@ -160,12 +145,11 @@ const modules: Module[] = [
   }
 ];
 
-export default function DataManagerPage() {
-  const router = useRouter();
-  const [, setModuleCounts] = useState<{ [key: string]: number }>({});
-  const [, setLoading] = useState(true);
-  const [, setError] = useState<string | null>(null);
-  const [, setSalesData] = useState<ChartData>({
+export default function DataManagerDashboard() {
+  const [moduleCounts, setModuleCounts] = useState<{ [key: string]: number }>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [salesData, setSalesData] = useState<ChartData>({
     labels: [],
     datasets: [{
       label: 'Sales',
@@ -174,7 +158,7 @@ export default function DataManagerPage() {
       backgroundColor: 'rgba(34, 197, 94, 0.5)',
     }]
   });
-  const [, setPurchaseData] = useState<ChartData>({
+  const [purchaseData, setPurchaseData] = useState<ChartData>({
     labels: [],
     datasets: [{
       label: 'Purchases',
@@ -183,7 +167,7 @@ export default function DataManagerPage() {
       backgroundColor: 'rgba(249, 115, 22, 0.5)',
     }]
   });
-  const [, setPaymentStatusData] = useState<ChartData>({
+  const [paymentStatusData, setPaymentStatusData] = useState<ChartData>({
     labels: ['Paid', 'Pending', 'Overdue', 'Partially Paid'],
     datasets: [{
       label: 'Payment Status',
@@ -196,15 +180,6 @@ export default function DataManagerPage() {
       ],
     }]
   });
-
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-    
-    if (!token || !roles.includes('ROLE_DATA_MANAGER')) {
-      router.replace('/login');
-    }
-  }, [router]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -271,7 +246,7 @@ export default function DataManagerPage() {
           'Partially Paid': 0
         };
 
-        salesForPaymentStatus.forEach((sale: Sale) => {
+        salesForPaymentStatus.forEach((sale: any) => {
           if (sale.paymentStatus in paymentStatusCounts) {
             paymentStatusCounts[sale.paymentStatus as keyof typeof paymentStatusCounts]++;
           }
@@ -292,9 +267,8 @@ export default function DataManagerPage() {
         });
 
         setModuleCounts(counts);
-      } catch (e: Error | unknown) {
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-        setError(`Failed to fetch data: ${errorMessage}`);
+      } catch (e: any) {
+        setError(`Failed to fetch data: ${e.message}`);
       } finally {
         setLoading(false);
       }
@@ -303,40 +277,181 @@ export default function DataManagerPage() {
     fetchData();
   }, []);
 
-  const processMonthlyData = (data: DataItem[], dateField: string, amountField: string): MonthlyData => {
-    const monthlyTotals: { [key: string]: number } = {};
+  // Helper function to process monthly data
+  const processMonthlyData = (data: any[], dateField: string, amountField: string) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyTotals = new Array(12).fill(0);
+    const currentYear = new Date().getFullYear();
 
-    data.forEach(item => {
-      const date = new Date(String(item[dateField]));
-      const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
-      const amount = Number(item[amountField]) || 0;
-
-      monthlyTotals[monthYear] = (monthlyTotals[monthYear] || 0) + amount;
-    });
-
-    const sortedMonths = Object.keys(monthlyTotals).sort((a, b) => {
-      const [monthA, yearA] = a.split(' ');
-      const [monthB, yearB] = b.split(' ');
-      const dateA = new Date(`${monthA} 1, ${yearA}`);
-      const dateB = new Date(`${monthB} 1, ${yearB}`);
-      return dateA.getTime() - dateB.getTime();
+    data.forEach((item: any) => {
+      const date = new Date(item[dateField]);
+      if (date.getFullYear() === currentYear) {
+        const month = date.getMonth();
+        monthlyTotals[month] += Number(item[amountField]) || 0;
+      }
     });
 
     return {
-      labels: sortedMonths,
-      data: sortedMonths.map(month => monthlyTotals[month])
+      labels: months,
+      data: monthlyTotals
     };
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Data Manager Dashboard</h1>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Welcome to Data Management</h2>
-          <p className="text-gray-600">This is the data management dashboard where you can manage and analyze system data.</p>
+    <div className="space-y-6">
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        {/* Sales Trend Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trend</h3>
+          <div className="h-80">
+            <Line
+              data={salesData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: false,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: (value) => `$${value.toLocaleString()}`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
         </div>
+
+        {/* Purchase Trend Chart */}
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Purchase Trend</h3>
+          <div className="h-80">
+            <Line
+              data={purchaseData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                  title: {
+                    display: false,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: (value) => `$${value.toLocaleString()}`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Payment Status Distribution */}
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Status Distribution</h3>
+          <div className="h-80">
+            <Doughnut
+              data={paymentStatusData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'right' as const,
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Monthly Comparison */}
+        <div className="bg-white p-6 rounded-lg shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Sales vs Purchases</h3>
+          <div className="h-80">
+            <Bar
+              data={{
+                labels: salesData.labels,
+                datasets: [
+                  {
+                    label: 'Sales',
+                    data: salesData.datasets[0].data,
+                    backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                  },
+                  {
+                    label: 'Purchases',
+                    data: purchaseData.datasets[0].data,
+                    backgroundColor: 'rgba(249, 115, 22, 0.5)',
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    position: 'top' as const,
+                  },
+                },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      callback: (value) => `$${value.toLocaleString()}`,
+                    },
+                  },
+                },
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Modules Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {loading ? (
+          <div className="col-span-full text-center py-8 text-gray-600">Loading module counts...</div>
+        ) : error ? (
+          <div className="col-span-full text-center py-8 text-red-600">{error}</div>
+        ) : (
+          modules.map((module) => (
+            <Link
+              key={module.id}
+              href={module.path}
+              className="bg-white p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{module.name}</h3>
+                  <p className="text-2xl font-bold text-gray-900 mt-2">{moduleCounts[module.id] || 0}</p>
+                </div>
+                <div className={`p-3 rounded-lg ${module.color}`}>
+                  <module.icon className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div className="mt-4 flex items-center text-blue-600">
+                <span className="text-sm font-medium">View Details</span>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </div>
+            </Link>
+          ))
+        )}
       </div>
     </div>
   );
-} 
+}

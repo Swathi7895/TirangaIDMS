@@ -35,9 +35,21 @@ interface APIReview {
 export default function PerformancePage() {
   const [reviews, setReviews] = useState<APIReview[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/performance-reviews/employee/byId/1')
+    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!id) {
+      setReviews([]);
+      setLoading(false);
+      return;
+    }
+    setEmployeeId(id);
+  }, []);
+
+  useEffect(() => {
+    if (!employeeId) return;
+    fetch(`http://localhost:8080/api/performance-reviews/employee/byId/${employeeId}`)
       .then(res => res.json())
       .then((data: APIReview[]) => {
         setReviews(Array.isArray(data) ? data : []);
@@ -47,7 +59,7 @@ export default function PerformancePage() {
         setReviews([]);
         setLoading(false);
       });
-  }, []);
+  }, [employeeId]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;

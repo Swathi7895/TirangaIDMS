@@ -11,6 +11,8 @@ import {
  
 } from 'lucide-react';
 import Link from 'next/link';
+import axios from 'axios';
+
 interface Employee {
   id: string;
   name: string;
@@ -41,6 +43,8 @@ interface AttendanceStats {
 
 export default function AdminAttendanceDashboard() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'year'>('today');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -49,70 +53,46 @@ export default function AdminAttendanceDashboard() {
 
   // Sample data initialization
   useEffect(() => {
-    const sampleEmployees: Employee[] = [
-      { id: '1', name: 'John Doe', department: 'Engineering', email: 'john@company.com' },
-      { id: '2', name: 'Jane Smith', department: 'Marketing', email: 'jane@company.com' },
-      { id: '3', name: 'Mike Johnson', department: 'Sales', email: 'mike@company.com' },
-      { id: '4', name: 'Sarah Wilson', department: 'HR', email: 'sarah@company.com' },
-      { id: '5', name: 'David Brown', department: 'Engineering', email: 'david@company.com' },
-      { id: '6', name: 'Lisa Davis', department: 'Finance', email: 'lisa@company.com' },
-      { id: '7', name: 'Tom Anderson', department: 'Marketing', email: 'tom@company.com' },
-      { id: '8', name: 'Emily Taylor', department: 'Sales', email: 'emily@company.com' }
-    ];
-
-    const generateAttendanceData = () => {
-      const records: AttendanceRecord[] = [];
-      const today = new Date();
-      
-      // Generate data for the last 30 days
-      for (let i = 0; i < 30; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateString = date.toISOString().split('T')[0];
-        
-        sampleEmployees.forEach(employee => {
-          const random = Math.random();
-          let status: 'present' | 'absent' | 'half-day' | 'late';
-          let signIn: string | null = null;
-          let signOut: string | null = null;
-          let workHours = 0;
-          
-          if (random > 0.85) {
-            status = 'absent';
-          } else if (random > 0.75) {
-            status = 'half-day';
-            signIn = '09:' + Math.floor(Math.random() * 60).toString().padStart(2, '0');
-            signOut = '13:' + Math.floor(Math.random() * 60).toString().padStart(2, '0');
-            workHours = 4;
-          } else if (random > 0.65) {
-            status = 'late';
-            signIn = '09:' + (30 + Math.floor(Math.random() * 30)).toString().padStart(2, '0');
-            signOut = '18:' + Math.floor(Math.random() * 30).toString().padStart(2, '0');
-            workHours = 8;
-          } else {
-            status = 'present';
-            signIn = '09:' + Math.floor(Math.random() * 30).toString().padStart(2, '0');
-            signOut = '18:' + Math.floor(Math.random() * 30).toString().padStart(2, '0');
-            workHours = 8;
+    const fetchAttendance = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get('http://localhost:8080/api/attendance');
+        // Map API response to AttendanceRecord[] with late logic
+        const mappedData: AttendanceRecord[] = response.data.map((record: any) => {
+          let status = record.status;
+          // Only check for late if present or late
+          if (record.checkInTime) {
+            // Compare checkInTime to 09:15:00
+            const checkIn = record.checkInTime;
+            if (checkIn > '09:15:00') {
+              status = 'late';
+            } else if (checkIn > '09:00:00') {
+              status = 'present'; // Between 09:00:01 and 09:15:00
+            } else {
+              status = 'present';
+            }
           }
-          
-          records.push({
-            employeeId: employee.id,
-            employeeName: employee.name,
-            department: employee.department,
-            date: dateString,
-            signIn,
-            signOut,
+          return {
+            employeeId: record.employeeId,
+            employeeName: record.employeeName,
+            department: record.department,
+            date: record.date,
+            signIn: record.checkInTime ?? null,
+            signOut: record.checkOutTime ?? null,
             status,
-            workHours
-          });
+            workHours: record.workHours,
+          };
         });
+        setAttendanceData(mappedData);
+      } catch (err: Error | unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(`Failed to fetch attendance data: ${errorMessage}`);
+      } finally {
+        setLoading(false);
       }
-      
-      return records;
     };
-
-    setAttendanceData(generateAttendanceData());
+    fetchAttendance();
   }, []);
 
   const getStatusColor = (status: string) => {
@@ -368,6 +348,11 @@ export default function AdminAttendanceDashboard() {
             Back to Dashboard
           </Link>
         </div>
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
         <div className="mb-8">
           <div className="flex items-center justify-between">
         
@@ -395,13 +380,22 @@ export default function AdminAttendanceDashboard() {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        {renderStatsCards()}
+        {loading ? (
+          <div className="text-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading...</p>
+          </div>
+        ) : (
+          <>
+            {/* Stats Cards */}
+            {renderStatsCards()}
 
     
 
-        {/* Attendance Table */}
-        {renderAttendanceTable()}
+            {/* Attendance Table */}
+            {renderAttendanceTable()}
+          </>
+        )}
       </div>
     </div>
   );

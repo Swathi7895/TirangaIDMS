@@ -1,249 +1,339 @@
 'use client';
-import React, { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
- 
-  X, 
-  User, 
-  
-  Building,
-  FileText,
-
+import React, { useState, useEffect } from 'react';
+import {
+  Search,
+  Plus,
+  X,
+  Edit,
+  Trash2,
   Eye,
-  CheckCircle,
-  XCircle
+  User,
+  Mail,
+  Phone,
+ 
+  Calendar,
+  Briefcase,
+  EyeOff
 } from 'lucide-react';
 
-interface Document {
+interface Employee {
   id: string;
-  name: string;
-  status: 'pending' | 'submitted' | 'verified';
-  type: string;
-}
-
-interface OnboardingTask {
-  id: string;
-  name: string;
-  status: 'pending' | 'completed';
-  assignedTo: string;
-}
-
-interface JoiningRecord {
-  id: string;
-  employeeName: string;
   employeeId: string;
-  department: string;
+  employeeName: string;
+  email: string;
+  password:string;
+  phoneNumber: string;
+  bloodGroup: string;
+  currentAddress: string;
+  permanentAddress: string;
   position: string;
-  joiningDate: string;
-  relievingDate?: string;
-  status: 'joining' | 'relieving' | 'completed';
-  documents: Document[];
-  onboardingTasks: OnboardingTask[];
+  department: string;
+  joiningDate: string; // YYYY-MM-DD
+  status: 'Active' | 'Inactive' | 'On Leave';
   notes?: string;
 }
+
+interface ApiEmployeeResponse extends Omit<Employee, 'joiningDate' | 'status'> {
+  joiningDate: string;
+  status: string;
+}
+
+interface ApiEmployeeRequest extends Omit<Employee, 'id' | 'joiningDate' | 'status'> {
+  joiningDate: string;
+  status: string;
+}
+
+const transformEmployeeToApiRequest = (employee: Omit<Employee, 'id'>): ApiEmployeeRequest => ({
+  employeeId: employee.employeeId,
+  employeeName: employee.employeeName,
+  email: employee.email,
+  password:employee.password,
+  phoneNumber: employee.phoneNumber,
+  bloodGroup: employee.bloodGroup,
+  currentAddress: employee.currentAddress,
+  permanentAddress: employee.permanentAddress,
+  position: employee.position,
+  department: employee.department,
+  joiningDate: employee.joiningDate,
+  status: employee.status,
+  notes: employee.notes,
+});
+
+const transformEmployeeFromApiResponse = (apiEmployee: ApiEmployeeResponse): Employee => ({
+  id: apiEmployee.id,
+  employeeId: apiEmployee.employeeId,
+  employeeName: apiEmployee.employeeName,
+  email: apiEmployee.email,
+  password:apiEmployee.password,
+  phoneNumber: apiEmployee.phoneNumber,
+  bloodGroup: apiEmployee.bloodGroup,
+  currentAddress: apiEmployee.currentAddress,
+  permanentAddress: apiEmployee.permanentAddress,
+  position: apiEmployee.position,
+  department: apiEmployee.department,
+  joiningDate: apiEmployee.joiningDate,
+  status: apiEmployee.status as Employee['status'],
+  notes: apiEmployee.notes,
+});
+
+const API_BASE_URL = 'http://localhost:8080/api/employees';
+
+const employeesAPI = {
+  getAll: async (): Promise<Employee[]> => {
+    const res = await fetch(API_BASE_URL);
+    if (!res.ok) throw new Error('Failed to fetch employees');
+    const data: ApiEmployeeResponse[] = await res.json();
+    return data.map(transformEmployeeFromApiResponse);
+  },
+
+  create: async (employee: Omit<Employee, 'id'>): Promise<Employee> => {
+    const apiRequest = transformEmployeeToApiRequest(employee);
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiRequest),
+    });
+    if (!res.ok) throw new Error('Failed to create employee');
+    const data: ApiEmployeeResponse = await res.json();
+    return transformEmployeeFromApiResponse(data);
+  },
+
+  update: async (id: string, employee: Omit<Employee, 'id'>): Promise<Employee> => {
+    const apiRequest = transformEmployeeToApiRequest(employee);
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiRequest),
+    });
+    if (!res.ok) throw new Error('Failed to update employee');
+    const data: ApiEmployeeResponse = await res.json();
+    return transformEmployeeFromApiResponse(data);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete employee');
+  },
+};
 
 type ModalType = 'add' | 'edit' | 'view';
 
 export default function JoiningPage() {
-  const [records, setRecords] = useState<JoiningRecord[]>([
-    {
-      id: '1',
-      employeeName: 'John Doe',
-      employeeId: 'EMP001',
-      department: 'Engineering',
-      position: 'Senior Developer',
-      joiningDate: '2024-03-15',
-      status: 'joining',
-      documents: [
-        { id: '1', name: 'Resume', status: 'verified', type: 'Resume' },
-        { id: '2', name: 'ID Proof', status: 'submitted', type: 'ID Proof' },
-        { id: '3', name: 'Address Proof', status: 'pending', type: 'Address Proof' }
-      ],
-      onboardingTasks: [
-        { id: '1', name: 'System Access Setup', status: 'completed', assignedTo: 'IT Team' },
-        { id: '2', name: 'Email Setup', status: 'completed', assignedTo: 'IT Team' },
-        { id: '3', name: 'Orientation Session', status: 'pending', assignedTo: 'HR Team' }
-      ]
-    },
-    {
-      id: '2',
-      employeeName: 'Jane Smith',
-      employeeId: 'EMP002',
-      department: 'Marketing',
-      position: 'Marketing Manager',
-      joiningDate: '2024-02-01',
-      relievingDate: '2024-03-31',
-      status: 'relieving',
-      documents: [
-        { id: '1', name: 'Resignation Letter', status: 'verified', type: 'Resignation' },
-        { id: '2', name: 'Exit Interview Form', status: 'submitted', type: 'Exit' }
-      ],
-      onboardingTasks: [
-        { id: '1', name: 'Knowledge Transfer', status: 'pending', assignedTo: 'Team Lead' },
-        { id: '2', name: 'Asset Return', status: 'pending', assignedTo: 'Admin Team' }
-      ]
-    }
-  ]);
-
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>('add');
-  const [selectedRecord, setSelectedRecord] = useState<JoiningRecord | null>(null);
-  const [formData, setFormData] = useState<Partial<JoiningRecord>>({});
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [formData, setFormData] = useState<Partial<Employee>>({});
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const isEditMode = modalType === 'edit';
+
   const isViewMode = modalType === 'view';
 
-  const openModal = (type: ModalType, record?: JoiningRecord) => {
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await employeesAPI.getAll();
+        setEmployees(data);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch employees');
+        setEmployees([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
+  const openModal = (type: ModalType, employee?: Employee) => {
     setModalType(type);
-    setSelectedRecord(record || null);
+    setSelectedEmployee(employee || null);
     if (type === 'add') {
       setFormData({
-        employeeName: '',
         employeeId: '',
-        department: '',
+        employeeName: '',
+        email: '',
+        password:'',
+        phoneNumber: '',
+        bloodGroup: '',
+        currentAddress: '',
+        permanentAddress: '',
         position: '',
+        department: '',
         joiningDate: '',
-        status: 'joining',
-        documents: [],
-        onboardingTasks: []
+        status: 'Active',
+        notes: ''
       });
-    } else if (record) {
-      setFormData({ ...record });
+    } else if (employee) {
+      setFormData({ ...employee });
     }
     setShowModal(true);
   };
 
   const closeModal = () => {
     setShowModal(false);
-    setSelectedRecord(null);
+    setSelectedEmployee(null);
     setFormData({});
   };
 
-  const handleSubmit = () => {
-    if (!formData.employeeName || !formData.employeeId || !formData.department || !formData.position || !formData.joiningDate) {
+  const handleSubmit = async () => {
+    if (!formData.employeeId || !formData.employeeName || !formData.email || !formData.phoneNumber || !formData.position || !formData.department || !formData.joiningDate) {
       alert('Please fill in all required fields');
       return;
     }
 
-    if (modalType === 'add') {
-      const newRecord: JoiningRecord = {
-        ...formData as JoiningRecord,
-        id: Date.now().toString(),
-        documents: [],
-        onboardingTasks: []
-      };
-      setRecords([...records, newRecord]);
-    } else if (modalType === 'edit' && selectedRecord) {
-      setRecords(records.map(record => 
-        record.id === selectedRecord.id 
-          ? { ...formData as JoiningRecord, id: selectedRecord.id }
-          : record
-      ));
+    try {
+      if (modalType === 'add') {
+        const newEmployee = await employeesAPI.create(formData as Omit<Employee, 'id'>);
+        setEmployees([...employees, newEmployee]);
+      } else if (modalType === 'edit' && selectedEmployee) {
+        const updatedEmployee = await employeesAPI.update(selectedEmployee.id, formData as Omit<Employee, 'id'>);
+        setEmployees(employees.map(employee => 
+          employee.id === selectedEmployee.id ? updatedEmployee : employee
+        ));
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving employee:', error);
+      alert(error instanceof Error ? error.message : 'Failed to save employee');
     }
-    
-    closeModal();
   };
 
-
-
-  const handleDocumentStatusChange = (recordId: string, documentId: string, newStatus: Document['status']) => {
-    setRecords(records.map(record => {
-      if (record.id === recordId) {
-        return {
-          ...record,
-          documents: record.documents.map(doc => 
-            doc.id === documentId ? { ...doc, status: newStatus } : doc
-          )
-        };
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this employee record?')) {
+      try {
+        await employeesAPI.delete(id);
+        setEmployees(employees.filter(employee => employee.id !== id));
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        alert(error instanceof Error ? error.message : 'Failed to delete employee');
       }
-      return record;
-    }));
+    }
   };
 
-  const handleTaskStatusChange = (recordId: string, taskId: string, newStatus: OnboardingTask['status']) => {
-    setRecords(records.map(record => {
-      if (record.id === recordId) {
-        return {
-          ...record,
-          onboardingTasks: record.onboardingTasks.map(task => 
-            task.id === taskId ? { ...task, status: newStatus } : task
-          )
-        };
-      }
-      return record;
-    }));
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
-  const filteredRecords = records.filter(record =>
-    record.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    record.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    record.department.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredEmployees = employees.filter(employee =>
+    employee.employeeId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    employee.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    employee.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    employee.department.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const departments = ['all', ...new Set(employees.map(e => e.department))];
+  const statuses = ['all', 'Active', 'Inactive', 'On Leave'];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-gray-600">Loading employees...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Joining & Relieving Management</h1>
-       
+        <h1 className="text-2xl font-bold text-gray-900">Employee Management</h1>
+      
       </div>
 
       {/* Search and Filter Bar */}
       <div className="bg-white p-4 rounded-xl shadow-sm mb-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search records..."
+              placeholder="Search employees..."
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Filter className="w-5 h-5 text-gray-600" />
-          </button>
+          <div className="flex gap-4">
+            <select
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+            >
+              {departments.map(department => (
+                <option key={department} value={department}>
+                  {department === 'all' ? 'All Departments' : department}
+                </option>
+              ))}
+            </select>
+            <select
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              {statuses.map(status => (
+                <option key={status} value={status}>
+                  {status === 'all' ? 'All Status' : status}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Records Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredRecords.map((record) => (
-          <div key={record.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300">
+      {/* Employees Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-6">
+        {filteredEmployees.map((employee) => (
+          <div key={employee.id} className="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition-all duration-300 flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 rounded-lg bg-blue-50">
-                <User className="w-5 h-5 text-blue-600" />
-              </div>
-              <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                record.status === 'joining' ? 'bg-green-100 text-green-800' :
-                record.status === 'relieving' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
+              <h3 className="text-lg font-semibold text-gray-900">{employee.employeeName}</h3>
+              <span className={`px-2 py-1 text-xs font-medium rounded-full ${employee.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                {employee.status}
               </span>
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{record.employeeName}</h3>
-            <div className="space-y-2">
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">ID:</span> {record.employeeId}
-              </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Position:</span> {record.position}
-              </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">Department:</span> {record.department}
-              </p>
-              <p className="text-sm text-gray-600">
-                <span className="font-medium">{record.status === 'relieving' ? 'Relieving Date:' : 'Joining Date:'}</span> {record.status === 'relieving' ? record.relievingDate : record.joiningDate}
-              </p>
+            <div className="space-y-2 text-sm text-gray-600 mb-4 flex-grow">
+              <div className="flex items-center">
+                <User className="w-4 h-4 mr-2" />
+                <span>{employee.employeeId}</span>
+              </div>
+              <div className="flex items-center">
+                <Briefcase className="w-4 h-4 mr-2" />
+                <span>{employee.position} ({employee.department})</span>
+              </div>
+              <div className="flex items-center">
+                <Calendar className="w-4 h-4 mr-2" />
+                <span>Joined: {employee.joiningDate}</span>
+              </div>
+              <div className="flex items-center">
+                <Mail className="w-4 h-4 mr-2" />
+                <span>{employee.email}</span>
+              </div>
+              <div className="flex items-center">
+                <Phone className="w-4 h-4 mr-2" />
+                <span>{employee.phoneNumber}</span>
+              </div>
             </div>
 
-            <div className="mt-4 flex space-x-2">
+            <div className="flex space-x-2 mt-auto pt-4 border-t border-gray-100">
               <button 
-                onClick={() => openModal('view', record)}
+                onClick={() => openModal('view', employee)}
                 className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center space-x-1"
               >
                 <Eye className="w-4 h-4" />
@@ -262,9 +352,8 @@ export default function JoiningPage() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {modalType === 'add' && 'Add New Record'}
-                  {modalType === 'edit' && 'Edit Record'}
-                  {modalType === 'view' && 'Record Details'}
+                 
+                  {modalType === 'view' && 'Employee Details'}
                 </h2>
                 <button 
                   onClick={closeModal}
@@ -277,108 +366,78 @@ export default function JoiningPage() {
 
             <div className="p-6">
               {isViewMode ? (
-                <div className="space-y-6">
-                  {/* Employee Info */}
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex items-center space-x-3">
-                      <User className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Employee Name</p>
-                        <p className="font-medium">{selectedRecord?.employeeName}</p>
+                    <div>
+                      <p className="text-sm text-gray-600">Employee ID</p>
+                      <p className="font-medium">{selectedEmployee?.employeeId}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Name</p>
+                      <p className="font-medium">{selectedEmployee?.employeeName}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Email</p>
+                      <p className="font-medium">{selectedEmployee?.email}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-gray-600">Password</p>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium">{showPassword ? selectedEmployee?.password : '••••••••'}</p>
+                        <button
+                          onClick={togglePasswordVisibility}
+                          className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4 text-gray-600" /> : <Eye className="w-4 h-4 text-gray-600" />}
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
-                      <Building className="w-5 h-5 text-gray-400" />
-                      <div>
-                        <p className="text-sm text-gray-600">Department</p>
-                        <p className="font-medium">{selectedRecord?.department}</p>
-                      </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Phone Number</p>
+                      <p className="font-medium">{selectedEmployee?.phoneNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Position</p>
+                      <p className="font-medium">{selectedEmployee?.position}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Department</p>
+                      <p className="font-medium">{selectedEmployee?.department}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Joining Date</p>
+                      <p className="font-medium">{selectedEmployee?.joiningDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Status</p>
+                      <p className="font-medium">{selectedEmployee?.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Blood Group</p>
+                      <p className="font-medium">{selectedEmployee?.bloodGroup}</p>
                     </div>
                   </div>
 
-                  {/* Documents Section */}
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Documents</h3>
-                    <div className="space-y-3">
-                      {selectedRecord?.documents.map((doc) => (
-                        <div key={doc.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-5 h-5 text-gray-400" />
-                            <div>
-                              <p className="font-medium">{doc.name}</p>
-                              <p className="text-sm text-gray-500">{doc.type}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              doc.status === 'verified' ? 'bg-green-100 text-green-800' :
-                              doc.status === 'submitted' ? 'bg-blue-100 text-blue-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                            </span>
-                            {isEditMode && selectedRecord && (
-                              <select
-                                value={doc.status}
-                                onChange={(e) => handleDocumentStatusChange(selectedRecord.id, doc.id, e.target.value as Document['status'])}
-                                className="text-sm border border-gray-300 rounded-lg px-2 py-1"
-                              >
-                                <option value="pending">Pending</option>
-                                <option value="submitted">Submitted</option>
-                                <option value="verified">Verified</option>
-                              </select>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <p className="text-sm text-gray-600">Current Address</p>
+                    <p className="font-medium">{selectedEmployee?.currentAddress}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Permanent Address</p>
+                    <p className="font-medium">{selectedEmployee?.permanentAddress}</p>
                   </div>
 
-                  {/* Onboarding Tasks Section */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Onboarding Tasks</h3>
-                    <div className="space-y-3">
-                      {selectedRecord?.onboardingTasks.map((task) => (
-                        <div key={task.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                          <div>
-                            <p className="font-medium">{task.name}</p>
-                            <p className="text-sm text-gray-500">Assigned to: {task.assignedTo}</p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                              task.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-                            </span>
-                            {isEditMode && selectedRecord && (
-                              <button
-                                onClick={() => handleTaskStatusChange(selectedRecord.id, task.id, task.status === 'completed' ? 'pending' : 'completed')}
-                                className={`p-1 rounded-full ${
-                                  task.status === 'completed' ? 'text-green-600 hover:bg-green-50' : 'text-yellow-600 hover:bg-yellow-50'
-                                }`}
-                              >
-                                {task.status === 'completed' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
+                  {selectedEmployee?.notes && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Notes</p>
+                      <p className="text-gray-900">{selectedEmployee.notes}</p>
                     </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Employee Name</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.employeeName || ''}
-                        onChange={(e) => setFormData({...formData, employeeName: e.target.value})}
-                      />
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
                       <input
@@ -390,13 +449,52 @@ export default function JoiningPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Employee Name</label>
                       <input
                         type="text"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.department || ''}
-                        onChange={(e) => setFormData({...formData, department: e.target.value})}
+                        value={formData.employeeName || ''}
+                        onChange={(e) => setFormData({...formData, employeeName: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                      <input
+                        type="email"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.email || ''}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                      <div className="relative">
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          required
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={formData.password || ''}
+                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                        />
+                        <button
+                          type="button"
+                          onClick={togglePasswordVisibility}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4 text-gray-600" /> : <Eye className="w-4 h-4 text-gray-600" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.phoneNumber || ''}
+                        onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
                       />
                     </div>
                     <div>
@@ -410,39 +508,71 @@ export default function JoiningPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                      <select
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                      <input
+                        type="text"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.status || ''}
-                        onChange={(e) => setFormData({...formData, status: e.target.value as JoiningRecord['status']})}
-                      >
-                        <option value="joining">Joining</option>
-                        <option value="relieving">Relieving</option>
-                        <option value="completed">Completed</option>
-                      </select>
+                        value={formData.department || ''}
+                        onChange={(e) => setFormData({...formData, department: e.target.value})}
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {formData.status === 'relieving' ? 'Relieving Date' : 'Joining Date'}
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Joining Date</label>
                       <input
                         type="date"
                         required
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={formData.status === 'relieving' ? formData.relievingDate || '' : formData.joiningDate || ''}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          [formData.status === 'relieving' ? 'relievingDate' : 'joiningDate']: e.target.value
-                        })}
+                        value={formData.joiningDate || ''}
+                        onChange={(e) => setFormData({...formData, joiningDate: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                      <select
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.status || 'Active'}
+                        onChange={(e) => setFormData({...formData, status: e.target.value as Employee['status']})}
+                      >
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="On Leave">On Leave</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Blood Group</label>
+                      <input
+                        type="text"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.bloodGroup || ''}
+                        onChange={(e) => setFormData({...formData, bloodGroup: e.target.value})}
                       />
                     </div>
                   </div>
 
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Current Address</label>
+                    <textarea
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.currentAddress || ''}
+                      onChange={(e) => setFormData({...formData, currentAddress: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Permanent Address</label>
+                    <textarea
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.permanentAddress || ''}
+                      onChange={(e) => setFormData({...formData, permanentAddress: e.target.value})}
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={formData.notes || ''}
                       onChange={(e) => setFormData({...formData, notes: e.target.value})}
@@ -456,7 +586,7 @@ export default function JoiningPage() {
                       onClick={handleSubmit}
                       className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      {modalType === 'add' ? 'Add Record' : 'Update Record'}
+                      {modalType === 'add' ? 'Add Employee' : 'Update Employee'}
                     </button>
                     <button
                       type="button"

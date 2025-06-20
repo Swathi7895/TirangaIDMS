@@ -30,7 +30,7 @@ export default function RegisterPage() {
     'FINANCE',
     'HR',
     'DATA_MANAGER',
-    'EMPLOYEE'
+    
   ];
 
   const handleRoleChange = (role: string) => {

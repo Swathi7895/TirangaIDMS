@@ -46,6 +46,7 @@ export default function ReportsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
  
   const reportTypes = [
     { id: 'employee', label: 'Employee Report', icon: <FileText className="w-5 h-5" /> },
@@ -119,6 +120,15 @@ export default function ReportsPage() {
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
+ 
+  useEffect(() => {
+    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!id) {
+      // handle error or redirect
+      return;
+    }
+    setEmployeeId(id);
+  }, []);
  
   const handleSubmitReport = async () => {
     // Ensure required fields are present

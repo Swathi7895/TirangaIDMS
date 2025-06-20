@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   FileText, 
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface QuickLink {
   title: string;
@@ -28,14 +29,24 @@ interface QuickLink {
 }
 
 export default function EmployeeDashboard() {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [employee, setEmployee] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editedProfile, setEditedProfile] = useState({
-    name: 'John Doe',
-    position: 'Software Engineer',
-    department: 'Technology',
-    email: 'john.doe@company.com',
-    phone: '+1-555-0123',
-    address: '123 Main St, City, State'
+    employeeName: '',
+    position: '',
+    department: '',
+    email: '',
+    phoneNumber: '',
+    bloodGroup: '',
+    profilePhotoUrl: '',
+    currentAddress: '',
+    permanentAddress: '',
+    joiningDate: '',
+    relievingDate: '',
+    status: ''
   });
   const [profilePhoto, setProfilePhoto] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face');
 
@@ -84,28 +95,56 @@ export default function EmployeeDashboard() {
     }
   ];
 
-  // Sample employee data
-  const employee = {
-    name: 'John Doe',
-    position: 'Software Engineer',
-    department: 'Technology',
-    employeeId: 'EMP001',
-    email: 'john.doe@company.com',
-    phone: '+1-555-0123',
-    address: '123 Main St, City, State',
-    joinDate: '2023-01-15',
-    performance: 92,
-    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-    attendance: { present: 22, absent: 2, leaves: 1 },
-    upcomingHolidays: [
-      { date: '2024-03-25', name: 'Holi' },
-      { date: '2024-04-09', name: 'Ram Navami' },
-      { date: '2024-05-01', name: 'Labour Day' }
-    ]
+  const fetchEmployee = async () => {
+    setLoading(true);
+    setError(null);
+    const employeeId = sessionStorage.getItem("employeeId");
+    if (!employeeId) {
+      router.replace("/login");
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:8080/api/employees/byEmployeeId/${employeeId}`);
+      if (!res.ok) throw new Error("Failed to fetch employee data");
+      const data = await res.json();
+      setEmployee(data);
+      setEditedProfile({
+        employeeName: data.employeeName || '',
+        position: data.position || '',
+        department: data.department || '',
+        email: data.email || '',
+        phoneNumber: data.phoneNumber || '',
+        bloodGroup: data.bloodGroup || '',
+        profilePhotoUrl: data.profilePhotoUrl || '',
+        currentAddress: data.currentAddress || '',
+        permanentAddress: data.permanentAddress || '',
+        joiningDate: data.joiningDate || '',
+        relievingDate: data.relievingDate || '',
+        status: data.status || ''
+      });
+      if (data.profilePhotoUrl) setProfilePhoto(data.profilePhotoUrl);
+    } catch (e: any) {
+      setError(e.message || "Error fetching employee data");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchEmployee();
+  }, [router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-lg text-gray-700">Loading employee profile...</div>
+      </div>
+    );
+  }
 
   const handleEdit = () => {
     setIsEditing(true);
+    setError(null);
   };
 
   const handleSave = () => {
@@ -117,12 +156,18 @@ export default function EmployeeDashboard() {
 
   const handleCancel = () => {
     setEditedProfile({
-      name: employee.name,
+      employeeName: employee.employeeName,
       position: employee.position,
       department: employee.department,
       email: employee.email,
-      phone: employee.phone,
-      address: employee.address
+      phoneNumber: employee.phoneNumber,
+      bloodGroup: employee.bloodGroup,
+      profilePhotoUrl: employee.profilePhotoUrl,
+      currentAddress: employee.currentAddress,
+      permanentAddress: employee.permanentAddress,
+      joiningDate: employee.joiningDate,
+      relievingDate: employee.relievingDate,
+      status: employee.status
     });
     setIsEditing(false);
   };
@@ -166,6 +211,20 @@ export default function EmployeeDashboard() {
     }
   };
 
+  if (error || !employee) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center text-red-600">
+        {error || 'Employee not found.'}
+        <button
+          onClick={() => { setError(null); fetchEmployee(); }}
+          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -176,7 +235,7 @@ export default function EmployeeDashboard() {
               <div className="w-24 h-24 relative overflow-hidden rounded-full">
                 <Image
                   src={profilePhoto}
-                  alt={employee.name}
+                  alt={employee.employeeName}
                   fill
                   sizes="96px"
                   className="object-cover"
@@ -205,8 +264,8 @@ export default function EmployeeDashboard() {
                       <label className="block text-sm font-medium text-gray-700">Name</label>
                       <input
                         type="text"
-                        name="name"
-                        value={editedProfile.name}
+                        name="employeeName"
+                        value={editedProfile.employeeName}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
@@ -242,33 +301,77 @@ export default function EmployeeDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Phone</label>
+                      <label className="block text-sm font-medium text-gray-700">Phone Number</label>
                       <input
                         type="tel"
-                        name="phone"
-                        value={editedProfile.phone}
+                        name="phoneNumber"
+                        value={editedProfile.phoneNumber}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Address</label>
+                      <label className="block text-sm font-medium text-gray-700">Blood Group</label>
                       <input
                         type="text"
-                        name="address"
-                        value={editedProfile.address}
+                        name="bloodGroup"
+                        value={editedProfile.bloodGroup}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Current Address</label>
+                      <input
+                        type="text"
+                        name="currentAddress"
+                        value={editedProfile.currentAddress}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Permanent Address</label>
+                      <input
+                        type="text"
+                        name="permanentAddress"
+                        value={editedProfile.permanentAddress}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Joining Date</label>
+                      <input
+                        type="date"
+                        name="joiningDate"
+                        value={editedProfile.joiningDate ? editedProfile.joiningDate.slice(0, 10) : ''}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Relieving Date</label>
+                      <input
+                        type="date"
+                        name="relievingDate"
+                        value={editedProfile.relievingDate ? editedProfile.relievingDate.slice(0, 10) : ''}
+                        onChange={handleInputChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Status</label>
+                      <input
+                        type="text"
+                        name="status"
+                        value={editedProfile.status}
                         onChange={handleInputChange}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                     <div className="flex space-x-2">
-                      <button
-                        onClick={handleSave}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Update Profile
-                      </button>
+                     
                       <button
                         onClick={handleCancel}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -281,7 +384,7 @@ export default function EmployeeDashboard() {
                 ) : (
                   <>
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900">{employee.name}</h1>
+                      <h1 className="text-2xl font-bold text-gray-900">{employee.employeeName}</h1>
                       <p className="text-gray-600">{employee.position} • {employee.department}</p>
                       <div className="mt-4 grid grid-cols-2 gap-4">
                         <div className="flex items-center space-x-2">
@@ -290,25 +393,36 @@ export default function EmployeeDashboard() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <Phone className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{employee.phone}</span>
+                          <span className="text-gray-600">{employee.phoneNumber}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <MapPin className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{employee.address}</span>
+                          <span className="text-gray-600">{employee.currentAddress}</span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Briefcase className="w-4 h-4 text-gray-400" />
                           <span className="text-gray-600">ID: {employee.employeeId}</span>
                         </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold">Blood Group:</span>
+                          <span className="text-gray-600">{employee.bloodGroup}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold">Permanent Address:</span>
+                          <span className="text-gray-600">{employee.permanentAddress}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold">Joining Date:</span>
+                          <span className="text-gray-600">{employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString() : '-'}</span>
+                        </div>
+                      
+                        <div className="flex items-center space-x-2">
+                          <span className="font-semibold">Status:</span>
+                          <span className="text-gray-600">{employee.status}</span>
+                        </div>
                       </div>
                       <div className="mt-4">
-                        <button
-                          onClick={handleEdit}
-                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          <Edit2 className="w-4 h-4 mr-2" />
-                          Update Profile
-                        </button>
+                      
                       </div>
                     </div>
                   </>
@@ -317,57 +431,6 @@ export default function EmployeeDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Today&rsquo;s Attendance</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Present</span>
-                <span className="font-semibold text-green-600">{employee.attendance.present} days</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Absent</span>
-                <span className="font-semibold text-red-600">{employee.attendance.absent} days</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600">Leaves</span>
-                <span className="font-semibold text-yellow-600">{employee.attendance.leaves} days</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance</h3>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-3xl font-bold text-gray-900">{employee.performance}%</p>
-                <p className="text-sm text-gray-600">Current Rating</p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Upcoming Holidays</h3>
-            <div className="space-y-3">
-              {employee.upcomingHolidays.map((holiday, index) => (
-                <div key={index} className="flex justify-between items-center">
-                  <span className="text-gray-600">{holiday.name}</span>
-                  <span className="font-semibold">{new Date(holiday.date).toLocaleDateString()}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Memos Section */}
-        {/* <div className="mb-8">
-          <MemoViewer userId="current-user-id" userRole="employee" />
-        </div> */}
 
         {/* Quick Links */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

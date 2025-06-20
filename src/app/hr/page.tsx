@@ -1,26 +1,21 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Users,
   FileText,
- 
- 
   Calendar,
   CheckCircle,
- 
   TrendingUp,
   Award,
   UserPlus,
- 
- Smartphone,
- Clock,
   LucideIcon,
   Building,
   GraduationCap,
   Briefcase,
+  Clock,
+  Smartphone
 } from 'lucide-react';
- 
- 
+
 interface StatCardProps {
   icon: LucideIcon;
   title: string;
@@ -29,7 +24,7 @@ interface StatCardProps {
   color?: string;
   bgColor?: string;
 }
- 
+
 interface RecentActivityProps {
   icon: LucideIcon;
   title: string;
@@ -44,9 +39,55 @@ interface QuickActionCardProps {
   color?: string;
   path: string;
 }
- 
+
 export default function HRDashboard() {
- 
+  // State for stats
+  const [totalWorkforce, setTotalWorkforce] = useState<number | null>(null);
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [newHires, setNewHires] = useState<number | null>(null);
+  const [openPositions, setOpenPositions] = useState<number | null>(null); // Placeholder
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [errorStats, setErrorStats] = useState<string | null>(null);
+
+  // State for recent activities
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingActivities, setLoadingActivities] = useState(true);
+  const [errorActivities, setErrorActivities] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoadingStats(true);
+    setErrorStats(null);
+    fetch('http://localhost:8080/api/employees')
+      .then(res => res.json())
+      .then(data => {
+        setTotalWorkforce(data.length);
+        // Unique departments
+        setDepartments(Array.from(new Set(data.map((e: any) => e.department))));
+        // New hires in last 30 days
+        const now = new Date();
+        const hires = data.filter((e: any) => {
+          if (!e.joiningDate) return false;
+          const joinDate = new Date(e.joiningDate);
+          return (now.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24) <= 30;
+        });
+        setNewHires(hires.length);
+        // Placeholder for open positions (if API available, replace this logic)
+        setOpenPositions(null);
+      })
+      .catch(() => setErrorStats('Failed to fetch employee data'))
+      .finally(() => setLoadingStats(false));
+  }, []);
+
+  useEffect(() => {
+    setLoadingActivities(true);
+    setErrorActivities(null);
+    fetch('http://localhost:8080/api/activities')
+      .then(res => res.json())
+      .then(data => setActivities(data.slice(0, 5)))
+      .catch(() => setErrorActivities('Failed to fetch activities'))
+      .finally(() => setLoadingActivities(false));
+  }, []);
+
   const StatCard = ({ icon: Icon, title, value, trend, color = 'blue', bgColor = 'bg-blue-50' }: StatCardProps) => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-lg transition-all duration-300">
       <div className="flex items-center justify-between">
@@ -66,7 +107,7 @@ export default function HRDashboard() {
       </div>
     </div>
   );
- 
+
   const QuickActionCard = ({ icon: Icon, title, description, color = 'blue', path }: QuickActionCardProps) => (
     <a
       href={path}
@@ -79,7 +120,7 @@ export default function HRDashboard() {
       <p className="text-sm text-gray-600">{description}</p>
     </a>
   );
- 
+
   const RecentActivity = ({ icon: Icon, title, time, status }: RecentActivityProps) => (
     <div className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
       <div className="p-2 rounded-lg bg-blue-50">
@@ -98,7 +139,7 @@ export default function HRDashboard() {
       </span>
     </div>
   );
- 
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -108,37 +149,37 @@ export default function HRDashboard() {
             <StatCard
               icon={Users}
               title="Total Workforce"
-              value="248"
-              trend="+12% this month"
+              value={loadingStats ? '...' : errorStats ? '!' : totalWorkforce?.toString() || '0'}
+              trend=""
               color="blue"
               bgColor="bg-blue-50"
             />
             <StatCard
               icon={Building}
               title="Departments"
-              value="12"
-              trend="+2 new"
+              value={loadingStats ? '...' : errorStats ? '!' : departments.length.toString()}
+              trend=""
               color="purple"
               bgColor="bg-purple-50"
             />
             <StatCard
               icon={GraduationCap}
               title="Open Positions"
-              value="15"
-              trend="+5 this week"
+              value={openPositions !== null ? openPositions.toString() : 'N/A'}
+              trend=""
               color="green"
               bgColor="bg-green-50"
             />
             <StatCard
               icon={Briefcase}
               title="New Hires"
-              value="8"
-              trend="This month"
+              value={loadingStats ? '...' : errorStats ? '!' : newHires?.toString() || '0'}
+              trend="Last 30 days"
               color="orange"
               bgColor="bg-orange-50"
             />
           </div>
- 
+
           {/* Quick Actions */}
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-6">HR Management</h2>
@@ -187,39 +228,32 @@ export default function HRDashboard() {
               />
             </div>
           </div>
- 
+
           {/* Recent Activities */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">HR Activities</h3>
-              <div className="space-y-2">
-                <RecentActivity
-                  icon={UserPlus}
-                  title="New hire onboarding scheduled"
-                  time="2 hours ago"
-                  status="pending"
-                />
-                <RecentActivity
-                  icon={Calendar}
-                  title="Department head meeting"
-                  time="4 hours ago"
-                  status="completed"
-                />
-                <RecentActivity
-                  icon={Award}
-                  title="Performance review cycle started"
-                  time="1 day ago"
-                  status="pending"
-                />
-                <RecentActivity
-                  icon={FileText}
-                  title="Compliance audit completed"
-                  time="2 days ago"
-                  status="completed"
-                />
-              </div>
+              {loadingActivities ? (
+                <div className="text-gray-500">Loading...</div>
+              ) : errorActivities ? (
+                <div className="text-red-500">{errorActivities}</div>
+              ) : activities.length === 0 ? (
+                <div className="text-gray-500">No recent activities.</div>
+              ) : (
+                <div className="space-y-2">
+                  {activities.map((activity, idx) => (
+                    <RecentActivity
+                      key={activity.id || idx}
+                      icon={Award} // You can map activity type to icon if available
+                      title={activity.title || activity.activityName || 'Activity'}
+                      time={activity.date ? new Date(activity.date).toLocaleString() : ''}
+                      status={activity.status || 'completed'}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
- 
+
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Recruitment Pipeline</h3>
               <div className="space-y-4">
@@ -228,33 +262,32 @@ export default function HRDashboard() {
                     <UserPlus className="w-5 h-5 text-blue-600" />
                     <span className="text-sm font-medium text-gray-900">New Applications</span>
                   </div>
-                  <span className="text-sm text-gray-600">45 this week</span>
+                  <span className="text-sm text-gray-600">N/A</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <span className="text-sm font-medium text-gray-900">Interviews Scheduled</span>
                   </div>
-                  <span className="text-sm text-gray-600">12 pending</span>
+                  <span className="text-sm text-gray-600">N/A</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Award className="w-5 h-5 text-purple-600" />
                     <span className="text-sm font-medium text-gray-900">Offers Made</span>
                   </div>
-                  <span className="text-sm text-gray-600">5 this week</span>
+                  <span className="text-sm text-gray-600">N/A</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <Users className="w-5 h-5 text-orange-600" />
                     <span className="text-sm font-medium text-gray-900">Joining Next Week</span>
                   </div>
-                  <span className="text-sm text-gray-600">3 employees</span>
+                  <span className="text-sm text-gray-600">N/A</span>
                 </div>
               </div>
             </div>
           </div>
- 
         </div>
       </div>
     </div>

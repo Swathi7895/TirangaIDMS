@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   
@@ -14,6 +14,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
+import axios from 'axios';
 
 interface Report {
   id: number;
@@ -33,48 +34,9 @@ interface Report {
 }
 
 export default function ReportsPage() {
-  const [reports,] = useState<Report[]>([
-    {
-      id: 1,
-      type: 'employee',
-      subtype: 'weekly',
-      title: 'Weekly Activity Report',
-      date: '2024-03-18',
-      status: 'submitted',
-      content: 'Weekly progress report including completed tasks and achievements.',
-      submittedBy: 'John Doe',
-      employeeId: 'EMP001',
-      employeeName: 'John Doe',
-      department: 'Engineering'
-    },
-    {
-      id: 2,
-      type: 'visit',
-      title: 'Client Visit Report - Tech Corp',
-      date: '2024-03-17',
-      status: 'approved',
-      content: 'Visit to Tech Corp headquarters for project discussion.',
-      attachments: ['meeting_notes.pdf', 'presentation.pptx'],
-      submittedBy: 'John Doe',
-      approvedBy: 'Manager Name',
-      approvedDate: '2024-03-18',
-      employeeId: 'EMP001',
-      employeeName: 'John Doe',
-      department: 'Engineering'
-    },
-    {
-      id: 3,
-      type: 'oem',
-      title: 'OEM Partnership Meeting',
-      date: '2024-03-16',
-      status: 'draft',
-      content: 'Discussion with OEM partner regarding new product launch.',
-      submittedBy: 'John Doe',
-      employeeId: 'EMP001',
-      employeeName: 'John Doe',
-      department: 'Engineering'
-    }
-  ]);
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('all');
@@ -83,7 +45,6 @@ export default function ReportsPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
-
 
   const reportTypes = [
     { id: 'employee', label: 'Employee Report', icon: <FileText className="w-5 h-5" /> },
@@ -140,6 +101,39 @@ export default function ReportsPage() {
     { id: 'approved', label: 'Approved' }
   ];
 
+  useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get('http://localhost:8080/api/reports');
+        const mappedReports: Report[] = response.data.map((r: any) => ({
+          id: r.id,
+          type: r.type,
+          subtype: r.subtype,
+          title: r.title,
+          date: r.date,
+          status: r.status,
+          content: r.content,
+          attachments: r.attachments ?? [],
+          submittedBy: r.submittedBy,
+          approvedBy: r.approvedBy,
+          approvedDate: r.approvedDate,
+          employeeId: r.employeeId,
+          employeeName: r.employeeName,
+          department: r.department,
+        }));
+        setReports(mappedReports);
+      } catch (err: Error | unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        setError(`Failed to fetch reports: ${errorMessage}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
+  }, []);
+
   const filteredReports = reports.filter(report => {
     const matchesType = selectedType === 'all' || report.type === selectedType;
     const matchesSubtype = selectedType !== 'employee' || selectedSubtype === 'all' || report.subtype === selectedSubtype;
@@ -169,6 +163,12 @@ export default function ReportsPage() {
             Back to Dashboard
           </Link>
         </div>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <div className="space-y-6">
           {/* Header */}
@@ -295,54 +295,61 @@ export default function ReportsPage() {
           {/* Reports List */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="space-y-4">
-              {filteredReports.map(report => (
-                <div key={report.id} className="border rounded-lg p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        {getReportIcon(report.type)}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-900">{report.title}</h3>
-                        <div className="mt-1 text-sm text-gray-600">
-                          <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
-                          {report.type === 'employee' && report.subtype && (
-                            <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
-                          )}
-                          <p>Date: {new Date(report.date).toLocaleDateString()}</p>
-                          <p>Employee: {report.employeeName} ({report.employeeId})</p>
-                          <p>Department: {report.department}</p>
-                          <p>Submitted by: {report.submittedBy}</p>
-                          {report.approvedBy && (
-                            <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
-                          )}
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading...</p>
+                </div>
+              ) : (
+                filteredReports.map(report => (
+                  <div key={report.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start space-x-4">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          {getReportIcon(report.type)}
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-gray-900">{report.title}</h3>
+                          <div className="mt-1 text-sm text-gray-600">
+                            <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
+                            {report.type === 'employee' && report.subtype && (
+                              <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
+                            )}
+                            <p>Date: {new Date(report.date).toLocaleDateString()}</p>
+                            <p>Employee: {report.employeeName} ({report.employeeId})</p>
+                            <p>Department: {report.department}</p>
+                            <p>Submitted by: {report.submittedBy}</p>
+                            {report.approvedBy && (
+                              <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
+                            )}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+                          {report.status}
+                        </span>
+                        {report.attachments && (
+                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+                            <Download className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
-                        {report.status}
-                      </span>
-                      {report.attachments && (
-                        <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                          <Download className="w-5 h-5" />
-                        </button>
-                      )}
+                    <div className="mt-4 text-sm text-gray-600">
+                      <p>{report.content}</p>
                     </div>
+                    {report.attachments && (
+                      <div className="mt-4 flex items-center space-x-2">
+                        <FileText className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-600">
+                          Attachments: {report.attachments.join(', ')}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-4 text-sm text-gray-600">
-                    <p>{report.content}</p>
-                  </div>
-                  {report.attachments && (
-                    <div className="mt-4 flex items-center space-x-2">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        Attachments: {report.attachments.join(', ')}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

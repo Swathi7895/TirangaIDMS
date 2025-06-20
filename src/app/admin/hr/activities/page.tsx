@@ -1,11 +1,16 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-
+ 
+  Plus, 
+  X, 
   Calendar,
   Clock,
-
+  Edit,
+  Trash2,
+  Eye,
+ 
   User
 } from 'lucide-react';
 
@@ -22,59 +27,220 @@ interface Activity {
   notes?: string;
 }
 
+// Define the API response interface
+interface ApiActivityResponse {
+  id: string;
+  title: string;
+  description: string;
+  activityDate: string;
+  activityTime: string;
+  status: string; // "Pending", "In Progress", "Completed"
+  assignedTo: string;
+  priority: string; // "Low Priority", "Medium Priority", "High Priority"
+  category: string;
+  notes?: string;
+}
 
+// Define the API request interface
+interface ApiActivityRequest {
+  title: string;
+  description: string;
+  activityDate: string;
+  activityTime: string;
+  status: string; // "Pending", "In Progress", "Completed"
+  assignedTo: string;
+  priority: string; // "Low Priority", "Medium Priority", "High Priority"
+  category: string;
+  notes?: string;
+}
+
+// Transformation from client-side Activity (without id) to API request format
+const transformActivityToApiRequest = (activity: Omit<Activity, 'id'>): ApiActivityRequest => ({
+  title: activity.title,
+  description: activity.description,
+  activityDate: activity.date,
+  activityTime: activity.time,
+  status: activity.status.charAt(0).toUpperCase() + activity.status.slice(1),
+  assignedTo: activity.assignedTo,
+  priority: activity.priority.charAt(0).toUpperCase() + activity.priority.slice(1) + ' Priority',
+  category: activity.category,
+  notes: activity.notes,
+});
+
+// Transformation from API response to client-side Activity format
+const transformActivityFromApiResponse = (apiActivity: ApiActivityResponse): Activity => ({
+  id: apiActivity.id,
+  title: apiActivity.title,
+  description: apiActivity.description,
+  date: apiActivity.activityDate,
+  time: apiActivity.activityTime,
+  status: apiActivity.status.toLowerCase() as Activity['status'],
+  assignedTo: apiActivity.assignedTo,
+  priority: apiActivity.priority.replace(' Priority', '').toLowerCase() as Activity['priority'],
+  category: apiActivity.category,
+  notes: apiActivity.notes,
+});
+
+type ModalType = 'add' | 'edit' | 'view';
+
+const API_BASE_URL = 'http://localhost:8080/api/activities';
+
+const activitiesAPI = {
+  getAll: async (): Promise<Activity[]> => {
+    const res = await fetch(API_BASE_URL);
+    if (!res.ok) throw new Error('Failed to fetch activities');
+    const data: ApiActivityResponse[] = await res.json();
+    return data.map(transformActivityFromApiResponse);
+  },
+
+  create: async (activity: Omit<Activity, 'id'>): Promise<Activity> => {
+    const apiRequest = transformActivityToApiRequest(activity);
+    const res = await fetch(API_BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiRequest),
+    });
+    if (!res.ok) throw new Error('Failed to create activity');
+    const data: ApiActivityResponse = await res.json();
+    return transformActivityFromApiResponse(data);
+  },
+
+  update: async (id: string, activity: Omit<Activity, 'id'>): Promise<Activity> => {
+    const apiRequest = transformActivityToApiRequest(activity);
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiRequest),
+    });
+    if (!res.ok) throw new Error('Failed to update activity');
+    const data: ApiActivityResponse = await res.json();
+    return transformActivityFromApiResponse(data);
+  },
+
+  delete: async (id: string): Promise<void> => {
+    const res = await fetch(`${API_BASE_URL}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to delete activity');
+  },
+};
 
 export default function ActivitiesPage() {
-  const [activities] = useState<Activity[]>([
-    {
-      id: '1',
-      title: 'Team Building Workshop',
-      description: 'Quarterly team building activity for the engineering team',
-      date: '2024-03-20',
-      time: '10:00',
-      status: 'pending',
-      assignedTo: 'HR Team',
-      priority: 'high',
-      category: 'Team Event',
-      notes: 'Venue to be confirmed'
-    },
-    {
-      id: '2',
-      title: 'Performance Review Meeting',
-      description: 'Monthly performance review with department heads',
-      date: '2024-03-15',
-      time: '14:00',
-      status: 'in-progress',
-      assignedTo: 'HR Manager',
-      priority: 'high',
-      category: 'Meeting',
-      notes: 'Prepare review templates'
-    },
-    {
-      id: '3',
-      title: 'New Employee Orientation',
-      description: 'Orientation program for new joiners',
-      date: '2024-03-25',
-      time: '09:00',
-      status: 'pending',
-      assignedTo: 'HR Team',
-      priority: 'medium',
-      category: 'Training',
-      notes: 'Send welcome emails'
-    }
-  ]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
- 
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<ModalType>('add');
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [formData, setFormData] = useState<Partial<Activity>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
 
+  const isEditMode = modalType === 'edit';
+  const isViewMode = modalType === 'view';
 
+  // Fetch activities on component mount
+  useEffect(() => {
+    const fetchActivities = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await activitiesAPI.getAll();
+        setActivities(data);
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch activities');
+        setActivities([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  
+    fetchActivities();
+  }, []);
 
+  const openModal = (type: ModalType, activity?: Activity) => {
+    setModalType(type);
+    setSelectedActivity(activity || null);
+    if (type === 'add') {
+      setFormData({
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        status: 'pending',
+        assignedTo: '',
+        priority: 'medium',
+        category: '',
+        notes: ''
+      });
+    } else if (activity) {
+      setFormData({ ...activity });
+    }
+    setShowModal(true);
+  };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedActivity(null);
+    setFormData({});
+  };
 
+  const handleSubmit = async () => {
+    if (!formData.title || !formData.description || !formData.date || !formData.time || !formData.assignedTo || !formData.category) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      if (modalType === 'add') {
+        const newActivity = await activitiesAPI.create(formData as Omit<Activity, 'id'>);
+        setActivities([...activities, newActivity]);
+      } else if (modalType === 'edit' && selectedActivity) {
+        const updatedActivity = await activitiesAPI.update(selectedActivity.id, formData as Omit<Activity, 'id'>);
+        setActivities(activities.map(activity => 
+          activity.id === selectedActivity.id ? updatedActivity : activity
+        ));
+      }
+      closeModal();
+    } catch (error) {
+      console.error('Error saving activity:', error);
+      alert(error instanceof Error ? error.message : 'Failed to save activity');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this activity?')) {
+      try {
+        await activitiesAPI.delete(id);
+        setActivities(activities.filter(activity => activity.id !== id));
+      } catch (error) {
+        console.error('Error deleting activity:', error);
+        alert(error instanceof Error ? error.message : 'Failed to delete activity');
+      }
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: Activity['status']) => {
+    try {
+      const activity = activities.find(a => a.id === id);
+      if (!activity) return;
+
+      const updatedActivity = await activitiesAPI.update(id, {
+        ...activity,
+        status: newStatus
+      });
+      
+      setActivities(activities.map(activity => 
+        activity.id === id ? updatedActivity : activity
+      ));
+    } catch (error) {
+      console.error('Error updating activity status:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update activity status');
+    }
+  };
 
   const filteredActivities = activities.filter(activity => {
     const matchesSearch = 
@@ -90,6 +256,22 @@ export default function ActivitiesPage() {
 
   const categories = ['all', ...new Set(activities.map(a => a.category))];
   const statuses = ['all', 'pending', 'in-progress', 'completed'];
+
+  if (isLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-gray-600">Loading activities...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 flex items-center justify-center">
+        <div className="text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
@@ -178,11 +360,223 @@ export default function ActivitiesPage() {
               </div>
             </div>
 
-        
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => openModal('view', activity)}
+                className="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors flex items-center justify-center space-x-1"
+              >
+                <Eye className="w-4 h-4" />
+                <span>View</span>
+              </button>
+             
+            </div>
           </div>
         ))}
       </div>
 
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  
+                  {modalType === 'view' && 'Activity Details'}
+                </h2>
+                <button 
+                  onClick={closeModal}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {isViewMode ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Title</p>
+                      <p className="font-medium">{selectedActivity?.title}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Category</p>
+                      <p className="font-medium">{selectedActivity?.category}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Date & Time</p>
+                      <p className="font-medium">{selectedActivity?.date} at {selectedActivity?.time}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Assigned To</p>
+                      <p className="font-medium">{selectedActivity?.assignedTo}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Status</p>
+                      <p className="font-medium">{selectedActivity?.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Priority</p>
+                      <p className="font-medium">{selectedActivity?.priority}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-gray-600 mb-2">Description</p>
+                    <p className="text-gray-900">{selectedActivity?.description}</p>
+                  </div>
+
+                  {selectedActivity?.notes && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Notes</p>
+                      <p className="text-gray-900">{selectedActivity.notes}</p>
+                    </div>
+                  )}
+
+                  {isEditMode && (
+                    <div className="flex space-x-3 pt-4">
+                      <button
+                        onClick={() => handleStatusChange(selectedActivity!.id, 'completed')}
+                        className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Mark as Completed
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(selectedActivity!.id, 'in-progress')}
+                        className="flex-1 bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors"
+                      >
+                        Mark as In Progress
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.title || ''}
+                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.category || ''}
+                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                      <input
+                        type="date"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.date || ''}
+                        onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                      <input
+                        type="time"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.time || ''}
+                        onChange={(e) => setFormData({...formData, time: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.assignedTo || ''}
+                        onChange={(e) => setFormData({...formData, assignedTo: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                      <select
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.priority || 'medium'}
+                        onChange={(e) => setFormData({...formData, priority: e.target.value as Activity['priority']})}
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                      <select
+                        required
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={formData.status || 'pending'}
+                        onChange={(e) => setFormData({...formData, status: e.target.value as Activity['status']})}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      required
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.notes || ''}
+                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      placeholder="Add any additional notes..."
+                    />
+                  </div>
+
+                  <div className="flex space-x-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      {modalType === 'add' ? 'Add Activity' : 'Update Activity'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

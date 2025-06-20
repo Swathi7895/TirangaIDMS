@@ -32,19 +32,31 @@ function mapApiDocumentToDocument(api: ApiDocument): Document {
   };
 }
  
-const API_BASE_URL = 'http://localhost:8080/api/hr/documents/employee/EMP001';
+// API_BASE_URL will be set dynamically
  
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [apiDocuments, setApiDocuments] = useState<ApiDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [apiBaseUrl, setApiBaseUrl] = useState<string | null>(null);
  
   useEffect(() => {
+    const employeeId = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!employeeId) {
+      setError('Employee ID not found. Please log in again.');
+      setLoading(false);
+      return;
+    }
+    setApiBaseUrl(`http://localhost:8080/api/hr/documents/employee/${employeeId}`);
+  }, []);
+ 
+  useEffect(() => {
+    if (!apiBaseUrl) return;
     const fetchDocuments = async () => {
       try {
         setLoading(true);
-        const response = await axios.get<ApiDocument[]>(API_BASE_URL);
+        const response = await axios.get<ApiDocument[]>(apiBaseUrl);
         setApiDocuments(response.data);
         setDocuments(response.data.map(mapApiDocumentToDocument));
         setError(null);
@@ -56,9 +68,8 @@ export default function DocumentsPage() {
         setLoading(false);
       }
     };
- 
     fetchDocuments();
-  }, []);
+  }, [apiBaseUrl]);
  
   const handleDownload = async (document: Document) => {
     try {
