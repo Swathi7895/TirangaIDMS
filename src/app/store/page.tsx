@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   ShoppingCartIcon,
- 
   ArchiveBoxIcon,
   BookOpenIcon,
   DocumentArrowUpIcon,
@@ -19,9 +18,8 @@ import {
   CpuChipIcon,
   PrinterIcon,
   PencilSquareIcon,
- 
-
 } from '@heroicons/react/24/outline';
+import React from 'react';
 
 type SectionColor = 'indigo' | 'teal' | 'rose';
 
@@ -29,7 +27,7 @@ interface ItemData {
   title: string;
   description: string;
   href: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   count: number;
   apiUrl: string;
 }
@@ -37,7 +35,7 @@ interface ItemData {
 interface SectionData {
   title: string;
   description: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   color: SectionColor;
   count: string;
   items: ItemData[];
@@ -159,18 +157,6 @@ export default function StorePage() {
     }
   ];
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
-    
-    if (!token || !roles.includes('ROLE_STORE')) {
-      router.replace('/login');
-      return;
-    }
-
-    fetchAllCounts();
-  }, [router]);
-
   const fetchAllCounts = async () => {
     try {
       setLoading(true);
@@ -250,7 +236,17 @@ export default function StorePage() {
     }
   };
 
- 
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const roles = JSON.parse(sessionStorage.getItem('roles') || '[]');
+    
+    if (!token || !roles.includes('ROLE_STORE')) {
+      router.replace('/login');
+      return;
+    }
+
+    fetchAllCounts();
+  }, [router, fetchAllCounts]);
 
   if (loading) {
     return (

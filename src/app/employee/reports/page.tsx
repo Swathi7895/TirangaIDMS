@@ -1,8 +1,7 @@
 'use client';
-import React, { useState } from 'react';
-import { 
-  FileText, 
-   
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  FileText,
   FilePlus,
   Building,
   Users,
@@ -11,11 +10,11 @@ import {
   Award,
   Calendar,
   Download,
-
-  ArrowLeft
+  ArrowLeft,
+  Trash2 // Added for delete functionality (optional, but good to have)
 } from 'lucide-react';
 import Link from 'next/link';
-
+ 
 interface Report {
   id: number;
   type: 'employee' | 'visit' | 'oem' | 'customer' | 'blueprint' | 'projection' | 'achievement';
@@ -29,42 +28,12 @@ interface Report {
   approvedBy?: string;
   approvedDate?: string;
 }
-
+ 
+// Define your backend API base URL
+const BASE_URL = 'http://localhost:8080/api/reports'; // Your Spring Boot backend URL
+ 
 export default function ReportsPage() {
-  const [reports, setReports] = useState<Report[]>([
-    {
-      id: 1,
-      type: 'employee',
-      subtype: 'weekly',
-      title: 'Weekly Activity Report',
-      date: '2024-03-18',
-      status: 'submitted',
-      content: 'Weekly progress report including completed tasks and achievements.',
-      submittedBy: 'John Doe'
-    },
-    {
-      id: 2,
-      type: 'visit',
-      title: 'Client Visit Report - Tech Corp',
-      date: '2024-03-17',
-      status: 'approved',
-      content: 'Visit to Tech Corp headquarters for project discussion.',
-      attachments: ['meeting_notes.pdf', 'presentation.pptx'],
-      submittedBy: 'John Doe',
-      approvedBy: 'Manager Name',
-      approvedDate: '2024-03-18'
-    },
-    {
-      id: 3,
-      type: 'oem',
-      title: 'OEM Partnership Meeting',
-      date: '2024-03-16',
-      status: 'draft',
-      content: 'Discussion with OEM partner regarding new product launch.',
-      submittedBy: 'John Doe'
-    }
-  ]);
-
+  const [reports, setReports] = useState<Report[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('all');
   const [showNewReportForm, setShowNewReportForm] = useState(false);
@@ -73,9 +42,11 @@ export default function ReportsPage() {
     subtype: 'daily',
     title: '',
     content: '',
-    status: 'draft'
+    status: 'draft' // Default status for new reports
   });
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+ 
   const reportTypes = [
     { id: 'employee', label: 'Employee Report', icon: <FileText className="w-5 h-5" /> },
     { id: 'visit', label: 'Visit Report', icon: <Map className="w-5 h-5" /> },
@@ -85,19 +56,19 @@ export default function ReportsPage() {
     { id: 'projection', label: 'Projection Report', icon: <Target className="w-5 h-5" /> },
     { id: 'achievement', label: 'Achievement Report', icon: <Award className="w-5 h-5" /> }
   ];
-
+ 
   const employeeSubtypes = [
     { id: 'daily', label: 'Daily Report', icon: <Calendar className="w-5 h-5" /> },
     { id: 'weekly', label: 'Weekly Report', icon: <Calendar className="w-5 h-5" /> },
     { id: 'monthly', label: 'Monthly Report', icon: <Calendar className="w-5 h-5" /> },
     { id: 'yearly', label: 'Yearly Report', icon: <Calendar className="w-5 h-5" /> }
   ];
-
+ 
   const getReportIcon = (type: string) => {
     const reportType = reportTypes.find(t => t.id === type);
     return reportType?.icon || <FileText className="w-5 h-5" />;
   };
-
+ 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
@@ -110,40 +81,124 @@ export default function ReportsPage() {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const handleSubmitReport = () => {
-    const report: Report = {
-      id: reports.length + 1,
-      type: newReport.type as Report['type'],
-      subtype: newReport.type === 'employee' ? newReport.subtype as Report['subtype'] : undefined,
-      title: newReport.title || '',
-      date: new Date().toISOString().split('T')[0],
-      status: 'submitted',
-      content: newReport.content || '',
-      submittedBy: 'John Doe' // This should be the actual logged-in user
+ 
+  // Function to fetch reports from the backend
+  const fetchReports = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    let url = BASE_URL;
+    const params = new URLSearchParams();
+ 
+    if (selectedType !== 'all') {
+      params.append('type', selectedType);
+    }
+    if (selectedType === 'employee' && selectedSubtype !== 'all') {
+      params.append('subtype', selectedSubtype);
+    }
+ 
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+ 
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data: Report[] = await response.json();
+      setReports(data);
+    } catch (err: any) {
+      setError(`Failed to fetch reports: ${err.message}`);
+      console.error("Error fetching reports:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedType, selectedSubtype]);
+ 
+  // useEffect to call fetchReports when component mounts or filters change
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
+ 
+  const handleSubmitReport = async () => {
+    // Ensure required fields are present
+    if (!newReport.title || !newReport.content) {
+      setError('Title and Content are required.');
+      return;
+    }
+ 
+    // Set default values for new report that backend might expect if not explicitly sent
+    const reportData = {
+      ...newReport,
+      date: new Date().toISOString().split('T')[0], // Backend expects YYYY-MM-DD
+      status: newReport.status || 'submitted', // Or 'draft' based on your default creation logic
+      submittedBy: 'Current User' // Replace with actual logged-in user context if available
     };
-
-    setReports([report, ...reports]);
-    setShowNewReportForm(false);
-    setNewReport({
-      type: 'employee',
-      subtype: 'daily',
-      title: '',
-      content: '',
-      status: 'draft'
-    });
+ 
+    try {
+      const response = await fetch(BASE_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData),
+      });
+ 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to create report: ${response.status}`);
+      }
+ 
+      const createdReport: Report = await response.json();
+      setReports([createdReport, ...reports]); // Add new report to the top of the list
+      setShowNewReportForm(false);
+      setNewReport({ // Reset form
+        type: 'employee',
+        subtype: 'daily',
+        title: '',
+        content: '',
+        status: 'draft'
+      });
+      setError(null); // Clear any previous errors
+    } catch (err: any) {
+      setError(`Error submitting report: ${err.message}`);
+      console.error("Error submitting report:", err);
+    }
   };
-
+ 
+  const handleDeleteReport = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this report?')) {
+      return;
+    }
+ 
+    try {
+      const response = await fetch(`${BASE_URL}/${id}`, {
+        method: 'DELETE',
+      });
+ 
+      if (!response.ok) {
+        throw new Error(`Failed to delete report: ${response.status}`);
+      }
+ 
+      setReports(reports.filter(report => report.id !== id));
+      setError(null);
+    } catch (err: any) {
+      setError(`Error deleting report: ${err.message}`);
+      console.error("Error deleting report:", err);
+    }
+  };
+ 
+ 
   const renderNewReportForm = () => {
     if (!showNewReportForm) return null;
-
+ 
     const maxWords = 1000;
     const wordCount = newReport.content?.trim().split(/\s+/).filter(word => word.length > 0).length || 0;
     const remainingWords = maxWords - wordCount;
-
+ 
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl transform transition-all">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+        <div className="bg-white rounded-2xl p-8 w-full max-w-2xl shadow-2xl transform transition-all animate-slideIn">
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center space-x-4">
@@ -165,6 +220,7 @@ export default function ReportsPage() {
                   content: '',
                   status: 'draft'
                 });
+                setError(null); // Clear error on close
               }}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
@@ -173,8 +229,8 @@ export default function ReportsPage() {
               </svg>
             </button>
           </div>
-          
-          <div className="space-y-6">
+ 
+  <div className="space-y-6">
             {/* Report Type Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -184,8 +240,8 @@ export default function ReportsPage() {
                     value={newReport.type}
                     onChange={(e) => {
                       const type = e.target.value as Report['type'];
-                      setNewReport({ 
-                        ...newReport, 
+                      setNewReport({
+                        ...newReport,
                         type,
                         subtype: type === 'employee' ? newReport.subtype : undefined
                       });
@@ -203,8 +259,9 @@ export default function ReportsPage() {
                   </div>
                 </div>
               </div>
-
-              {newReport.type === 'employee' && (
+ 
+ 
+ {newReport.type === 'employee' && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-gray-700">Report Subtype</label>
                   <div className="relative">
@@ -226,7 +283,7 @@ export default function ReportsPage() {
                 </div>
               )}
             </div>
-
+ 
             {/* Title Input */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">Title</label>
@@ -238,7 +295,7 @@ export default function ReportsPage() {
                 className="w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors py-2.5"
               />
             </div>
-
+ 
             {/* Content Textarea */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
@@ -266,7 +323,10 @@ export default function ReportsPage() {
                 className="w-full rounded-xl border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 transition-colors resize-none py-2.5"
               />
             </div>
-
+ 
+            {/* Error Message */}
+            {error && <div className="text-red-600 text-sm">{error}</div>}
+ 
             {/* Action Buttons */}
             <div className="flex justify-end space-x-4 pt-6 border-t">
               <button
@@ -279,6 +339,7 @@ export default function ReportsPage() {
                     content: '',
                     status: 'draft'
                   });
+                  setError(null); // Clear error on cancel
                 }}
                 className="px-6 py-2.5 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
               >
@@ -297,8 +358,7 @@ export default function ReportsPage() {
       </div>
     );
   };
-
-  // Add these styles at the top of your file, after the imports
+ 
   const styles = `
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -315,7 +375,7 @@ export default function ReportsPage() {
       animation: slideIn 0.3s ease-out;
     }
   `;
-
+ 
   return (
     <>
       <style>{styles}</style>
@@ -331,7 +391,7 @@ export default function ReportsPage() {
               Back to Dashboard
             </Link>
           </div>
-
+ 
           <div className="space-y-6">
             {/* Header */}
             <div className="flex justify-between items-center">
@@ -344,7 +404,7 @@ export default function ReportsPage() {
                 <span>New Report</span>
               </button>
             </div>
-
+ 
             {/* Report Type Filter */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex flex-wrap gap-2">
@@ -376,7 +436,7 @@ export default function ReportsPage() {
                 ))}
               </div>
             </div>
-
+ 
             {/* Employee Report Subtype Filter */}
             {selectedType === 'employee' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -404,67 +464,88 @@ export default function ReportsPage() {
                 </div>
               </div>
             )}
-
+ 
+            {/* Loading and Error Indicators */}
+            {loading && <div className="text-center py-4 text-gray-500">Loading reports...</div>}
+            {error && <div className="text-center py-4 text-red-600">{error}</div>}
+ 
             {/* Reports List */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="space-y-4">
-                {reports
-                  .filter(report => 
-                    (selectedType === 'all' || report.type === selectedType) &&
-                    (selectedType !== 'employee' || selectedSubtype === 'all' || report.subtype === selectedSubtype)
-                  )
-                  .map(report => (
-                    <div key={report.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <div className="p-2 bg-blue-100 rounded-lg">
-                            {getReportIcon(report.type)}
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">{report.title}</h3>
-                            <div className="mt-1 text-sm text-gray-600">
-                              <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
-                              {report.type === 'employee' && report.subtype && (
-                                <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
-                              )}
-                              <p>Date: {new Date(report.date).toLocaleDateString()}</p>
-                              <p>Submitted by: {report.submittedBy}</p>
-                              {report.approvedBy && (
-                                <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
-                              )}
+            {!loading && !error && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="space-y-4">
+                  {reports.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">No reports found for the selected filters.</div>
+                  ) : (
+                    reports.map(report => (
+                      <div key={report.id} className="border rounded-lg p-4 animate-fadeIn">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start space-x-4">
+                            <div className="p-2 bg-blue-100 rounded-lg">
+                              {getReportIcon(report.type)}
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">{report.title}</h3>
+                              <div className="mt-1 text-sm text-gray-600">
+                                <p>Type: {reportTypes.find(t => t.id === report.type)?.label}</p>
+                                {report.type === 'employee' && report.subtype && (
+                                  <p>Subtype: {employeeSubtypes.find(s => s.id === report.subtype)?.label}</p>
+                                )}
+                                <p>Date: {new Date(report.date).toLocaleDateString()}</p>
+                                <p>Submitted by: {report.submittedBy}</p>
+                                {report.approvedBy && (
+                                  <p>Approved by: {report.approvedBy} on {new Date(report.approvedDate!).toLocaleDateString()}</p>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
-                            {report.status}
-                          </span>
-                          {report.attachments && (
-                            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-                              <Download className="w-5 h-5" />
+                          <div className="flex items-center space-x-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
+                              {report.status}
+                            </span>
+                            {/* Optional: Add Download button if attachments are actual URLs */}
+                            {report.attachments && report.attachments.length > 0 && (
+                                <a
+                                  href={`/api/download-attachment/${report.id}`} // Example: Replace with actual download endpoint
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                  title="Download Attachments"
+                                >
+                                  <Download className="w-5 h-5" />
+                                </a>
+                            )}
+                            <button
+                              onClick={() => handleDeleteReport(report.id)}
+                              className="p-2 text-red-600 hover:bg-red-100 rounded-lg"
+                              title="Delete Report"
+                            >
+                              <Trash2 className="w-5 h-5" />
                             </button>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="mt-4 text-sm text-gray-600">
-                        <p>{report.content}</p>
-                      </div>
-                      {report.attachments && (
-                        <div className="mt-4 flex items-center space-x-2">
-                          <FileText className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            Attachments: {report.attachments.join(', ')}
-                          </span>
+                        <div className="mt-4 text-sm text-gray-600">
+                          <p>{report.content}</p>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        {report.attachments && report.attachments.length > 0 && (
+                          <div className="mt-4 flex items-center space-x-2">
+                            <FileText className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm text-gray-600">
+                              Attachments: {report.attachments.join(', ')}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
       {renderNewReportForm()}
     </>
   );
-} 
+}
+ 
+ 

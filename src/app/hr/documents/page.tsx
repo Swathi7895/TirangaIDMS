@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { File, Upload, Search, Filter, Eye, Download,  X, Calendar, User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon } from 'lucide-react';
+import { File, Upload, Search, Filter,  Download,  X,  User, FileText, CreditCard, Briefcase, GraduationCap, LucideIcon } from 'lucide-react';
 
 interface Document {
   id: number;
@@ -20,6 +20,16 @@ interface DocumentType {
   color: 'blue' | 'green' | 'purple' | 'orange';
 }
 
+interface ApiDocument {
+  id: number;
+  employeeId: string;
+  documentType?: string;
+  fileName?: string;
+  fileDownloadUri?: string;
+  fileType?: string;
+  size?: number;
+}
+
 export default function DocumentsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,10 +37,10 @@ export default function DocumentsPage() {
   const [selectedDocType, setSelectedDocType] = useState('');
   const [employeeId, setEmployeeId] = useState('');
   const [showViewModal, setShowViewModal] = useState(false);
-  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
+  const [viewingDocument, ] = useState<Document | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
 
@@ -51,7 +61,7 @@ export default function DocumentsPage() {
       const data = await response.json();
       
       // Transform API response to match our Document interface
-      const transformedDocuments: Document[] = data.map((doc: any) => ({
+      const transformedDocuments: Document[] = (data as ApiDocument[]).map((doc) => ({
         id: doc.id,
         employeeId: doc.employeeId,
         documentType: doc.documentType ? doc.documentType.toLowerCase() : '',

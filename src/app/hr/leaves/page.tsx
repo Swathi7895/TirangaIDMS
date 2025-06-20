@@ -1,9 +1,10 @@
 'use client';
-
-import React, { useState } from 'react';
-
+ 
+import React, { useState, useEffect } from 'react';
+ 
 interface Leave {
   id: string;
+  employeeId?: string;
   name: string;
   type: string;
   startDate: string;
@@ -13,7 +14,7 @@ interface Leave {
   reason: string;
   rejectionReason?: string;
 }
-
+ 
 interface Holiday {
   name: string;
   date: string;
@@ -21,30 +22,30 @@ interface Holiday {
   type: string;
   coverage: string;
 }
-
+ 
 interface LeaveData {
   approved: Leave[];
   pending: Leave[];
   rejected: Leave[];
   holidays: Holiday[];
 }
-
+ 
 interface StatusBadgeProps {
   status: 'approved' | 'pending' | 'rejected' | 'holiday';
 }
-
+ 
 interface ActionButtonProps {
   variant: 'approve' | 'reject' | 'view';
   onClick: () => void;
   children: React.ReactNode;
 }
-
+ 
 interface LeaveTableProps {
   leaves: Leave[] | Holiday[];
   showActions?: boolean;
   isHoliday?: boolean;
 }
-
+ 
 const LeaveManagementSystem = () => {
   const [leaveData, setLeaveData] = useState<LeaveData>({
     approved: [
@@ -145,7 +146,7 @@ const LeaveManagementSystem = () => {
       }
     ]
   });
-
+ 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showAddHolidayModal, setShowAddHolidayModal] = useState(false);
@@ -156,42 +157,124 @@ const LeaveManagementSystem = () => {
     type: 'National Holiday',
     coverage: 'All Employees'
   });
-
-  const approveLeave = (empId: string) => {
-    if (window.confirm(`Are you sure you want to approve leave for employee ${empId}?`)) {
-      setLeaveData(prev => {
-        const pendingLeave = prev.pending.find(leave => leave.id === empId);
-        if (pendingLeave) {
+ 
+  // Fetch leave requests from API and update non-approved leaves
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/leave-requests/hr/all');
+        if (!res.ok) throw new Error('Failed to fetch leave requests');
+        const apiLeaves = await res.json();
+        // Map API data to Leave interface
+        const mappedLeaves = apiLeaves.map((item: any) => ({
+          id: item.id,
+          employeeId: item.employeeId,
+          name: item.employeeName || '',
+          type: item.leaveType,
+          startDate: item.startDate,
+          endDate: item.endDate,
+          days: item.numberOfDays,
+          status: item.status.toLowerCase(),
+          reason: item.reason,
+          rejectionReason: item.status === 'REJECTED' ? item.hrComments : undefined,
+        }));
+        // Separate into approved, pending and rejected
+        const approved = mappedLeaves.filter((l: any) => l.status === 'approved');
+        const pending = mappedLeaves.filter((l: any) => l.status === 'pending');
+        const rejected = mappedLeaves.filter((l: any) => l.status === 'rejected');
+        setLeaveData(prev => ({
+          ...prev,
+          approved,
+          pending,
+          rejected,
+        }));
+      } catch (error) {
+        // Optionally handle error
+        console.error(error);
+      }
+    };
+    fetchLeaves();
+  }, []);
+ 
+  const approveLeave = async (leaveId: string) => {
+    if (window.confirm(`Are you sure you want to approve leave request ${leaveId}?`)) {
+      try {
+        // Call the approve API
+        const res = await fetch(`http://localhost:8080/api/leave-requests/hr/${leaveId}/approve?hrComments=Approved`, {
+          method: 'PUT',
+        });
+        if (!res.ok) throw new Error('Failed to approve leave');
+        const updatedLeave = await res.json();
+        // Map API response to Leave interface
+        const approvedLeave = {
+          id: updatedLeave.id,
+          employeeId: updatedLeave.employeeId,
+          name: updatedLeave.employeeName || '',
+          type: updatedLeave.leaveType,
+          startDate: updatedLeave.startDate,
+          endDate: updatedLeave.endDate,
+          days: updatedLeave.numberOfDays,
+          status: updatedLeave.status.toLowerCase(),
+          reason: updatedLeave.reason,
+          rejectionReason: updatedLeave.status === 'REJECTED' ? updatedLeave.hrComments : undefined,
+        };
+        setLeaveData(prev => {
+          // Remove from pending/rejected, add to approved
           return {
             ...prev,
-            approved: [...prev.approved, { ...pendingLeave, status: 'approved' }],
-            pending: prev.pending.filter(leave => leave.id !== empId)
+            approved: [...prev.approved, approvedLeave],
+            pending: prev.pending.filter(leave => leave.id !== leaveId),
+            rejected: prev.rejected.filter(leave => leave.id !== leaveId),
           };
-        }
-        return prev;
-      });
-      alert(`Leave approved for employee ${empId}`);
+        });
+        alert(`Leave approved for request ${leaveId}`);
+      } catch (error) {
+        alert('Failed to approve leave.');
+        console.error(error);
+      }
     }
   };
-
-  const rejectLeave = (empId: string) => {
-    const reason = window.prompt(`Please provide a reason for rejecting leave for employee ${empId}:`);
+ 
+  const rejectLeave = async (leaveId: string) => {
+    const reason = window.prompt(`Please provide a reason for rejecting leave request ${leaveId}:`);
     if (reason) {
-      setLeaveData(prev => {
-        const pendingLeave = prev.pending.find(leave => leave.id === empId);
-        if (pendingLeave) {
+      try {
+        // Call the reject API
+        const res = await fetch(`http://localhost:8080/api/leave-requests/hr/${leaveId}/reject?hrComments=${encodeURIComponent(reason)}`, {
+          method: 'PUT',
+        });
+        if (!res.ok) throw new Error('Failed to reject leave');
+        const updatedLeave = await res.json();
+        // Map API response to Leave interface
+        const rejectedLeave = {
+          id: updatedLeave.id,
+          employeeId: updatedLeave.employeeId,
+          name: updatedLeave.employeeName || '',
+          type: updatedLeave.leaveType,
+          startDate: updatedLeave.startDate,
+          endDate: updatedLeave.endDate,
+          days: updatedLeave.numberOfDays,
+          status: updatedLeave.status.toLowerCase(),
+          reason: updatedLeave.reason,
+          rejectionReason: updatedLeave.hrComments,
+        };
+        setLeaveData(prev => {
+          // Remove from pending/approved, add to rejected
           return {
             ...prev,
-            rejected: [...prev.rejected, { ...pendingLeave, status: 'rejected', rejectionReason: reason }],
-            pending: prev.pending.filter(leave => leave.id !== empId)
+            rejected: [...prev.rejected, rejectedLeave],
+            pending: prev.pending.filter(leave => leave.id !== leaveId),
+            approved: prev.approved.filter(leave => leave.id !== leaveId),
           };
-        }
-        return prev;
-      });
-      alert(`Leave rejected for employee ${empId}. Reason: ${reason}`);
+        });
+        alert(`Leave rejected for request ${leaveId}`);
+      } catch (error) {
+        alert('Failed to reject leave.');
+        console.error(error);
+      }
     }
   };
-
+ 
   const viewDetails = (empId: string) => {
     const leave = [...leaveData.approved, ...leaveData.pending, ...leaveData.rejected].find(
       (l) => l.id === empId
@@ -201,39 +284,173 @@ const LeaveManagementSystem = () => {
       setShowDetailsModal(true);
     }
   };
-
-  const addHoliday = () => {
+ 
+  const addHoliday = async () => {
     if (!newHoliday.name || !newHoliday.date) {
       alert('Please fill in all required fields');
       return;
     }
-
+ 
     // Get day of week from date
     const date = new Date(newHoliday.date);
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayOfWeek = days[date.getDay()];
-
+ 
     const holidayToAdd = {
-      ...newHoliday,
-      day: dayOfWeek
+      employeeId: 'ALL',
+      employeeName: 'ALL',
+      leaveType: 'Holiday',
+      holidayName: newHoliday.name,
+      startDate: newHoliday.date,
+      endDate: newHoliday.date,
+      day: dayOfWeek,
+      type: newHoliday.type,
+      status: 'HOLIDAY',
+      coverage: newHoliday.coverage,
     };
-
-    setLeaveData(prev => ({
-      ...prev,
-      holidays: [...prev.holidays, holidayToAdd]
-    }));
-
-    // Reset form
-    setNewHoliday({
-      name: '',
-      date: '',
-      day: '',
-      type: 'National Holiday',
-      coverage: 'All Employees'
-    });
-    setShowAddHolidayModal(false);
+ 
+    try {
+      const res = await fetch('http://localhost:8080/api/holidays', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(holidayToAdd),
+      });
+      if (!res.ok) throw new Error('Failed to add holiday');
+      const added = await res.json();
+      setLeaveData(prev => ({
+        ...prev,
+        holidays: [
+          ...prev.holidays,
+          {
+            name: added.holidayName,
+            date: added.startDate,
+            day: added.day,
+            type: added.type,
+            coverage: added.coverage,
+            id: added.id,
+          },
+        ],
+      }));
+      // Reset form
+      setNewHoliday({
+        name: '',
+        date: '',
+        day: '',
+        type: 'National Holiday',
+        coverage: 'All Employees',
+      });
+      setShowAddHolidayModal(false);
+      alert('Holiday added successfully');
+    } catch (error) {
+      alert('Failed to add holiday.');
+      console.error(error);
+    }
   };
-
+ 
+  // Fetch holidays from API
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/holidays');
+        if (!res.ok) throw new Error('Failed to fetch holidays');
+        const apiHolidays = await res.json();
+        // Map API data to Holiday interface
+        const mappedHolidays = apiHolidays.map((item: any) => ({
+          name: item.holidayName,
+          date: item.startDate,
+          day: item.day,
+          type: item.type,
+          coverage: item.coverage,
+          id: item.id, // for actions
+        }));
+        setLeaveData(prev => ({
+          ...prev,
+          holidays: mappedHolidays,
+        }));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchHolidays();
+  }, []);
+ 
+  // Delete holiday
+  const deleteHoliday = async (holidayId: number) => {
+    if (window.confirm('Are you sure you want to delete this holiday?')) {
+      try {
+        const res = await fetch(`http://localhost:8080/api/holidays/${holidayId}`, {
+          method: 'DELETE',
+        });
+        if (!res.ok) throw new Error('Failed to delete holiday');
+        setLeaveData(prev => ({
+          ...prev,
+          holidays: prev.holidays.filter((h: any) => h.id !== holidayId),
+        }));
+        alert('Holiday deleted successfully');
+      } catch (error) {
+        alert('Failed to delete holiday.');
+        console.error(error);
+      }
+    }
+  };
+ 
+  // Edit holiday (open modal with holiday data)
+  const [editHoliday, setEditHoliday] = useState<any>(null);
+  const [showEditHolidayModal, setShowEditHolidayModal] = useState(false);
+ 
+ 
+  const handleEditHoliday = (holiday: any) => {
+    setEditHoliday(holiday);
+    setShowEditHolidayModal(true);
+  };
+ 
+  const updateHoliday = async () => {
+    if (!editHoliday.name || !editHoliday.date) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:8080/api/holidays/${editHoliday.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: 'ALL',
+          employeeName: 'ALL',
+          leaveType: 'Holiday',
+          holidayName: editHoliday.name,
+          startDate: editHoliday.date,
+          endDate: editHoliday.date,
+          day: editHoliday.day,
+          type: editHoliday.type,
+          status: 'HOLIDAY',
+          coverage: editHoliday.coverage,
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update holiday');
+      const updated = await res.json();
+      setLeaveData(prev => ({
+        ...prev,
+        holidays: prev.holidays.map((h: any) => h.id === editHoliday.id ? {
+          ...h,
+          name: updated.holidayName,
+          date: updated.startDate,
+          day: updated.day,
+          type: updated.type,
+          coverage: updated.coverage,
+        } : h),
+      }));
+      setShowEditHolidayModal(false);
+      setEditHoliday(null);
+      alert('Holiday updated successfully');
+    } catch (error) {
+      alert('Failed to update holiday.');
+      console.error(error);
+    }
+  };
+ 
+ 
+ 
+ 
   const StatusBadge = ({ status }: StatusBadgeProps) => {
     const statusClasses = {
       approved: 'bg-green-100 text-green-800 border-green-200',
@@ -241,21 +458,21 @@ const LeaveManagementSystem = () => {
       pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       holiday: 'bg-orange-100 text-orange-800 border-orange-200'
     };
-
+ 
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border ${statusClasses[status]}`}>
         {status}
       </span>
     );
   };
-
+ 
   const ActionButton = ({ variant, onClick, children }: ActionButtonProps) => {
     const variants = {
       approve: 'bg-green-500 hover:bg-green-600 text-white',
       reject: 'bg-red-500 hover:bg-red-600 text-white',
       view: 'bg-blue-500 hover:bg-blue-600 text-white'
     };
-
+ 
     return (
       <button
         onClick={onClick}
@@ -265,7 +482,7 @@ const LeaveManagementSystem = () => {
       </button>
     );
   };
-
+ 
   const LeaveTable = ({ leaves, showActions = false, isHoliday = false }: LeaveTableProps) => (
     <div className="overflow-x-auto">
       <table className="w-full bg-white rounded-lg shadow-lg overflow-hidden">
@@ -279,6 +496,7 @@ const LeaveManagementSystem = () => {
                 <th className="px-4 py-3 text-left font-semibold">Type</th>
                 <th className="px-4 py-3 text-left font-semibold">Status</th>
                 <th className="px-4 py-3 text-left font-semibold">Coverage</th>
+                <th className="px-4 py-3 text-left font-semibold">Actions</th>
               </>
             ) : (
               <>
@@ -288,7 +506,6 @@ const LeaveManagementSystem = () => {
                 <th className="px-4 py-3 text-left font-semibold">Start Date</th>
                 <th className="px-4 py-3 text-left font-semibold">End Date</th>
                 <th className="px-4 py-3 text-left font-semibold">Days</th>
-           
                 <th className="px-4 py-3 text-left font-semibold">Status</th>
                 <th className="px-4 py-3 text-left font-semibold">Actions</th>
               </>
@@ -297,20 +514,30 @@ const LeaveManagementSystem = () => {
         </thead>
         <tbody>
           {isHoliday ? (
-            (leaves as Holiday[]).map((holiday, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
+            (leaves as any[]).map((holiday, index) => (
+              <tr key={holiday.id || index} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
                 <td className="px-4 py-3">{holiday.name}</td>
                 <td className="px-4 py-3">{holiday.date}</td>
                 <td className="px-4 py-3">{holiday.day}</td>
                 <td className="px-4 py-3">{holiday.type}</td>
                 <td className="px-4 py-3"><StatusBadge status="holiday" /></td>
                 <td className="px-4 py-3">{holiday.coverage}</td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-2">
+                    <ActionButton variant="view" onClick={() => handleEditHoliday(holiday)}>
+                      Edit
+                    </ActionButton>
+                    <ActionButton variant="reject" onClick={() => deleteHoliday(holiday.id)}>
+                      Delete
+                    </ActionButton>
+                  </div>
+                </td>
               </tr>
             ))
           ) : (
             (leaves as Leave[]).map((leave) => (
               <tr key={leave.id} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
-                <td className="px-4 py-3 font-medium">{leave.id}</td>
+                <td className="px-4 py-3 font-medium">{leave.employeeId || leave.id}</td>
                 <td className="px-4 py-3">{leave.name}</td>
                 <td className="px-4 py-3">{leave.type}</td>
                 <td className="px-4 py-3">{leave.startDate}</td>
@@ -341,11 +568,11 @@ const LeaveManagementSystem = () => {
       </table>
     </div>
   );
-
+ 
   const totalLeaves = leaveData.approved.length + leaveData.pending.length + leaveData.rejected.length;
   const approvedCount = leaveData.approved.length;
   const pendingCount = leaveData.pending.length;
-
+ 
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
@@ -358,11 +585,11 @@ const LeaveManagementSystem = () => {
             Manage employee leave requests efficiently and transparently
           </p>
         </div>
-
+ 
         {/* Layout Container */}
         <div className="flex flex-col md:flex-row gap-8">
-          
-
+         
+ 
           {/* Main Content */}
           <div >
             {/* Stats Grid */}
@@ -380,8 +607,9 @@ const LeaveManagementSystem = () => {
                 <p className="text-lg opacity-90">Pending Requests</p>
               </div>
             </div>
-
-            {/* Approved Leaves Section */}
+ 
+ 
+  {/* Approved Leaves Section */}
             <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-green-500">
               <div className="flex items-center mb-6">
                 <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
@@ -391,7 +619,7 @@ const LeaveManagementSystem = () => {
               </div>
               <LeaveTable leaves={leaveData.approved} />
             </div>
-
+ 
             {/* Non-Approved Leaves Section */}
             <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-red-500">
               <div className="flex items-center mb-6">
@@ -402,7 +630,7 @@ const LeaveManagementSystem = () => {
               </div>
               <LeaveTable leaves={[...leaveData.pending, ...leaveData.rejected]} showActions={true} />
             </div>
-
+ 
             {/* Holiday Leaves Section */}
             <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-orange-500">
               <div className="flex items-center justify-between mb-6">
@@ -423,7 +651,7 @@ const LeaveManagementSystem = () => {
             </div>
           </div>
         </div>
-
+ 
         {/* Details Modal */}
         {showDetailsModal && selectedLeave && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -492,7 +720,7 @@ const LeaveManagementSystem = () => {
             </div>
           </div>
         )}
-
+ 
         {/* Add Holiday Modal */}
         {showAddHolidayModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -576,9 +804,106 @@ const LeaveManagementSystem = () => {
             </div>
           </div>
         )}
+ 
+        {/* Edit Holiday Modal */}
+        {showEditHolidayModal && editHoliday && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl transform transition-all">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-800">Edit Holiday</h3>
+                <button
+                  onClick={() => setShowEditHolidayModal(false)}
+                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Holiday Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editHoliday.name}
+                    onChange={e => setEditHoliday((prev: any) => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="e.g., Republic Day"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={editHoliday.date}
+                    onChange={e => setEditHoliday((prev: any) => ({ ...prev, date: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Day
+                  </label>
+                  <input
+                    type="text"
+                    value={editHoliday.day}
+                    onChange={e => setEditHoliday((prev: any) => ({ ...prev, day: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="e.g., Monday"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Type
+                  </label>
+                  <select
+                    value={editHoliday.type}
+                    onChange={e => setEditHoliday((prev: any) => ({ ...prev, type: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="National Holiday">National Holiday</option>
+                    <option value="State Holiday">State Holiday</option>
+                    <option value="Company Holiday">Company Holiday</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Coverage
+                  </label>
+                  <select
+                    value={editHoliday.coverage}
+                    onChange={e => setEditHoliday((prev: any) => ({ ...prev, coverage: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  >
+                    <option value="All Employees">All Employees</option>
+                    <option value="Specific Department">Specific Department</option>
+                    <option value="Specific Location">Specific Location</option>
+                  </select>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setShowEditHolidayModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={updateHoliday}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  Update Holiday
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
-
+ 
 export default LeaveManagementSystem;
+ 

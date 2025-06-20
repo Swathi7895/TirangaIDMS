@@ -41,31 +41,6 @@ export default function LabInstrumentsPage() {
 
   const categories = ['Optical', 'Separation', 'Measurement', 'Analysis', 'Electronics', 'Other'];
 
-  // Transform API response to internal format
-  const transformApiToInternal = (apiItem: ApiLabInstrument): LabInstrument => ({
-    id: apiItem.id || `instrument-${Math.random().toString(36).substr(2, 9)}`,
-    name: apiItem.name,
-    quantity: apiItem.quantity,
-    category: apiItem.category,
-    location: apiItem.location,
-    lastUpdated: new Date(apiItem.lastUpdated),
-    condition: mapCondition(apiItem.itemCondition),
-    calibrationDate: apiItem.calibrationDate ? new Date(apiItem.calibrationDate) : undefined,
-    status: apiItem.status as LabInstrument['status'] || 'operational',
-  });
-
-  // Transform internal format to API format
-  const transformInternalToApi = (item: Partial<LabInstrument>) => ({
-    name: item.name,
-    quantity: item.quantity,
-    category: item.category,
-    location: item.location,
-    itemCondition: mapConditionToApi(item.condition),
-    lastUpdated: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-    calibrationDate: item.calibrationDate?.toISOString().split('T')[0],
-    status: item.status,
-  });
-
   // Map condition values between API and internal formats
   const mapCondition = (apiCondition: string): LabInstrument['condition'] => {
     const conditionMap: Record<string, LabInstrument['condition']> = {
@@ -80,6 +55,31 @@ export default function LabInstrumentsPage() {
     };
     return conditionMap[apiCondition] || 'good';
   };
+
+  // Transform API response to internal format
+  const transformApiToInternal = useCallback((apiItem: ApiLabInstrument): LabInstrument => ({
+    id: apiItem.id || `instrument-${Math.random().toString(36).substr(2, 9)}`,
+    name: apiItem.name,
+    quantity: apiItem.quantity,
+    category: apiItem.category,
+    location: apiItem.location,
+    lastUpdated: new Date(apiItem.lastUpdated),
+    condition: mapCondition(apiItem.itemCondition),
+    calibrationDate: apiItem.calibrationDate ? new Date(apiItem.calibrationDate) : undefined,
+    status: apiItem.status as LabInstrument['status'] || 'operational',
+  }), [mapCondition]);
+
+  // Transform internal format to API format
+  const transformInternalToApi = (item: Partial<LabInstrument>) => ({
+    name: item.name,
+    quantity: item.quantity,
+    category: item.category,
+    location: item.location,
+    itemCondition: mapConditionToApi(item.condition),
+    lastUpdated: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+    calibrationDate: item.calibrationDate?.toISOString().split('T')[0],
+    status: item.status,
+  });
 
   const mapConditionToApi = (condition?: LabInstrument['condition']): string => {
     const conditionMap: Record<LabInstrument['condition'], string> = {

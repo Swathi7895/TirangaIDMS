@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Laptop, Smartphone, CreditCard, Car, Wifi, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -15,55 +15,73 @@ interface Asset {
   notes?: string;
 }
 
+interface ApiAsset {
+  id: number;
+  assetName: string;
+  category: string;
+  serialNumber: string;
+  status: string;
+  assetcondition: string;
+  assignedTo?: string;
+}
+
+function mapApiAssetToAsset(api: ApiAsset): Asset {
+  // Map API status/condition to local enums
+  let status: Asset['status'] = 'active';
+  if (api.status === 'Under Maintenance') status = 'maintenance';
+  else if (api.status === 'Returned') status = 'returned';
+  else if (api.status === 'Available' || api.status === 'Assigned') status = 'active';
+
+  let condition: Asset['condition'] = 'good';
+  if (api.assetcondition === 'Fair') condition = 'fair';
+  else if (api.assetcondition === 'Poor') condition = 'poor';
+  else if (api.assetcondition === 'Good' || api.assetcondition === 'New') condition = 'good';
+
+  // Map category to type
+  let type: Asset['type'] = 'laptop';
+  if (api.category.toLowerCase().includes('phone')) type = 'phone';
+  else if (api.category.toLowerCase().includes('sim')) type = 'sim';
+  else if (api.category.toLowerCase().includes('card')) type = 'idCard';
+  else if (api.category.toLowerCase().includes('vehicle')) type = 'vehicle';
+
+  return {
+    id: api.id,
+    name: api.assetName,
+    type,
+    assignedDate: '', // Not provided by API
+    status,
+    serialNumber: api.serialNumber,
+    condition,
+    notes: api.assignedTo ? `Assigned to: ${api.assignedTo}` : undefined,
+  };
+}
+
 export default function AssetsPage() {
- const assets: Asset[] = [
-    {
-      id: 1,
-      name: 'MacBook Pro 2023',
-      type: 'laptop',
-      assignedDate: '2024-01-01',
-      status: 'active',
-      serialNumber: 'MBP2023-001',
-      condition: 'good'
-    },
-    {
-      id: 2,
-      name: 'iPhone 14',
-      type: 'phone',
-      assignedDate: '2024-01-01',
-      status: 'active',
-      serialNumber: 'IP14-001',
-      condition: 'good'
-    },
-    {
-      id: 3,
-      name: 'Company ID Card',
-      type: 'idCard',
-      assignedDate: '2024-01-01',
-      status: 'active',
-      serialNumber: 'IDC-001',
-      condition: 'good'
-    },
-    {
-      id: 4,
-      name: 'Company SIM Card',
-      type: 'sim',
-      assignedDate: '2024-01-01',
-      status: 'active',
-      serialNumber: 'SIM-001',
-      condition: 'good'
-    },
-    {
-      id: 5,
-      name: 'Company Vehicle',
-      type: 'vehicle',
-      assignedDate: '2024-01-01',
-      status: 'maintenance',
-      serialNumber: 'VEH-001',
-      condition: 'fair',
-      notes: 'Regular maintenance due'
-    }
-  ];
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAssets = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:8080/api/assets/employee/1');
+        if (!response.ok) {
+          throw new Error('Failed to fetch assets');
+        }
+        const data = await response.json();
+        const mapped = Array.isArray(data) ? data.map(mapApiAssetToAsset) : [];
+        setAssets(mapped);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setAssets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAssets();
+  }, []);
 
   const getAssetIcon = (type: Asset['type']) => {
     switch (type) {
@@ -122,6 +140,13 @@ export default function AssetsPage() {
             <p className="mt-2 text-gray-600">View and manage your assigned company assets</p>
           </div>
 
+          {/* Loading/Error State */}
+          {loading ? (
+            <div className="text-center text-gray-500 py-8">Loading assets...</div>
+          ) : error ? (
+            <div className="text-center text-red-500 py-8">Error: {error}</div>
+          ) : (
+          <>
           {/* Asset Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -171,32 +196,38 @@ export default function AssetsPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Asset List</h2>
             <div className="space-y-4">
-              {assets.map((asset) => (
-                <div key={asset.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    {getAssetIcon(asset.type)}
-                    <div>
-                      <p className="font-medium">{asset.name}</p>
-                      <p className="text-sm text-gray-600">
-                        Serial: {asset.serialNumber} | Assigned: {new Date(asset.assignedDate).toLocaleDateString()}
-                      </p>
-                      {asset.notes && (
-                        <p className="text-sm text-yellow-600 mt-1">{asset.notes}</p>
-                      )}
+              {assets.length === 0 ? (
+                <div className="text-center text-gray-500">No assets assigned.</div>
+              ) : (
+                assets.map((asset) => (
+                  <div key={asset.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center space-x-4">
+                      {getAssetIcon(asset.type)}
+                      <div>
+                        <p className="font-medium">{asset.name}</p>
+                        <p className="text-sm text-gray-600">
+                          Serial: {asset.serialNumber} {asset.assignedDate ? `| Assigned: ${new Date(asset.assignedDate).toLocaleDateString()}` : ''}
+                        </p>
+                        {asset.notes && (
+                          <p className="text-sm text-yellow-600 mt-1">{asset.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(asset.status)}`}>
+                        {asset.status}
+                      </span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(asset.condition)}`}>
+                        {asset.condition}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(asset.status)}`}>
-                      {asset.status}
-                    </span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getConditionColor(asset.condition)}`}>
-                      {asset.condition}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
     </div>

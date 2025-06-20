@@ -12,10 +12,31 @@ interface Document {
   status: 'verified' | 'pending' | 'rejected';
 }
  
-const API_BASE_URL = 'http://localhost:8080/api/documents';
+interface ApiDocument {
+  id: number;
+  employeeId: string;
+  documentType: string;
+  fileName: string;
+  fileDownloadUri: string;
+  fileType: string;
+  size: number;
+}
+ 
+function mapApiDocumentToDocument(api: ApiDocument): Document {
+  return {
+    id: api.id,
+    name: api.fileName,
+    type: api.documentType,
+    uploadDate: '', // Not provided by API
+    status: 'verified', // Default or map if available
+  };
+}
+ 
+const API_BASE_URL = 'http://localhost:8080/api/hr/documents/employee/EMP001';
  
 export default function DocumentsPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [apiDocuments, setApiDocuments] = useState<ApiDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
  
@@ -23,14 +44,14 @@ export default function DocumentsPage() {
     const fetchDocuments = async () => {
       try {
         setLoading(true);
-        const response = await axios.get<Document[]>(API_BASE_URL);
-        setDocuments(response.data.map(doc => ({
-          ...doc,
-          uploadDate: new Date(doc.uploadDate).toLocaleDateString()
-        })));
+        const response = await axios.get<ApiDocument[]>(API_BASE_URL);
+        setApiDocuments(response.data);
+        setDocuments(response.data.map(mapApiDocumentToDocument));
+        setError(null);
       } catch (err) {
         setError('Failed to fetch documents. Make sure backend is running.');
-        console.error('Error fetching documents:', err);
+        setDocuments([]);
+        setApiDocuments([]);
       } finally {
         setLoading(false);
       }
@@ -41,19 +62,10 @@ export default function DocumentsPage() {
  
   const handleDownload = async (document: Document) => {
     try {
-      console.log(`Downloading ${document.name} (ID: ${document.id})`);
-      const response = await axios.get(`${API_BASE_URL}/download/${document.id}`, {
-        responseType: 'blob',
-      });
- 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = window.document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', document.name);
-      window.document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const apiDoc = apiDocuments.find(doc => doc.fileName === document.name);
+      if (!apiDoc) throw new Error('Download URL not found');
+      const url = apiDoc.fileDownloadUri.startsWith('http') ? apiDoc.fileDownloadUri : `http://localhost:8080${apiDoc.fileDownloadUri}`;
+      window.open(url, '_blank');
     } catch (err) {
       setError(`Failed to download ${document.name}`);
       console.error('Error downloading document:', err);

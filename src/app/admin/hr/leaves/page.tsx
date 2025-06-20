@@ -1,9 +1,10 @@
 'use client';
-
-import React, { useState } from 'react';
-
+ 
+import React, { useState, useEffect } from 'react';
+ 
 interface Leave {
   id: string;
+  employeeId?: string;
   name: string;
   type: string;
   startDate: string;
@@ -13,7 +14,7 @@ interface Leave {
   reason: string;
   rejectionReason?: string;
 }
-
+ 
 interface Holiday {
   name: string;
   date: string;
@@ -21,97 +22,41 @@ interface Holiday {
   type: string;
   coverage: string;
 }
-
+ 
 interface LeaveData {
   approved: Leave[];
   pending: Leave[];
   rejected: Leave[];
   holidays: Holiday[];
 }
-
+ 
 interface StatusBadgeProps {
   status: 'approved' | 'pending' | 'rejected' | 'holiday';
 }
-
+ 
 interface ActionButtonProps {
   variant: 'approve' | 'reject' | 'view';
   onClick: () => void;
   children: React.ReactNode;
 }
-
+ 
 interface LeaveTableProps {
   leaves: Leave[] | Holiday[];
+  showActions?: boolean;
   isHoliday?: boolean;
 }
-
+ 
 const LeaveManagementSystem = () => {
-  const [leaveData, ] = useState<LeaveData>({
+  const [leaveData, setLeaveData] = useState<LeaveData>({
     approved: [
-      {
-        id: 'EMP001',
-        name: 'John Smith',
-        type: 'Annual Leave',
-        startDate: '2025-06-10',
-        endDate: '2025-06-15',
-        days: 6,
-        status: 'approved',
-        reason: 'Family vacation'
-      },
-      {
-        id: 'EMP002',
-        name: 'Sarah Johnson',
-        type: 'Medical Leave',
-        startDate: '2025-06-12',
-        endDate: '2025-06-14',
-        days: 3,
-        status: 'approved',
-        reason: 'Medical checkup and follow-up'
-      },
-      {
-        id: 'EMP003',
-        name: 'Michael Brown',
-        type: 'Personal Leave',
-        startDate: '2025-06-20',
-        endDate: '2025-06-22',
-        days: 3,
-        status: 'approved',
-        reason: 'Personal family matter'
-      }
+     
+ 
     ],
     pending: [
-      {
-        id: 'EMP004',
-        name: 'Emily Davis',
-        type: 'Annual Leave',
-        startDate: '2025-06-08',
-        endDate: '2025-06-12',
-        days: 5,
-        status: 'pending',
-        reason: 'Attending a wedding'
-      },
-      {
-        id: 'EMP006',
-        name: 'Lisa Anderson',
-        type: 'Medical Leave',
-        startDate: '2025-06-25',
-        endDate: '2025-06-30',
-        days: 6,
-        status: 'pending',
-        reason: 'Dental surgery and recovery'
-      }
+             
     ],
     rejected: [
-      {
-        id: 'EMP005',
-        name: 'David Wilson',
-        type: 'Personal Leave',
-        startDate: '2025-06-15',
-        endDate: '2025-06-16',
-        days: 2,
-        status: 'rejected',
-        reason: 'Personal work',
-        rejectionReason: 'Critical project deadline during requested period'
-      }
+ 
     ],
     holidays: [
       {
@@ -144,13 +89,51 @@ const LeaveManagementSystem = () => {
       }
     ]
   });
-
+ 
   const [selectedLeave, setSelectedLeave] = useState<Leave | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
  
-
  
-
+ 
+  // Fetch leave requests from API and update non-approved leaves
+  useEffect(() => {
+    const fetchLeaves = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/leave-requests/hr/all');
+        if (!res.ok) throw new Error('Failed to fetch leave requests');
+        const apiLeaves = await res.json();
+        // Map API data to Leave interface
+        const mappedLeaves = apiLeaves.map((item: any) => ({
+          id: item.id,
+          employeeId: item.employeeId,
+          name: item.employeeName || '',
+          type: item.leaveType,
+          startDate: item.startDate,
+          endDate: item.endDate,
+          days: item.numberOfDays,
+          status: item.status.toLowerCase(),
+          reason: item.reason,
+          rejectionReason: item.status === 'REJECTED' ? item.hrComments : undefined,
+        }));
+        // Separate into approved, pending and rejected
+        const approved = mappedLeaves.filter((l: any) => l.status === 'approved');
+        const pending = mappedLeaves.filter((l: any) => l.status === 'pending');
+        const rejected = mappedLeaves.filter((l: any) => l.status === 'rejected');
+        setLeaveData(prev => ({
+          ...prev,
+          approved,
+          pending,
+          rejected,
+        }));
+      } catch (error) {
+        // Optionally handle error
+        console.error(error);
+      }
+    };
+    fetchLeaves();
+  }, []);
+ 
+ 
   const viewDetails = (empId: string) => {
     const leave = [...leaveData.approved, ...leaveData.pending, ...leaveData.rejected].find(
       (l) => l.id === empId
@@ -160,9 +143,45 @@ const LeaveManagementSystem = () => {
       setShowDetailsModal(true);
     }
   };
-
  
-
+  // Fetch holidays from API
+  useEffect(() => {
+    const fetchHolidays = async () => {
+      try {
+        const res = await fetch('http://localhost:8080/api/holidays');
+        if (!res.ok) throw new Error('Failed to fetch holidays');
+        const apiHolidays = await res.json();
+        // Map API data to Holiday interface
+        const mappedHolidays = apiHolidays.map((item: any) => ({
+          name: item.holidayName,
+          date: item.startDate,
+          day: item.day,
+          type: item.type,
+          coverage: item.coverage,
+          id: item.id, // for actions
+        }));
+        setLeaveData(prev => ({
+          ...prev,
+          holidays: mappedHolidays,
+        }));
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchHolidays();
+  }, []);
+ 
+ 
+  // Edit holiday (open modal with holiday data)
+  const [editHoliday, setEditHoliday] = useState<any>(null);
+  const [showEditHolidayModal, setShowEditHolidayModal] = useState(false);
+ 
+  const handleEditHoliday = (holiday: any) => {
+    setEditHoliday(holiday);
+    setShowEditHolidayModal(true);
+  };
+ 
+ 
   const StatusBadge = ({ status }: StatusBadgeProps) => {
     const statusClasses = {
       approved: 'bg-green-100 text-green-800 border-green-200',
@@ -170,21 +189,21 @@ const LeaveManagementSystem = () => {
       pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       holiday: 'bg-orange-100 text-orange-800 border-orange-200'
     };
-
+ 
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wide border ${statusClasses[status]}`}>
         {status}
       </span>
     );
   };
-
+ 
   const ActionButton = ({ variant, onClick, children }: ActionButtonProps) => {
     const variants = {
       approve: 'bg-green-500 hover:bg-green-600 text-white',
       reject: 'bg-red-500 hover:bg-red-600 text-white',
       view: 'bg-blue-500 hover:bg-blue-600 text-white'
     };
-
+ 
     return (
       <button
         onClick={onClick}
@@ -194,8 +213,8 @@ const LeaveManagementSystem = () => {
       </button>
     );
   };
-
-  const LeaveTable = ({ leaves, isHoliday = false }: LeaveTableProps) => (
+ 
+  const LeaveTable = ({ leaves, showActions = false, isHoliday = false }: LeaveTableProps) => (
     <div className="overflow-x-auto">
       <table className="w-full bg-white rounded-lg shadow-lg overflow-hidden">
         <thead className="bg-gradient-to-r from-gray-700 to-gray-800 text-white">
@@ -208,6 +227,7 @@ const LeaveManagementSystem = () => {
                 <th className="px-4 py-3 text-left font-semibold">Type</th>
                 <th className="px-4 py-3 text-left font-semibold">Status</th>
                 <th className="px-4 py-3 text-left font-semibold">Coverage</th>
+               
               </>
             ) : (
               <>
@@ -217,7 +237,6 @@ const LeaveManagementSystem = () => {
                 <th className="px-4 py-3 text-left font-semibold">Start Date</th>
                 <th className="px-4 py-3 text-left font-semibold">End Date</th>
                 <th className="px-4 py-3 text-left font-semibold">Days</th>
-           
                 <th className="px-4 py-3 text-left font-semibold">Status</th>
                 <th className="px-4 py-3 text-left font-semibold">Actions</th>
               </>
@@ -226,20 +245,23 @@ const LeaveManagementSystem = () => {
         </thead>
         <tbody>
           {isHoliday ? (
-            (leaves as Holiday[]).map((holiday, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
+            (leaves as any[]).map((holiday, index) => (
+              <tr key={holiday.id || index} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
                 <td className="px-4 py-3">{holiday.name}</td>
                 <td className="px-4 py-3">{holiday.date}</td>
                 <td className="px-4 py-3">{holiday.day}</td>
                 <td className="px-4 py-3">{holiday.type}</td>
                 <td className="px-4 py-3"><StatusBadge status="holiday" /></td>
                 <td className="px-4 py-3">{holiday.coverage}</td>
+                <td className="px-4 py-3">
+                 
+                </td>
               </tr>
             ))
           ) : (
             (leaves as Leave[]).map((leave) => (
               <tr key={leave.id} className="hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100">
-                <td className="px-4 py-3 font-medium">{leave.id}</td>
+                <td className="px-4 py-3 font-medium">{leave.employeeId || leave.id}</td>
                 <td className="px-4 py-3">{leave.name}</td>
                 <td className="px-4 py-3">{leave.type}</td>
                 <td className="px-4 py-3">{leave.startDate}</td>
@@ -248,7 +270,7 @@ const LeaveManagementSystem = () => {
                 <td className="px-4 py-3"><StatusBadge status={leave.status} /></td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    
+                   
                     <ActionButton variant="view" onClick={() => viewDetails(leave.id)}>
                       View
                     </ActionButton>
@@ -261,13 +283,13 @@ const LeaveManagementSystem = () => {
       </table>
     </div>
   );
-
+ 
   const totalLeaves = leaveData.approved.length + leaveData.pending.length + leaveData.rejected.length;
   const approvedCount = leaveData.approved.length;
   const pendingCount = leaveData.pending.length;
-
+ 
   return (
-    <div className="min-h-screen  p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
         {/* Header */}
         <div className="text-center mb-10 pb-6 border-b-4 border-blue-500">
@@ -278,59 +300,67 @@ const LeaveManagementSystem = () => {
             Manage employee leave requests efficiently and transparently
           </p>
         </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-            <h3 className="text-3xl font-bold mb-2">{totalLeaves}</h3>
-            <p className="text-lg opacity-90">Total Leave Requests</p>
-          </div>
-          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-            <h3 className="text-3xl font-bold mb-2">{approvedCount}</h3>
-            <p className="text-lg opacity-90">Approved Leaves</p>
-          </div>
-          <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
-            <h3 className="text-3xl font-bold mb-2">{pendingCount}</h3>
-            <p className="text-lg opacity-90">Pending Requests</p>
-          </div>
-        </div>
-
-        {/* Approved Leaves Section */}
-        <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-green-500">
-          <div className="flex items-center mb-6">
-            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-              ✓
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800">Approved Leaves</h2>
-          </div>
-          <LeaveTable leaves={leaveData.approved} />
-        </div>
-
-        {/* Non-Approved Leaves Section */}
-        <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-red-500">
-          <div className="flex items-center mb-6">
-            <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-              ✗
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800">Non-Approved Leaves</h2>
-          </div>
-          <LeaveTable leaves={[...leaveData.pending, ...leaveData.rejected]} />
-        </div>
-
-        {/* Holiday Leaves Section */}
-        <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-orange-500">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
-                🎉
+ 
+        {/* Layout Container */}
+        <div className="flex flex-col md:flex-row gap-8">
+         
+ 
+          {/* Main Content */}
+          <div >
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                <h3 className="text-3xl font-bold mb-2">{totalLeaves}</h3>
+                <p className="text-lg opacity-90">Total Leave Requests</p>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800">Holiday Leaves</h2>
+              <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                <h3 className="text-3xl font-bold mb-2">{approvedCount}</h3>
+                <p className="text-lg opacity-90">Approved Leaves</p>
+              </div>
+              <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+                <h3 className="text-3xl font-bold mb-2">{pendingCount}</h3>
+                <p className="text-lg opacity-90">Pending Requests</p>
+              </div>
             </div>
-          
+ 
+            {/* Approved Leaves Section */}
+            <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-green-500">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                  ✓
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">Approved Leaves</h2>
+              </div>
+              <LeaveTable leaves={leaveData.approved} />
+            </div>
+ 
+            {/* Non-Approved Leaves Section */}
+            <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-red-500">
+              <div className="flex items-center mb-6">
+                <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                  ✗
+                </div>
+                <h2 className="text-2xl font-bold text-gray-800">Non-Approved Leaves</h2>
+              </div>
+              <LeaveTable leaves={[...leaveData.pending, ...leaveData.rejected]} showActions={true} />
+            </div>
+ 
+            {/* Holiday Leaves Section */}
+            <div className="mb-10 bg-white rounded-2xl shadow-lg p-6 border-l-8 border-orange-500">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+                    🎉
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-800">Holiday Leaves</h2>
+                </div>
+               
+              </div>
+              <LeaveTable leaves={leaveData.holidays} isHoliday={true} />
+            </div>
           </div>
-          <LeaveTable leaves={leaveData.holidays} isHoliday={true} />
         </div>
-
+ 
         {/* Details Modal */}
         {showDetailsModal && selectedLeave && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -399,11 +429,11 @@ const LeaveManagementSystem = () => {
             </div>
           </div>
         )}
-
-    
+ 
+     
       </div>
     </div>
   );
 };
-
+ 
 export default LeaveManagementSystem;
