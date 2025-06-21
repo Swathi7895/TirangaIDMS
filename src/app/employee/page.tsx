@@ -14,7 +14,8 @@ import {
   Edit2,
   Save,
   X,
-  Camera
+  Camera,
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -57,6 +58,13 @@ export default function EmployeeDashboard() {
       icon: <Clock className="w-6 h-6" />,
       href: '/employee/attendance',
       color: 'bg-blue-100 text-blue-600'
+    },
+    {
+      title: 'Memos',
+      description: 'View memos and announcements sent to you',
+      icon: <MessageSquare className="w-6 h-6" />,
+      href: '/employee/memos',
+      color: 'bg-orange-100 text-orange-600'
     },
     {
       title: 'Documents',

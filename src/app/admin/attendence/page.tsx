@@ -31,6 +31,17 @@ interface AttendanceRecord {
   workHours: number;
 }
 
+interface BackendAttendanceRecord {
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  date: number[];
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  status: 'present' | 'absent' | 'half-day' | 'late';
+  workHours: number;
+}
+
 interface AttendanceStats {
   present?: number;
   late?: number;
@@ -59,8 +70,16 @@ export default function AdminAttendanceDashboard() {
       try {
         const response = await axios.get('http://localhost:8080/api/attendance');
         // Map API response to AttendanceRecord[] with late logic
-        const mappedData: AttendanceRecord[] = response.data.map((record: any) => {
+        const mappedData: AttendanceRecord[] = response.data.map((record: BackendAttendanceRecord) => {
           let status = record.status;
+
+          // Convert backend date array to 'YYYY-MM-DD' string
+          const dateArray = record.date;
+          const year = dateArray[0];
+          const month = String(dateArray[1]).padStart(2, '0');
+          const day = String(dateArray[2]).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+
           // Only check for late if present or late
           if (record.checkInTime) {
             // Compare checkInTime to 09:15:00
@@ -77,7 +96,7 @@ export default function AdminAttendanceDashboard() {
             employeeId: record.employeeId,
             employeeName: record.employeeName,
             department: record.department,
-            date: record.date,
+            date: dateStr,
             signIn: record.checkInTime ?? null,
             signOut: record.checkOutTime ?? null,
             status,
@@ -126,8 +145,12 @@ export default function AdminAttendanceDashboard() {
   };
 
   const filterDataByDateRange = () => {
+    // Create a timezone-safe 'YYYY-MM-DD' string for today's date
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`;
     
     switch (viewMode) {
       case 'today':

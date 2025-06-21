@@ -14,6 +14,7 @@ import {
   Trash2 // Added for delete functionality (optional, but good to have)
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
  
 interface Report {
   id: number;
@@ -33,6 +34,7 @@ interface Report {
 const BASE_URL = 'http://localhost:8080/api/reports'; // Your Spring Boot backend URL
  
 export default function ReportsPage() {
+  const router = useRouter();
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedSubtype, setSelectedSubtype] = useState<string>('all');
@@ -83,11 +85,29 @@ export default function ReportsPage() {
     }
   };
  
-  // Function to fetch reports from the backend
+  // Get employee ID from sessionStorage on component mount
+  useEffect(() => {
+    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!id) {
+      setError('Employee ID not found. Please login again.');
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2000);
+      return;
+    }
+    setEmployeeId(id);
+  }, [router]);
+ 
+  // Function to fetch reports from the backend - now employee-specific
   const fetchReports = useCallback(async () => {
+    if (!employeeId) return; // Don't fetch if employeeId is not available
+    
     setLoading(true);
     setError(null);
-    let url = BASE_URL;
+    
+    // Use employee-specific endpoint
+    let url = `${BASE_URL}/employee/${employeeId}`;
     const params = new URLSearchParams();
  
     if (selectedType !== 'all') {
@@ -114,23 +134,21 @@ export default function ReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedType, selectedSubtype]);
+  }, [selectedType, selectedSubtype, employeeId]); // Added employeeId as dependency
  
   // useEffect to call fetchReports when component mounts or filters change
   useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
- 
-  useEffect(() => {
-    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
-    if (!id) {
-      // handle error or redirect
-      return;
+    if (employeeId) {
+      fetchReports();
     }
-    setEmployeeId(id);
-  }, []);
+  }, [fetchReports, employeeId]); // Added employeeId as dependency
  
   const handleSubmitReport = async () => {
+    if (!employeeId) {
+      setError('Employee ID not found. Please login again.');
+      return;
+    }
+    
     // Ensure required fields are present
     if (!newReport.title || !newReport.content) {
       setError('Title and Content are required.');
@@ -142,7 +160,7 @@ export default function ReportsPage() {
       ...newReport,
       date: new Date().toISOString().split('T')[0], // Backend expects YYYY-MM-DD
       status: newReport.status || 'submitted', // Or 'draft' based on your default creation logic
-      submittedBy: 'Current User' // Replace with actual logged-in user context if available
+      submittedBy: employeeId // Use the actual employee ID
     };
  
     try {
