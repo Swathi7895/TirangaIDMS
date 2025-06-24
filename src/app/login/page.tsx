@@ -4,6 +4,7 @@ import React, { useState,  } from 'react';
 import { Lock, User, Eye, EyeOff, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface FormData {
   email: string;
@@ -24,7 +25,6 @@ export default function LoginPage() {
     password: ''
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [validationErrors, setValidationErrors] = useState<Partial<FormData>>({});
   const [loginAsEmployee, setLoginAsEmployee] = useState(false);
 
@@ -73,7 +73,6 @@ export default function LoginPage() {
       ...prev,
       [name]: undefined
     }));
-    if (error) setError('');
   };
 
   const handleLogin = async () => {
@@ -82,7 +81,6 @@ export default function LoginPage() {
     }
 
     setLoading(true);
-    setError('');
 
     try {
       const apiUrl = loginAsEmployee
@@ -96,6 +94,22 @@ export default function LoginPage() {
         body: JSON.stringify(formData)
       });
 
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        // Handle non-JSON response (like HTML error pages)
+        if (response.status === 401) {
+          toast.error('Invalid email or password. Please check your credentials.');
+        } else if (response.status === 404) {
+          toast.error('Login service not found. Please contact support.');
+        } else if (response.status >= 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error('Login failed. Please check your credentials and try again.');
+        }
+        return;
+      }
+
       const data: any = await response.json();
 
       if (response.ok) {
@@ -103,6 +117,10 @@ export default function LoginPage() {
         sessionStorage.setItem('token', data.token);
         sessionStorage.setItem('userEmail', formData.email);
         sessionStorage.setItem('roles', JSON.stringify(data.roles));
+        
+        // Show success message
+        toast.success('Login successful!');
+        
         // If employee login, store employeeId and employeeProfile from response
         if (loginAsEmployee && data.employeeId) {
           sessionStorage.setItem('employeeId', data.employeeId);
@@ -115,7 +133,10 @@ export default function LoginPage() {
         // Redirect based on role
         redirectBasedOnRole(data.roles);
       } else {
-        setError(data.message || 'Login failed. Please check your credentials.');
+        // Handle API error responses
+        const errorMessage = data.message || 'Login failed. Please check your credentials.';
+        toast.error(errorMessage);
+        
         // Clear any existing tokens on failed login
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('userEmail');
@@ -123,8 +144,15 @@ export default function LoginPage() {
         sessionStorage.removeItem('employeeId');
       }
     } catch (e: Error | unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-      setError(`Network error: ${errorMessage}`);
+      // Handle network errors and other exceptions
+      if (e instanceof TypeError && e.message.includes('fetch')) {
+        toast.error('Network error. Please check your internet connection and try again.');
+      } else if (e instanceof SyntaxError) {
+        toast.error('Invalid response from server. Please try again.');
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
+      
       // Clear any existing tokens on error
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('userEmail');
@@ -137,6 +165,30 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
         <div className="text-center mb-8">
           <div className="bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -145,12 +197,6 @@ export default function LoginPage() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Login</h1>
           <p className="text-gray-600">Sign in to access your dashboard</p>
         </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-            {error}
-          </div>
-        )}
 
         <div className="space-y-6">
           <div>

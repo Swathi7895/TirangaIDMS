@@ -9,10 +9,9 @@ import {
   MapPin,
   Briefcase,
   Star,
-  TrendingUp,
+  
   Laptop,
-  Edit2,
-  Save,
+ 
   X,
   Camera,
   MessageSquare

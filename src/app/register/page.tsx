@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface RegisterFormData {
   username: string;
@@ -21,7 +22,6 @@ export default function RegisterPage() {
     email: '',
     roles: [] // Remove default role
   });
-  const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const availableRoles = [
@@ -44,12 +44,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     // Validate that at least one role is selected
     if (formData.roles.length === 0) {
-      setError('Please select at least one role');
+      toast.error('Please select at least one role');
       setLoading(false);
       return;
     }
@@ -63,15 +62,41 @@ export default function RegisterPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        // Handle non-JSON response (like HTML error pages)
+        if (response.status === 400) {
+          toast.error('Invalid registration data. Please check your information.');
+        } else if (response.status === 409) {
+          toast.error('User already exists. Please use a different username or email.');
+        } else if (response.status >= 500) {
+          toast.error('Server error. Please try again later.');
+        } else {
+          toast.error('Registration failed. Please try again.');
+        }
+        return;
       }
 
-      router.push('/login'); // Redirect to login after success
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success('Account created successfully! Please log in.');
+        router.push('/login'); // Redirect to login after success
+      } else {
+        // Handle API error responses
+        const errorMessage = data.message || 'Registration failed. Please try again.';
+        toast.error(errorMessage);
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      // Handle network errors and other exceptions
+      if (err instanceof TypeError && err.message.includes('fetch')) {
+        toast.error('Network error. Please check your internet connection and try again.');
+      } else if (err instanceof SyntaxError) {
+        toast.error('Invalid response from server. Please try again.');
+      } else {
+        toast.error('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -79,6 +104,30 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10B981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: {
+              primary: '#EF4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/login" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
           <ArrowLeft className="w-5 h-5 mr-2" />
@@ -92,8 +141,6 @@ export default function RegisterPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl rounded-2xl sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">{error}</div>}
-
             <input
               type="text"
               placeholder="Username"

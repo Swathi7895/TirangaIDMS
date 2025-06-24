@@ -30,7 +30,7 @@ interface Employee {
   department: string;
   joiningDate: string; // YYYY-MM-DD
   status: 'Active' | 'Inactive' | 'On Leave';
-  notes?: string;
+ 
 }
 
 interface ApiEmployeeResponse extends Omit<Employee, 'joiningDate' | 'status'> {
@@ -56,7 +56,7 @@ const transformEmployeeToApiRequest = (employee: Omit<Employee, 'id'>): ApiEmplo
   department: employee.department,
   joiningDate: employee.joiningDate,
   status: employee.status,
-  notes: employee.notes,
+
 });
 
 const transformEmployeeFromApiResponse = (apiEmployee: ApiEmployeeResponse): Employee => ({
@@ -73,7 +73,7 @@ const transformEmployeeFromApiResponse = (apiEmployee: ApiEmployeeResponse): Emp
   department: apiEmployee.department,
   joiningDate: apiEmployee.joiningDate,
   status: apiEmployee.status as Employee['status'],
-  notes: apiEmployee.notes,
+
 });
 
 const API_BASE_URL = 'http://localhost:8080/api/employees';
@@ -171,7 +171,7 @@ export default function JoiningPage() {
         department: '',
         joiningDate: '',
         status: 'Active',
-        notes: ''
+       
       });
     } else if (employee) {
       setFormData({ ...employee });
@@ -447,12 +447,7 @@ export default function JoiningPage() {
                     <p className="font-medium">{selectedEmployee?.permanentAddress}</p>
                   </div>
 
-                  {selectedEmployee?.notes && (
-                    <div>
-                      <p className="text-sm text-gray-600 mb-2">Notes</p>
-                      <p className="text-gray-900">{selectedEmployee.notes}</p>
-                    </div>
-                  )}
+                
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -588,16 +583,7 @@ export default function JoiningPage() {
                       onChange={(e) => setFormData({...formData, permanentAddress: e.target.value})}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                    <textarea
-                      rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={formData.notes || ''}
-                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                      placeholder="Add any additional notes..."
-                    />
-                  </div>
+                
 
                   <div className="flex space-x-3 pt-4">
                     <button
