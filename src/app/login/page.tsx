@@ -246,6 +246,9 @@ export default function LoginPage() {
             {validationErrors.password && (
               <p className="mt-1 text-sm text-red-600">{validationErrors.password}</p>
             )}
+            <div className="flex justify-end mt-2">
+              <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">Forgot Password?</Link>
+            </div>
           </div>
 
           {/* Login as Employee Checkbox */}
@@ -275,11 +278,7 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <div className="mt-6 text-center">
-          <Link href="/forgot-password" className="text-indigo-600 hover:underline text-sm">
-            Forgot password?
-          </Link>
-        </div>
+       
 
         <div className="mt-6 text-center">
           <span className="text-gray-600">Don't have an account? </span>
