@@ -27,7 +27,7 @@ export default function StoreLayout({
           <div className="flex-shrink-0 flex items-center space-x-2"> {/* Added space-x-2 for icon */}
             {/* <AdminIcon className="h-6 w-6 text-white" /> Uncomment and replace with actual icon */}
             <h1 className="text-2xl font-extrabold text-white tracking-wide">
-           Store manager
+           Inventory Control Panel
             </h1>
           </div>
           <div className="flex items-center">

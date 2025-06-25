@@ -24,7 +24,7 @@ import { ArrowLeft } from 'lucide-react';
 export default function StoreDashboard() {
   const sections = [
     {
-      title: "Stationary",
+      title: "Office Supplies",
       description: "Manage office supplies and daily consumables",
       icon: PencilSquareIcon,
       color: "blue",
@@ -32,19 +32,19 @@ export default function StoreDashboard() {
       bgColor: "bg-gradient-to-br from-blue-50/70 to-blue-100/70 dark:from-blue-950/40 dark:to-blue-900/40", // More translucent
       items: [
         {
-          title: "Regular Usage",
+          title: "Consumables",
           description: "Daily office supplies and consumables",
           href: "/admin/store/stationary/regular",
           icon: BookOpenIcon
         },
         {
-          title: "Fixed Items",
+          title: "Fixed Assets",
           description: "Permanent stationary items",
           href: "/admin/store/stationary/fixed",
           icon: ArchiveBoxIcon
         },
         {
-          title: "In/Out Details",
+          title: "Inventory Transactions",
           description: "Track stationary movement",
           href: "/admin/store/stationary/inventory",
           icon: DocumentArrowUpIcon
@@ -52,7 +52,7 @@ export default function StoreDashboard() {
       ]
     },
     {
-      title: "Lab Materials",
+      title: "Laboratory Equipment",
       description: "Laboratory equipment and supplies management",
       icon: BeakerIcon,
       color: "emerald",
@@ -78,7 +78,7 @@ export default function StoreDashboard() {
           icon: CubeTransparentIcon
         },
         {
-          title: "In/Out Details",
+          title: "Inventory Transactions",
           description: "Track lab items movement",
           href: "/admin/store/lab/inventory",
           icon: ChartBarIcon
@@ -131,7 +131,7 @@ export default function StoreDashboard() {
             <ShoppingCartIcon className="w-9 h-9 text-white" /> {/* Icon slightly smaller */}
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 dark:text-white mb-4 leading-tight"> {/* Removed text gradient for simplicity and readability */}
-            Store Management
+            Inventory & Asset Management
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-light"> {/* Lighter font-weight */}
             Comprehensive inventory management system for all your business needs.

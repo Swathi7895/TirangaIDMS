@@ -5,7 +5,7 @@ import AdminStore from '@/app/components/AdminStore';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-interface StationaryItem {
+interface OfficeSuppliesItem {
   id: string;
   name: string;
   quantity: number;
@@ -15,7 +15,7 @@ interface StationaryItem {
   condition: 'new' | 'good' | 'fair' | 'poor';
 }
 
-interface ApiStationaryItem {
+interface ApiOfficeSuppliesItem {
   id: number;
   name: string;
   quantity: number;
@@ -30,14 +30,14 @@ interface ApiStationaryItem {
 const API_BASE_URL = 'http://localhost:8080/store/stationary/regular';
 
 export default function RegularStationaryPage() {
-  const [items, setItems] = useState<StationaryItem[]>([]);
+  const [items, setItems] = useState<OfficeSuppliesItem[]>([]);
   const [, setLoading] = useState(true);
   const [, setError] = useState<string | null>(null);
 
   const categories = ['Paper', 'Writing', 'Desk Accessories', 'Binders', 'Seating', 'Other'];
 
   // Helper function to convert API response to local format
-  const convertApiToLocal = (apiItem: ApiStationaryItem): StationaryItem => {
+  const convertApiToLocal = (apiItem: ApiOfficeSuppliesItem): OfficeSuppliesItem => {
     const [year, month, day] = apiItem.lastUpdated;
     return {
       id: apiItem.id.toString(),
@@ -62,7 +62,7 @@ export default function RegularStationaryPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data: ApiStationaryItem[] = await response.json();
+      const data: ApiOfficeSuppliesItem[] = await response.json();
       const convertedItems = data.map(convertApiToLocal);
       setItems(convertedItems);
     } catch (err) {
@@ -87,7 +87,7 @@ export default function RegularStationaryPage() {
         </Link>
       </div>
       <AdminStore
-        title="Regular Stationary Items"
+        title="Regular Office Supplies Items"
         items={items}
         categories={categories}
       />

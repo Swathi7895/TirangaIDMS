@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       gradient: 'from-blue-500 to-blue-600', // Solid gradient for icons
       bgOpacity: 'bg-blue-500/10', // Consistent opacity for card background
       darkBgOpacity: 'dark:bg-blue-600/10',
-      items: ['Daily', 'Weekly', 'Monthly', 'Yearly', 'Attendance Summary'],
+      items: ['Daily', 'Weekly', 'Monthly', 'Yearly', ],
       href: '/admin/attendence',
     },
     {
@@ -379,7 +379,7 @@ export default function AdminDashboard() {
                   >
                     <option value="ADMIN">Admin</option>
                     <option value="EMPLOYEE">Employee</option>
-                    <option value="STORE">Store Manager</option>
+                    <option value="STORE">Inventory Control Panel</option>
                     <option value="HR">HR</option>
                     <option value="DATAMANAGER">Data Manager</option>
                     <option value="FINANCEMANAGER">Finance Manager</option>

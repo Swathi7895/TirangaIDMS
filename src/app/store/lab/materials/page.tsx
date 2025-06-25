@@ -177,7 +177,7 @@ export default function LabMaterialsPage() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Lab Materials Inventory
+            Laboratory Equipment Inventory
           </h2>
           <button
             onClick={() => setIsAddModalOpen(true)}

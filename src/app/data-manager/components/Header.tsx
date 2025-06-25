@@ -1,5 +1,3 @@
-
-
 export default function Header({  handleLogout }: { title: string; handleLogout: () => void }) {
  
 return (
@@ -9,7 +7,7 @@ return (
           <div className="flex-shrink-0 flex items-center space-x-2"> {/* Added space-x-2 for icon */}
             {/* <AdminIcon className="h-6 w-6 text-white" /> Uncomment and replace with actual icon */}
             <h1 className="text-2xl font-extrabold text-white tracking-wide">
-           Data manager
+           Enterprise Data Manager
             </h1>
           </div>
           <div className="flex items-center">

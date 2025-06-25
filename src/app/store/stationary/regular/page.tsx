@@ -210,7 +210,7 @@ export default function RegularStationaryPage() {
       )}
 
       <ItemManagement
-        title="Regular Stationary Items"
+        title="Consumables"
         items={items}
         onAdd={handleAdd}
         onEdit={handleEdit}

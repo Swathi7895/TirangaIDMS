@@ -119,7 +119,7 @@ export default function FixedStationaryPage() {
             </Link>
             </div>
       <AdminStore
-        title="Fixed Stationary Items"
+        title="Fixed Office Supplies Items"
         items={items}
        
         categories={categories}

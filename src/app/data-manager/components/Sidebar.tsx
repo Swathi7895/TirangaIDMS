@@ -1,16 +1,15 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { 
-  TrendingUp, 
-  ShoppingCart, 
-  Truck, 
-  FileText, 
-  CreditCard, 
-  Receipt, 
-  Calculator, 
-  Gavel, 
-  X, 
+import {
+  TrendingUp,
+  ShoppingCart,
+  Truck,
+  FileText,
+  CreditCard,
+  Receipt,
+  Calculator,
+  Gavel,
   Menu,
   LucideIcon
 } from 'lucide-react';
@@ -37,41 +36,71 @@ const modules: Module[] = [
 ];
 
 export default function Sidebar() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
   const pathname = usePathname();
+  const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Show sidebar on menu hover, hide with delay on mouse leave
+  const handleMenuEnter = () => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    setSidebarVisible(true);
+  };
+  const handleMenuLeave = () => {
+    hoverTimeout.current = setTimeout(() => setSidebarVisible(false), 120);
+  };
 
   return (
-    <div className={`${sidebarOpen ? 'w-64' : 'w-16'} bg-white shadow-lg transition-all duration-300 flex flex-col`}>
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between">
-          {sidebarOpen && (
-            <h1 className="text-xl font-bold text-gray-800">DataManager Pro</h1>
-          )}
+    <>
+      {/* Floating menu button - only show when sidebar is closed */}
+      {!sidebarVisible && (
+        <div
+          className="fixed top-4 left-4 z-[100] lg:block hidden"
+          onMouseEnter={handleMenuEnter}
+          onMouseLeave={handleMenuLeave}
+        >
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100"
+            className="p-2 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+            aria-label="Open sidebar"
           >
-            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-7 h-7 text-blue-700" />
           </button>
         </div>
-      </div>
+      )}
 
-      <nav className="flex-1 p-4 space-y-2">
-        {modules.map((module) => (
-          <Link
-            key={module.id}
-            href={module.path}
-            className={`w-full flex items-center ${sidebarOpen ? 'px-4' : 'px-3'} py-3 text-left rounded-lg transition-colors ${
-              pathname === module.path
-                ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700'
-                : 'text-gray-600 hover:bg-gray-100'
-            }`}
-          >
-            <module.icon className="w-5 h-5 flex-shrink-0" />
-            {sidebarOpen && <span className="ml-3 font-medium">{module.name}</span>}
-          </Link>
-        ))}
-      </nav>
-    </div>
+      {/* Sidebar */}
+      <div
+        className={`
+          fixed z-50 top-0 left-0 h-full bg-white shadow-lg flex flex-col
+          transition-all duration-300
+          ${sidebarVisible ? 'w-64 opacity-100 pointer-events-auto' : 'w-0 opacity-0 pointer-events-none'}
+          hidden lg:flex
+        `}
+        style={{ minHeight: '100vh' }}
+        onMouseEnter={handleMenuEnter}
+        onMouseLeave={handleMenuLeave}
+      >
+        <div className="flex items-center p-4 border-b min-h-[56px]">
+          <span className="text-xl font-bold text-gray-800 whitespace-nowrap">Enterprise Data Manager</span>
+        </div>
+        <nav className="flex-1 p-2 space-y-1">
+          {modules.map((module) => {
+            const isActive = pathname === module.path;
+            return (
+              <Link
+                key={module.id}
+                href={module.path}
+                className={`
+                  flex items-center rounded-lg transition-colors px-4 py-3
+                  ${isActive ? 'bg-blue-100 text-blue-700 border-r-4 border-blue-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'}
+                `}
+              >
+                <module.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="ml-3 font-medium">{module.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </>
   );
-} 
+}

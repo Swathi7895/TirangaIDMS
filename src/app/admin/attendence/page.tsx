@@ -1,9 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Clock,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   ArrowLeft,
  
@@ -12,14 +12,14 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
-
+ 
 interface Employee {
   id: string;
   name: string;
   department: string;
   email: string;
 }
-
+ 
 interface AttendanceRecord {
   employeeId: string;
   employeeName: string;
@@ -30,7 +30,18 @@ interface AttendanceRecord {
   status: 'present' | 'absent' | 'half-day' | 'late';
   workHours: number;
 }
-
+ 
+interface BackendAttendanceRecord {
+  employeeId: string;
+  employeeName: string;
+  department: string;
+  date: number[];
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  status: 'present' | 'absent' | 'half-day' | 'late';
+  workHours: number;
+}
+ 
 interface AttendanceStats {
   present?: number;
   late?: number;
@@ -40,17 +51,17 @@ interface AttendanceStats {
   totalWorkHours: number;
   avgWorkHours: string;
 }
-
+ 
 export default function AdminAttendanceDashboard() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'year'>('today');
+ 
+  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'year'>('year');
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
  
-
+ 
   // Sample data initialization
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -59,12 +70,28 @@ export default function AdminAttendanceDashboard() {
       try {
         const response = await axios.get('http://localhost:8080/api/attendance');
         // Map API response to AttendanceRecord[] with late logic
-        const mappedData: AttendanceRecord[] = response.data.map((record: any) => {
+        const mappedData: AttendanceRecord[] = response.data.map((record: BackendAttendanceRecord) => {
           let status = record.status;
+ 
+          // Convert backend date array to 'YYYY-MM-DD' string
+          const dateArray = record.date;
+          const year = dateArray[0];
+          const month = String(dateArray[1]).padStart(2, '0');
+          const day = String(dateArray[2]).padStart(2, '0');
+          const dateStr = `${year}-${month}-${day}`;
+ 
+          // Convert checkInTime/checkOutTime arrays to string if needed
+          const formatTime = (time: string | number[] | null) => {
+            if (Array.isArray(time)) {
+              return time.map((n: number) => String(n).padStart(2, '0')).join(':');
+            }
+            return time ?? null;
+          };
+ 
           // Only check for late if present or late
-          if (record.checkInTime) {
+          const checkIn = formatTime(record.checkInTime);
+          if (checkIn && typeof checkIn === 'string') {
             // Compare checkInTime to 09:15:00
-            const checkIn = record.checkInTime;
             if (checkIn > '09:15:00') {
               status = 'late';
             } else if (checkIn > '09:00:00') {
@@ -77,9 +104,9 @@ export default function AdminAttendanceDashboard() {
             employeeId: record.employeeId,
             employeeName: record.employeeName,
             department: record.department,
-            date: record.date,
-            signIn: record.checkInTime ?? null,
-            signOut: record.checkOutTime ?? null,
+            date: dateStr,
+            signIn: formatTime(record.checkInTime),
+            signOut: formatTime(record.checkOutTime),
             status,
             workHours: record.workHours,
           };
@@ -94,7 +121,7 @@ export default function AdminAttendanceDashboard() {
     };
     fetchAttendance();
   }, []);
-
+ 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'present':
@@ -109,7 +136,7 @@ export default function AdminAttendanceDashboard() {
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-
+ 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'present':
@@ -124,11 +151,15 @@ export default function AdminAttendanceDashboard() {
         return <AlertCircle className="w-4 h-4" />;
     }
   };
-
+ 
   const filterDataByDateRange = () => {
+    // Create a timezone-safe 'YYYY-MM-DD' string for today's date
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayString = `${year}-${month}-${day}`;
+   
     switch (viewMode) {
       case 'today':
         return attendanceData.filter(record => record.date === todayString);
@@ -159,66 +190,66 @@ export default function AdminAttendanceDashboard() {
         return attendanceData;
     }
   };
-
+ 
   const filteredData = filterDataByDateRange().filter(record => {
     const matchesDepartment = selectedDepartment === 'all' || record.department === selectedDepartment;
-    const matchesSearch = record.employeeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         record.department.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (record.employeeName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                         (record.department?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     return matchesDepartment && matchesSearch;
   });
-
+ 
   const calculateStats = () => {
     const stats = filteredData.reduce((acc, record) => {
       acc[record.status] = (acc[record.status] || 0) + 1;
       acc.total = (acc.total || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-
+ 
     const totalWorkHours = filteredData.reduce((sum, record) => sum + record.workHours, 0);
     const avgWorkHours = stats.total > 0 ? (totalWorkHours / stats.total).toFixed(1) : '0';
-    
+   
     return { ...stats, totalWorkHours, avgWorkHours };
   };
-
+ 
   const stats: AttendanceStats = calculateStats();
   const departments = [...new Set(attendanceData.map(record => record.department))];
-
+ 
   const renderStatsCards = () => {
     const statCards = [
-      { 
-        title: 'Total Present', 
-        value: stats.present || 0, 
-        icon: CheckCircle, 
-        color: 'text-emerald-600', 
+      {
+        title: 'Total Present',
+        value: stats.present || 0,
+        icon: CheckCircle,
+        color: 'text-emerald-600',
         bgColor: 'bg-emerald-50',
         borderColor: 'border-emerald-200'
       },
-      { 
-        title: 'Late Arrivals', 
-        value: stats.late || 0, 
-        icon: Clock, 
-        color: 'text-orange-600', 
+      {
+        title: 'Late Arrivals',
+        value: stats.late || 0,
+        icon: Clock,
+        color: 'text-orange-600',
         bgColor: 'bg-orange-50',
         borderColor: 'border-orange-200'
       },
-      { 
-        title: 'Half Days', 
-        value: stats['half-day'] || 0, 
-        icon: AlertCircle, 
-        color: 'text-amber-600', 
+      {
+        title: 'Half Days',
+        value: stats['half-day'] || 0,
+        icon: AlertCircle,
+        color: 'text-amber-600',
         bgColor: 'bg-amber-50',
         borderColor: 'border-amber-200'
       },
-      { 
-        title: 'Absent', 
-        value: stats.absent || 0, 
-        icon: XCircle, 
-        color: 'text-red-600', 
+      {
+        title: 'Absent',
+        value: stats.absent || 0,
+        icon: XCircle,
+        color: 'text-red-600',
         bgColor: 'bg-red-50',
         borderColor: 'border-red-200'
       }
     ];
-
+ 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((card, index) => (
@@ -237,10 +268,10 @@ export default function AdminAttendanceDashboard() {
       </div>
     );
   };
-
+ 
   const renderAttendanceTable = () => {
-    const groupedData = viewMode === 'today' ? 
-      filteredData : 
+    const groupedData = viewMode === 'today' ?
+      filteredData :
       filteredData.reduce((acc, record) => {
         const key = `${record.employeeId}-${record.date}`;
         if (!acc[key]) {
@@ -248,9 +279,9 @@ export default function AdminAttendanceDashboard() {
         }
         return acc;
       }, {} as Record<string, AttendanceRecord>);
-
+ 
     const dataToShow = Array.isArray(groupedData) ? groupedData : Object.values(groupedData);
-
+ 
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -286,7 +317,7 @@ export default function AdminAttendanceDashboard() {
             </div>
           </div>
         </div>
-        
+       
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -335,7 +366,7 @@ export default function AdminAttendanceDashboard() {
       </div>
     );
   };
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -355,7 +386,7 @@ export default function AdminAttendanceDashboard() {
         )}
         <div className="mb-8">
           <div className="flex items-center justify-between">
-        
+       
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Attendance Dashboard</h1>
               <p className="text-gray-600">Monitor and manage employee attendance records</p>
@@ -379,7 +410,7 @@ export default function AdminAttendanceDashboard() {
             </div>
           </div>
         </div>
-
+ 
         {loading ? (
           <div className="text-center py-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -389,9 +420,9 @@ export default function AdminAttendanceDashboard() {
           <>
             {/* Stats Cards */}
             {renderStatsCards()}
-
-    
-
+ 
+   
+ 
             {/* Attendance Table */}
             {renderAttendanceTable()}
           </>
@@ -400,3 +431,4 @@ export default function AdminAttendanceDashboard() {
     </div>
   );
 }
+ 

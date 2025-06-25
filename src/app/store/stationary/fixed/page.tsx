@@ -237,7 +237,7 @@ export default function FixedStationaryPage() {
       )}
 
       <ItemManagement
-        title="Fixed Stationary Items"
+        title="Fixed Assets"
         items={items}
         onAdd={handleAdd}
         onEdit={handleEdit}

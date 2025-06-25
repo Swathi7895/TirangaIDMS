@@ -1,25 +1,24 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, 
-  FileText, 
+import {
+  Calendar,
+  FileText,
   Clock,
   Mail,
   Phone,
   MapPin,
   Briefcase,
   Star,
-  TrendingUp,
+ 
   Laptop,
-  Edit2,
-  Save,
+  User,
   X,
-  Camera
+  MessageSquare
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-
+ 
 interface QuickLink {
   title: string;
   description: string;
@@ -27,7 +26,7 @@ interface QuickLink {
   href: string;
   color: string;
 }
-
+ 
 export default function EmployeeDashboard() {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -48,8 +47,8 @@ export default function EmployeeDashboard() {
     relievingDate: '',
     status: ''
   });
-  const [profilePhoto, setProfilePhoto] = useState('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face');
-
+  const [profilePhoto, setProfilePhoto] = useState('');
+ 
   const quickLinks: QuickLink[] = [
     {
       title: 'Attendance',
@@ -57,6 +56,13 @@ export default function EmployeeDashboard() {
       icon: <Clock className="w-6 h-6" />,
       href: '/employee/attendance',
       color: 'bg-blue-100 text-blue-600'
+    },
+    {
+      title: 'Memos',
+      description: 'View memos and announcements sent to you',
+      icon: <MessageSquare className="w-6 h-6" />,
+      href: '/employee/memos',
+      color: 'bg-orange-100 text-orange-600'
     },
     {
       title: 'Documents',
@@ -94,7 +100,7 @@ export default function EmployeeDashboard() {
       color: 'bg-indigo-100 text-indigo-600'
     }
   ];
-
+ 
   const fetchEmployee = async () => {
     setLoading(true);
     setError(null);
@@ -122,18 +128,22 @@ export default function EmployeeDashboard() {
         relievingDate: data.relievingDate || '',
         status: data.status || ''
       });
-      if (data.profilePhotoUrl) setProfilePhoto(data.profilePhotoUrl);
+      if (data.profilePhotoUrl) {
+        setProfilePhoto(`http://localhost:8080${data.profilePhotoUrl}`);
+      } else {
+        setProfilePhoto('');
+      }
     } catch (e: any) {
       setError(e.message || "Error fetching employee data");
     } finally {
       setLoading(false);
     }
   };
-
+ 
   useEffect(() => {
     fetchEmployee();
   }, [router]);
-
+ 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -141,19 +151,19 @@ export default function EmployeeDashboard() {
       </div>
     );
   }
-
+ 
   const handleEdit = () => {
     setIsEditing(true);
     setError(null);
   };
-
+ 
   const handleSave = () => {
     // Here you would typically make an API call to update the profile
     setIsEditing(false);
     // Show success message or handle the update response
     alert('Profile updated successfully!');
   };
-
+ 
   const handleCancel = () => {
     setEditedProfile({
       employeeName: employee.employeeName,
@@ -171,7 +181,7 @@ export default function EmployeeDashboard() {
     });
     setIsEditing(false);
   };
-
+ 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditedProfile(prev => ({
@@ -179,38 +189,7 @@ export default function EmployeeDashboard() {
       [name]: value
     }));
   };
-
-  const handlePhotoUpdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Create an image element to get the dimensions
-        const img = new window.Image();
-        img.onload = () => {
-          // Create a canvas to resize and crop the image
-          const canvas = document.createElement('canvas');
-          const size = 150; // Match the default image size
-          canvas.width = size;
-          canvas.height = size;
-          
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            // Calculate the center crop
-            const scale = Math.max(size / img.width, size / img.height);
-            const x = (img.width * scale - size) / 2;
-            const y = (img.height * scale - size) / 2;
-            
-            ctx.drawImage(img, -x, -y, img.width * scale, img.height * scale);
-            setProfilePhoto(canvas.toDataURL('image/jpeg', 0.9));
-          }
-        };
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
+ 
   if (error || !employee) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-red-600">
@@ -224,7 +203,7 @@ export default function EmployeeDashboard() {
       </div>
     );
   }
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -232,29 +211,21 @@ export default function EmployeeDashboard() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex items-start space-x-6">
             <div className="relative">
-              <div className="w-24 h-24 relative overflow-hidden rounded-full">
-                <Image
-                  src={profilePhoto}
-                  alt={employee.employeeName}
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                  priority
-                />
+              <div className="w-24 h-24 relative overflow-hidden rounded-full bg-gray-100 flex items-center justify-center">
+                {profilePhoto ? (
+                  <Image
+                    src={profilePhoto}
+                    alt={employee.employeeName}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                    priority
+                  />
+                ) : (
+                  <User className="w-12 h-12 text-gray-400" />
+                )}
               </div>
-              <label 
-                htmlFor="photo-upload" 
-                className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors"
-              >
-                <Camera className="w-4 h-4 text-white" />
-                <input
-                  id="photo-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoUpdate}
-                />
-              </label>
+             
             </div>
             <div className="flex-1">
               <div className="flex justify-between items-start">
@@ -415,14 +386,14 @@ export default function EmployeeDashboard() {
                           <span className="font-semibold">Joining Date:</span>
                           <span className="text-gray-600">{employee.joiningDate ? new Date(employee.joiningDate).toLocaleDateString() : '-'}</span>
                         </div>
-                      
+                     
                         <div className="flex items-center space-x-2">
                           <span className="font-semibold">Status:</span>
                           <span className="text-gray-600">{employee.status}</span>
                         </div>
                       </div>
                       <div className="mt-4">
-                      
+                     
                       </div>
                     </div>
                   </>
@@ -431,7 +402,7 @@ export default function EmployeeDashboard() {
             </div>
           </div>
         </div>
-
+ 
         {/* Quick Links */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Quick Links</h2>
@@ -459,3 +430,4 @@ export default function EmployeeDashboard() {
     </div>
   );
 }
+ 

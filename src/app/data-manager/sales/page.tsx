@@ -56,9 +56,8 @@ export default function SalesPage() {
       }
       const result = await response.json();
       setData(result);
-    } catch (e: Error | unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-      setError(`Failed to fetch sales: ${errorMessage}`);
+    } catch (e: any) {
+      setError(`Failed to fetch sales: ${e.message}`);
     } finally {
       setLoading(false);
     }
@@ -130,9 +129,8 @@ export default function SalesPage() {
         }
         setData(prev => prev.filter(i => i.id !== item.id));
         alert('Sale deleted successfully!');
-      } catch (e: Error | unknown) {
-        const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-        alert(`Failed to delete sale: ${errorMessage}`);
+      } catch (e: any) {
+        alert(`Failed to delete sale: ${e.message}`);
       }
     }
   };
@@ -175,9 +173,8 @@ export default function SalesPage() {
       }
       setIsFormOpen(false);
       setSelectedSale(null);
-    } catch (e: Error | unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'An unknown error occurred';
-      alert(`Failed to save sale: ${errorMessage}`);
+    } catch (e: any) {
+      alert(`Failed to save sale: ${e.message}`);
     }
   };
 

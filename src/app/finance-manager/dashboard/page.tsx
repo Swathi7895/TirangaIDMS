@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-
+import { useRouter,  } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 import { 
@@ -24,10 +24,10 @@ interface Expense {
 export default function FinanceManagerDashboard() {
  
   const [stats, setStats] = useState([
-    { name: 'Monthly Budget', value: 'Loading...', change: '', icon: BanknotesIcon },
-    { name: 'Fixed Costs', value: 'Loading...', change: '', icon: BuildingOfficeIcon },
-    { name: 'Variable Costs', value: 'Loading...', change: '', icon: ChartBarIcon },
-    { name: 'Savings', value: 'Loading...', change: '', icon: ArrowTrendingUpIcon },
+    { name: 'Planned Monthly Budget', value: 'Loading...', change: '', icon: BanknotesIcon },
+    { name: 'Recurring Fixed Expenses', value: 'Loading...', change: '', icon: BuildingOfficeIcon },
+    { name: 'Dynamic Operational Costs', value: 'Loading...', change: '', icon: ChartBarIcon },
+    { name: 'Net Savings', value: 'Loading...', change: '', icon: ArrowTrendingUpIcon },
   ]);
 
   useEffect(() => {
@@ -93,25 +93,25 @@ export default function FinanceManagerDashboard() {
         // Update stats with calculated values
         setStats([
           { 
-            name: 'Monthly Budget', 
+            name: 'Planned Monthly Budget', 
             value: `₹${monthlyBudget.toLocaleString('en-IN')}`, 
             change: '+0%', 
             icon: BanknotesIcon 
           },
           { 
-            name: 'Fixed Costs', 
+            name: 'Recurring Fixed Expenses', 
             value: `₹${totalFixedCosts.toLocaleString('en-IN')}`, 
             change: calculateChange(totalFixedCosts, totalFixedCosts * 0.9), // Example previous value
             icon: BuildingOfficeIcon 
           },
           { 
-            name: 'Variable Costs', 
+            name: 'Dynamic Operational Costs', 
             value: `₹${totalVariableCosts.toLocaleString('en-IN')}`, 
             change: calculateChange(totalVariableCosts, totalVariableCosts * 0.95), // Example previous value
             icon: ChartBarIcon 
           },
           { 
-            name: 'Savings', 
+            name: 'Net Savings', 
             value: `₹${savings.toLocaleString('en-IN')}`, 
             change: calculateChange(savings, savings * 1.1), // Example previous value
             icon: ArrowTrendingUpIcon 
@@ -121,10 +121,10 @@ export default function FinanceManagerDashboard() {
         console.error('Error fetching expense data:', error);
         // Set error state in stats
         setStats([
-          { name: 'Monthly Budget', value: 'Error', change: '', icon: BanknotesIcon },
-          { name: 'Fixed Costs', value: 'Error', change: '', icon: BuildingOfficeIcon },
-          { name: 'Variable Costs', value: 'Error', change: '', icon: ChartBarIcon },
-          { name: 'Savings', value: 'Error', change: '', icon: ArrowTrendingUpIcon },
+          { name: 'Planned Monthly Budget', value: 'Error', change: '', icon: BanknotesIcon },
+          { name: 'Recurring Fixed Expenses', value: 'Error', change: '', icon: BuildingOfficeIcon },
+          { name: 'Dynamic Operational Costs', value: 'Error', change: '', icon: ChartBarIcon },
+          { name: 'Net Savings', value: 'Error', change: '', icon: ArrowTrendingUpIcon },
         ]);
       }
     };
@@ -134,33 +134,33 @@ export default function FinanceManagerDashboard() {
 
   const financeSections = [
     {
-      title: 'Fixed Expenses',
+      title: 'Recurring Expenditures',
       icon: BuildingOfficeIcon,
       description: 'Manage recurring fixed costs and monthly obligations',
       color: 'from-blue-500 to-blue-600',
       bgColor: 'bg-blue-50 dark:bg-blue-900/20',
       iconColor: 'text-blue-600 dark:text-blue-400',
       features: [
-        { name: 'Rent', link: '/finance-manager/fixed-expenses/rent', icon: '🏠' },
-        { name: 'Electric Bills', link: '/finance-manager/fixed-expenses/electric-bills', icon: '⚡' },
-        { name: 'Internet Bills', link: '/finance-manager/fixed-expenses/internet-bills', icon: '🌐' },
-        { name: 'SIM Bills', link: '/finance-manager/fixed-expenses/sim-bills', icon: '📱' },
-        { name: 'Water Bills', link: '/finance-manager/fixed-expenses/water-bills', icon: '💧' },
-        { name: 'Salaries', link: '/finance-manager/fixed-expenses/salaries', icon: '👥' },
+        { name: 'Facility Rent', link: '/finance-manager/fixed-expenses/rent', icon: '🏠' },
+        { name: 'Electricity Charges', link: '/finance-manager/fixed-expenses/electric-bills', icon: '⚡' },
+        { name: 'Broadband Services', link: '/finance-manager/fixed-expenses/internet-bills', icon: '🌐' },
+        { name: 'Telecom Subscriptions', link: '/finance-manager/fixed-expenses/sim-bills', icon: '📱' },
+        { name: 'Utility - Water Supply', link: '/finance-manager/fixed-expenses/water-bills', icon: '💧' },
+        { name: 'Employee Salaries', link: '/finance-manager/fixed-expenses/salaries', icon: '👥' },
       ],
     },
     {
-      title: 'Variable Expenses',
+      title: 'Operational Overhead',
       icon: TagIcon,
       description: 'Track fluctuating costs and dynamic business expenses',
       color: 'from-emerald-500 to-emerald-600',
       bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
       iconColor: 'text-emerald-600 dark:text-emerald-400',
       features: [
-        { name: 'Travel', link: '/finance-manager/variable-expenses/travel', icon: '✈️' },
-        { name: 'Expo Advertisement', link: '/finance-manager/variable-expenses/expo-advertisement', icon: '📢' },
-        { name: 'Incentives', link: '/finance-manager/variable-expenses/incentives', icon: '🎯' },
-        { name: 'Commissions', link: '/finance-manager/variable-expenses/commissions', icon: '💰' },
+        { name: 'Business Travel', link: '/finance-manager/variable-expenses/travel', icon: '✈️' },
+        { name: 'Marketing & Promotions', link: '/finance-manager/variable-expenses/expo-advertisement', icon: '📢' },
+        { name: 'Employee Incentives', link: '/finance-manager/variable-expenses/incentives', icon: '🎯' },
+        { name: 'Sales Commissions', link: '/finance-manager/variable-expenses/commissions', icon: '💰' },
       ],
     },
   ];
@@ -209,7 +209,7 @@ export default function FinanceManagerDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
-                Finance Manager
+                Financial Dashboard
               </h1>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Comprehensive expense tracking and budget management

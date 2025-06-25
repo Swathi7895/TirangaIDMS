@@ -154,8 +154,8 @@ export default function DataManagerDashboard() {
     datasets: [{
       label: 'Sales',
       data: [],
-      borderColor: 'rgb(34, 197, 94)',
-      backgroundColor: 'rgba(34, 197, 94, 0.5)',
+      borderColor: '#36a2eb',
+      backgroundColor: 'rgba(54, 162, 235, 0.3)',
     }]
   });
   const [purchaseData, setPurchaseData] = useState<ChartData>({
@@ -163,8 +163,8 @@ export default function DataManagerDashboard() {
     datasets: [{
       label: 'Purchases',
       data: [],
-      borderColor: 'rgb(249, 115, 22)',
-      backgroundColor: 'rgba(249, 115, 22, 0.5)',
+      borderColor: '#ff6384',
+      backgroundColor: 'rgba(255, 99, 132, 0.3)',
     }]
   });
   const [paymentStatusData, setPaymentStatusData] = useState<ChartData>({
@@ -173,10 +173,10 @@ export default function DataManagerDashboard() {
       label: 'Payment Status',
       data: [0, 0, 0, 0],
       backgroundColor: [
-        'rgba(34, 197, 94, 0.8)',
-        'rgba(234, 179, 8, 0.8)',
-        'rgba(239, 68, 68, 0.8)',
-        'rgba(249, 115, 22, 0.8)',
+        '#36a2eb',
+        '#ffce56',
+        '#ff6384',
+        '#4bc0c0',
       ],
     }]
   });
@@ -215,8 +215,8 @@ export default function DataManagerDashboard() {
             datasets: [{
               label: 'Sales',
               data: monthlySales.data,
-              borderColor: 'rgb(34, 197, 94)',
-              backgroundColor: 'rgba(34, 197, 94, 0.5)',
+              borderColor: '#36a2eb',
+              backgroundColor: 'rgba(54, 162, 235, 0.3)',
             }]
           });
         }
@@ -231,8 +231,8 @@ export default function DataManagerDashboard() {
             datasets: [{
               label: 'Purchases',
               data: monthlyPurchases.data,
-              borderColor: 'rgb(249, 115, 22)',
-              backgroundColor: 'rgba(249, 115, 22, 0.5)',
+              borderColor: '#ff6384',
+              backgroundColor: 'rgba(255, 99, 132, 0.3)',
             }]
           });
         }
@@ -258,10 +258,10 @@ export default function DataManagerDashboard() {
             label: 'Payment Status',
             data: Object.values(paymentStatusCounts),
             backgroundColor: [
-              'rgba(34, 197, 94, 0.8)',
-              'rgba(234, 179, 8, 0.8)',
-              'rgba(239, 68, 68, 0.8)',
-              'rgba(249, 115, 22, 0.8)',
+              '#36a2eb',
+              '#ffce56',
+              '#ff6384',
+              '#4bc0c0',
             ],
           }]
         });
@@ -391,12 +391,12 @@ export default function DataManagerDashboard() {
                   {
                     label: 'Sales',
                     data: salesData.datasets[0].data,
-                    backgroundColor: 'rgba(34, 197, 94, 0.5)',
+                    backgroundColor: '#36a2eb',
                   },
                   {
                     label: 'Purchases',
                     data: purchaseData.datasets[0].data,
-                    backgroundColor: 'rgba(249, 115, 22, 0.5)',
+                    backgroundColor: '#ff6384',
                   },
                 ],
               }}

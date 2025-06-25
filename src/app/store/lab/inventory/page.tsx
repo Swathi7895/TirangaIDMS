@@ -319,7 +319,7 @@ export default function LabInventoryPage() {
         {isAddModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg w-full max-w-md">
-              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Item</h3>
+              <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Inventory Transaction</h3>
               <div className="space-y-4">
                 <div>
                   <label htmlFor="item" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name *</label>

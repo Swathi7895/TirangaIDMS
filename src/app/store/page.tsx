@@ -49,14 +49,14 @@ export default function StorePage() {
 
   const initialSections: SectionData[] = [
     {
-      title: "Stationary",
-      description: "Office supplies and daily consumables management",
+      title: "Inventory & Asset Management",
+      description: "Manage office supplies and assets",
       icon: PencilSquareIcon,
       color: "indigo" as SectionColor,
       count: "0",
       items: [
         {
-          title: "Regular Usage",
+          title: "Consumables",
           description: "Daily office supplies and consumables",
           href: "/store/stationary/regular",
           icon: BookOpenIcon,
@@ -64,16 +64,16 @@ export default function StorePage() {
           apiUrl: 'http://localhost:8080/store/stationary/regular',
         },
         {
-          title: "Fixed Items",
-          description: "Permanent stationary items",
+          title: "Fixed Assets",
+          description: "Permanent office supplies",
           href: "/store/stationary/fixed",
           icon: ArchiveBoxIcon,
           count: 0,
           apiUrl: 'http://localhost:8080/store/stationary/fixed',
         },
         {
-          title: "In/Out Details",
-          description: "Track stationary movement",
+          title: "Inventory Transactions",
+          description: "Track office supplies movement",
           href: "/store/stationary/inventory",
           icon: DocumentArrowUpIcon,
           count: 0,
@@ -82,14 +82,14 @@ export default function StorePage() {
       ]
     },
     {
-      title: "Lab Materials",
+      title: "Laboratory Equipment",
       description: "Laboratory equipment and supplies management",
       icon: BeakerIcon,
       color: "teal" as SectionColor,
       count: "0",
       items: [
         {
-          title: "Instruments",
+          title: "Lab Equipment",
           description: "Lab equipment and tools",
           href: "/store/lab/instruments",
           icon: PaintBrushIcon,
@@ -97,7 +97,7 @@ export default function StorePage() {
           apiUrl: 'http://localhost:8080/store/lab/instruments',
         },
         {
-          title: "Components",
+          title: "Spare Parts & Modules",
           description: "Lab parts and components",
           href: "/store/lab/components",
           icon: WrenchScrewdriverIcon,
@@ -105,7 +105,7 @@ export default function StorePage() {
           apiUrl: 'http://localhost:8080/store/lab/components',
         },
         {
-          title: "Materials",
+          title: "Lab Consumables",
           description: "Lab consumables and materials",
           href: "/store/lab/materials",
           icon: CubeTransparentIcon,
@@ -113,8 +113,8 @@ export default function StorePage() {
           apiUrl: 'http://localhost:8080/store/lab/materials',
         },
         {
-          title: "In/Out Details",
-          description: "Track lab items movement",
+          title: "Usage & Movement Logs",
+          description: "Track laboratory inventory movement",
           href: "/store/lab/inventory",
           icon: ChartBarIcon,
           count: 0,
@@ -123,14 +123,14 @@ export default function StorePage() {
       ]
     },
     {
-      title: "Capital Office Assets",
+      title: "Inventory Segments",
       description: "Permanent office equipment and furniture",
       icon: BuildingOfficeIcon,
       color: "rose" as SectionColor,
       count: "0",
       items: [
         {
-          title: "Furniture",
+          title: "Office furniture and fixtures",
           description: "Office furniture and fixtures",
           href: "/store/assets/furniture",
           icon: TableCellsIcon,
@@ -138,7 +138,7 @@ export default function StorePage() {
           apiUrl: 'http://localhost:8080/store/assets/furniture',
         },
         {
-          title: "Systems",
+          title: "Computers and electronic systems",
           description: "Computers and electronic systems",
           href: "/store/assets/systems",
           icon: CpuChipIcon,
@@ -146,7 +146,7 @@ export default function StorePage() {
           apiUrl: 'http://localhost:8080/store/assets/systems',
         },
         {
-          title: "Printers & Equipment",
+          title: "Printers and other office equipment",
           description: "Printers and other office equipment",
           href: "/store/assets/printers",
           icon: PrinterIcon,
@@ -218,7 +218,7 @@ export default function StorePage() {
             
 
               // Count active assets (from Capital Office Assets section)
-              if (section.title === "Capital Office Assets") {
+              if (section.title === "Inventory Segments") {
                 
               }
             } else {
@@ -268,10 +268,10 @@ export default function StorePage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Store Management
+                  Inventory Control Panel
                 </h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Comprehensive inventory and asset management system
+                  Inventory & Asset Management System
                 </p>
               </div>
             </div>
@@ -286,10 +286,10 @@ export default function StorePage() {
         <div className="pb-12">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              Inventory Categories
+              Inventory Segments
             </h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Manage your store inventory across different categories
+              Manage your inventory and assets across different segments
             </p>
           </div>
 

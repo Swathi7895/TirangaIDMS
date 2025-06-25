@@ -24,7 +24,7 @@ export default function DataManagerLayout({
     <div className="flex h-screen bg-gray-100">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header title="Data Manager" handleLogout={handleLogout} />
+        <Header title="Enterprise Data Manager" handleLogout={handleLogout} />
         <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
