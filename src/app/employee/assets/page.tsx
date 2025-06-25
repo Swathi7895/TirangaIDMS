@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Laptop, Smartphone, CreditCard, Car, Wifi, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface Asset {
   id: number;
@@ -57,24 +58,34 @@ function mapApiAssetToAsset(api: ApiAsset): Asset {
 }
 
 export default function AssetsPage() {
+  const router = useRouter();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
 
+  // Get employee ID from sessionStorage on component mount
   useEffect(() => {
     const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
     if (!id) {
-      // handle error or redirect
+      setError('Employee ID not found. Please login again.');
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2000);
       return;
     }
     setEmployeeId(id);
-  }, []);
+  }, [router]);
 
+  // Fetch assets when employeeId is available
   useEffect(() => {
+    if (!employeeId) return; // Don't fetch if employeeId is not available
+    
     const fetchAssets = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear previous errors
         const response = await fetch(`http://localhost:8080/api/assets/employee/${employeeId}`);
         if (!response.ok) {
           throw new Error('Failed to fetch assets');
@@ -82,7 +93,6 @@ export default function AssetsPage() {
         const data = await response.json();
         const mapped = Array.isArray(data) ? data.map(mapApiAssetToAsset) : [];
         setAssets(mapped);
-        setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
         setAssets([]);
@@ -90,8 +100,9 @@ export default function AssetsPage() {
         setLoading(false);
       }
     };
+    
     fetchAssets();
-  }, [employeeId]);
+  }, [employeeId]); // Dependency on employeeId
 
   const getAssetIcon = (type: Asset['type']) => {
     switch (type) {

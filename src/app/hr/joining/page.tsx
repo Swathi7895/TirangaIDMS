@@ -29,8 +29,8 @@ interface Employee {
   position: string;
   department: string;
   joiningDate: string; // YYYY-MM-DD
-  status: 'Active' | 'Joining' | 'Relieving';
- 
+  status: 'Active' | 'Inactive' | 'On Leave';
+  notes?: string;
 }
  
 interface ApiEmployeeResponse extends Omit<Employee, 'joiningDate' | 'status'> {
@@ -56,7 +56,7 @@ const transformEmployeeToApiRequest = (employee: Omit<Employee, 'id'>): ApiEmplo
   department: employee.department,
   joiningDate: employee.joiningDate,
   status: employee.status,
-  profilePhotoUrl: employee.profilePhotoUrl,
+  notes: employee.notes,
 });
  
 const transformEmployeeFromApiResponse = (apiEmployee: ApiEmployeeResponse): Employee => ({
@@ -73,7 +73,7 @@ const transformEmployeeFromApiResponse = (apiEmployee: ApiEmployeeResponse): Emp
   department: apiEmployee.department,
   joiningDate: new Date(apiEmployee.joiningDate[0], apiEmployee.joiningDate[1] - 1, apiEmployee.joiningDate[2]).toISOString().split('T')[0],
   status: apiEmployee.status as Employee['status'],
-  profilePhotoUrl: apiEmployee.profilePhotoUrl,
+  notes: apiEmployee.notes,
 });
  
 const API_ORIGIN = 'http://localhost:8080';
@@ -189,7 +189,7 @@ export default function JoiningPage() {
         department: '',
         joiningDate: '',
         status: 'Active',
-        profilePhotoUrl: '',
+        notes: ''
       });
     } else if (employee) {
       setFormData({ ...employee });
@@ -488,8 +488,13 @@ export default function JoiningPage() {
                     <p className="text-sm text-gray-600">Permanent Address</p>
                     <p className="font-medium">{selectedEmployee?.permanentAddress}</p>
                   </div>
- 
-               
+
+                  {selectedEmployee?.notes && (
+                    <div>
+                      <p className="text-sm text-gray-600 mb-2">Notes</p>
+                      <p className="text-gray-900">{selectedEmployee.notes}</p>
+                    </div>
+                  )}
                 </div>
  
   ) : (
@@ -650,8 +655,17 @@ export default function JoiningPage() {
                       onChange={(e) => setFormData({...formData, permanentAddress: e.target.value})}
                     />
                   </div>
-               
- 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                    <textarea
+                      rows={2}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={formData.notes || ''}
+                      onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                      placeholder="Add any additional notes..."
+                    />
+                  </div>
+
                   <div className="flex space-x-3 pt-4">
                     <button
                       type="button"

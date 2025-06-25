@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import axios from 'axios';
- 
+import { useRouter } from 'next/navigation';
+
 // Changed interface to use checkInTime and checkOutTime for consistency with backend
 interface Attendance {
   id?: number;
@@ -22,7 +23,7 @@ interface Attendance {
  
 interface AttendanceRecord {
   id?: number;
-  date: string;
+  date: number[]; // Expect an array of numbers from the backend
   checkInTime: string | null;
   checkOutTime: string | null;
   workHours: number;
@@ -38,50 +39,80 @@ export default function AttendancePage() {
   const [todayAttendance, setTodayAttendance] = useState<Attendance | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
- 
-  const employeeId = 'EMP001'; // Static employee ID for this example
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Get employee ID from localStorage on component mount
+  useEffect(() => {
+    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!id) {
+      setError('Employee ID not found. Please login again.');
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2000);
+      return;
+    }
+    setEmployeeId(id);
+  }, [router]);
  
   // Define fetchAttendance using useCallback to memoize it
   const fetchAttendance = useCallback(async () => {
+    if (!employeeId) {
+      setError('Employee ID not available. Please log in again.');
+      return;
+    }
+
     try {
       setLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
       const response = await axios.get(`${API_BASE_URL}/employee/${employeeId}`);
-     
-      const fetchedAttendance: Attendance[] = response.data.map((record: AttendanceRecord) => ({
-        ...record,
-        // Map backend fields to the Attendance interface. Assuming backend sends 'checkInTime' and 'checkOutTime'
-        checkInTime: record.checkInTime || null,
-        checkOutTime: record.checkOutTime || null,
-        // Calculate workHours if not provided by backend, or if checkIn/Out are present
-        workHours: record.workHours || (record.checkInTime && record.checkOutTime
-          ? (new Date(`${record.date}T${record.checkOutTime}`).getTime() - new Date(`${record.date}T${record.checkInTime}`).getTime()) / (1000 * 60 * 60)
-          : 0),
-      }));
-     
-      setAttendance(fetchedAttendance); // Update the main attendance history
- 
+
+      // Convert attendance records with date arrays to use date strings
+      const fetchedAttendance: Attendance[] = response.data.map((record: AttendanceRecord) => {
+        const dateArray = record.date;
+        const year = dateArray[0];
+        const month = String(dateArray[1]).padStart(2, '0');
+        const day = String(dateArray[2]).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+
+        return {
+          ...record,
+          date: dateStr, // The date is now a 'YYYY-MM-DD' string
+          checkInTime: record.checkInTime || null,
+          checkOutTime: record.checkOutTime || null,
+          workHours: record.workHours,
+        };
+      });
+
+      setAttendance(fetchedAttendance);
+
+      // Create a timezone-safe 'YYYY-MM-DD' string for today's date
       const today = new Date();
-      const formattedToday = today.toISOString().split('T')[0];
-      const existingTodayAttendance = fetchedAttendance.find((a: Attendance) => a.date === formattedToday);
- 
-      if (!existingTodayAttendance) {
-        // If no attendance record exists for today, create a new one for initial state
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const formattedToday = `${year}-${month}-${day}`;
+
+      const existingTodayAttendance = fetchedAttendance.find(
+        (a: Attendance) => a.date === formattedToday
+      );
+
+      if (existingTodayAttendance) {
+        setTodayAttendance(existingTodayAttendance);
+      } else {
+        // If no record exists for today, create a new one for initial state
         const newAttendance: Attendance = {
           date: formattedToday,
           checkInTime: null,
           checkOutTime: null,
-          status: 'absent', // Default to absent if no activity
+          status: 'absent',
           workHours: 0,
           employeeId: employeeId,
         };
         setTodayAttendance(newAttendance);
-        // Add this new record to the main attendance list immediately for UI consistency
+        // Add this new record to the main attendance list for UI consistency
         setAttendance(prev => [newAttendance, ...prev]);
-        console.log("No existing attendance for today. Setting newAttendance and adding to list:", newAttendance);
-      } else {
-        setTodayAttendance(existingTodayAttendance);
-        console.log("Found existing attendance for today:", existingTodayAttendance);
       }
     } catch (err: Error | unknown) {
       const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -89,22 +120,23 @@ export default function AttendancePage() {
       console.error('Error fetching attendance:', err);
     } finally {
       setLoading(false);
-      console.log("Finished fetching attendance. Loading set to false.");
     }
   }, [employeeId]); // Dependency array for useCallback
  
-  // Fetch attendance data on component mount (and when fetchAttendance changes due to its dependencies)
+  // Fetch attendance data when employeeId is available
   useEffect(() => {
-    console.log("useEffect: Initial/re-fetch attendance data...");
-    fetchAttendance();
-  }, [fetchAttendance]); // Dependency array for useEffect
+    if (employeeId) {
+      console.log("useEffect: Initial/re-fetch attendance data...");
+      fetchAttendance();
+    }
+  }, [fetchAttendance, employeeId]); // Dependency array for useEffect
  
   // Console logs for debugging (can be removed in production)
   console.log("Render: loading=", loading, "todayAttendance=", todayAttendance);
   console.log("Render: todayAttendance.checkInTime=", todayAttendance?.checkInTime, "todayAttendance.checkOutTime=", todayAttendance?.checkOutTime);
  
   const handleSignIn = async () => {
-    if (!todayAttendance) return; // Prevent action if todayAttendance is null
+    if (!todayAttendance || !employeeId) return; // Prevent action if todayAttendance is null or employeeId is not available
  
     try {
       console.log("[handleSignIn] Attempting to sign in. Current todayAttendance:", todayAttendance);
@@ -162,7 +194,7 @@ export default function AttendancePage() {
  
   const handleSignOut = async () => {
     // Ensure todayAttendance exists and employee has signed in
-    if (!todayAttendance || !todayAttendance.checkInTime) return;
+    if (!todayAttendance || !todayAttendance.checkInTime || !employeeId) return;
  
     try {
       setLoading(true);
@@ -176,25 +208,11 @@ export default function AttendancePage() {
         second: '2-digit'
       });
  
-      // Calculate work hours based on sign-in and sign-out times
-      const signInTime = new Date(`${todayAttendance.date}T${todayAttendance.checkInTime}`);
-      const signOutTime = now;
-      const workHours = (signOutTime.getTime() - signInTime.getTime()) / (1000 * 60 * 60); // Hours
- 
-      // Determine status based on work hours
-      let status: 'present' | 'half-day' | 'absent' = 'present';
-      if (workHours < 4.5) { // Example threshold for absent
-        status = 'absent';
-      } else if (workHours < 9) { // Example threshold for half-day
-        status = 'half-day';
-      }
- 
+      // The backend only needs the employeeId and checkOutTime to process the sign-out.
+      // The backend will calculate work hours and update the status.
       const payload = {
-        ...todayAttendance, // Use current todayAttendance state
-        checkOutTime: timeString, // Set checkOutTime
-        status, // Update status
-        workHours: Number(workHours.toFixed(1)), // Round work hours to one decimal place
         employeeId: employeeId,
+        checkOutTime: timeString,
       };
  
       const response = await axios.post(`${API_BASE_URL}/mark`, payload);
@@ -381,10 +399,10 @@ export default function AttendancePage() {
             <div className="flex space-x-4">
               <button
                 onClick={handleSignIn}
-                // Disable if loading or already signed in today
-                disabled={loading || todayAttendance?.checkInTime !== null}
+                // Disable if loading, already signed in, or already signed out today
+                disabled={loading || todayAttendance?.checkInTime !== null || todayAttendance?.checkOutTime !== null}
                 className={`px-4 py-2 rounded-lg ${
-                  todayAttendance?.checkInTime !== null
+                  todayAttendance?.checkInTime !== null || todayAttendance?.checkOutTime !== null
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 text-white hover:bg-blue-700'
                 }`}
@@ -447,4 +465,5 @@ export default function AttendancePage() {
     </div>
   );
 }
+ 
  

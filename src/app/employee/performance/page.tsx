@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Star, TrendingUp, Award, Calendar, Briefcase, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface APIReview {
   id: number;
@@ -33,40 +34,84 @@ interface APIReview {
 }
 
 export default function PerformancePage() {
+  const router = useRouter();
   const [reviews, setReviews] = useState<APIReview[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [employeeId, setEmployeeId] = useState<string | null>(null);
 
+  // Get employee ID from sessionStorage on component mount
   useEffect(() => {
     const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
     if (!id) {
-      setReviews([]);
-      setLoading(false);
+      setError('Employee ID not found. Please login again.');
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2000);
       return;
     }
     setEmployeeId(id);
-  }, []);
+  }, [router]);
 
+  // Fetch performance data when employeeId is available
   useEffect(() => {
-    if (!employeeId) return;
+    if (!employeeId) return; // Don't fetch if employeeId is not available
+    
+    setLoading(true);
+    setError(null); // Clear previous errors
     fetch(`http://localhost:8080/api/performance-reviews/employee/byId/${employeeId}`)
       .then(res => res.json())
       .then((data: APIReview[]) => {
         setReviews(Array.isArray(data) ? data : []);
         setLoading(false);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Failed to fetch performance data:', err);
+        setError('Failed to load performance data. Please try again.');
         setReviews([]);
         setLoading(false);
       });
-  }, [employeeId]);
+  }, [employeeId]); // Added employeeId as dependency
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-gray-500 py-8">Loading performance data...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center text-red-500 py-8">Error: {error}</div>
+        </div>
+      </div>
+    );
   }
 
   if (!reviews || reviews.length === 0) {
-    return <div className="min-h-screen flex items-center justify-center">No performance data found.</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Back Button */}
+          <div className="mb-6">
+            <Link
+              href="/employee"
+              className="inline-flex items-center text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
+            </Link>
+          </div>
+          <div className="text-center text-gray-500 py-8">No performance data found.</div>
+        </div>
+      </div>
+    );
   }
 
   // Use the first review for employee info

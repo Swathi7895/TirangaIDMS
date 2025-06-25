@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, CheckCircle, XCircle, Plus, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
  
 interface Leave {
@@ -19,6 +20,7 @@ interface Leave {
 }
  
 export default function LeavesPage() {
+  const router = useRouter();
   const [leaves, setLeaves] = useState<Leave[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [newLeave, setNewLeave] = useState<Partial<Leave>>({
@@ -29,16 +31,31 @@ export default function LeavesPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
  
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL_LEAVE_REQUESTS || 'http://localhost:8080/api/leave-requests';
  
-  const EMPLOYEE_ID = 'EMP001'; // TODO: Replace with logged-in user's ID
- 
-  // Fetch leave history
+  // Get employee ID from sessionStorage on component mount
   useEffect(() => {
+    const id = sessionStorage.getItem('employeeId') || localStorage.getItem('employeeId');
+    if (!id) {
+      setError('Employee ID not found. Please login again.');
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        router.replace('/login');
+      }, 2000);
+      return;
+    }
+    setEmployeeId(id);
+  }, [router]);
+ 
+  // Fetch leave history when employeeId is available
+  useEffect(() => {
+    if (!employeeId) return; // Don't fetch if employeeId is not available
+    
     setLoading(true);
     setError(null);
-    axios.get(`${API_BASE}/employee/${EMPLOYEE_ID}`)
+    axios.get(`${API_BASE}/employee/${employeeId}`)
       .then(res => {
         // Map API data to correct interface
         setLeaves(res.data.map((item: any) => ({
@@ -60,11 +77,16 @@ export default function LeavesPage() {
         setError('Failed to load leave history. Please try again.');
       })
       .finally(() => setLoading(false));
-  }, [API_BASE]);
+  }, [API_BASE, employeeId]); // Added employeeId as dependency
  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+ 
+    if (!employeeId) {
+      setError('Employee ID not found. Please login again.');
+      return;
+    }
  
     if (!newLeave.startDate || !newLeave.endDate || !newLeave.reason) {
       setError("Please fill in all required fields (Start Date, End Date, Reason).");
@@ -77,7 +99,7 @@ export default function LeavesPage() {
     }
  
     const leavePayload: any = {
-      employeeId: EMPLOYEE_ID,
+      employeeId: employeeId, // Use dynamic employeeId instead of static
       employeeName: newLeave.employeeName || '',
       leaveType: newLeave.leaveType,
       startDate: newLeave.startDate,
